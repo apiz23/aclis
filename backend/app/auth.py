@@ -14,6 +14,9 @@ class CurrentUser:
 
 def decode_token(token: str) -> CurrentUser:
     try:
+        # TODO(security, Phase 8): aud is not verified (verify_aud=False). Before
+        # production, enable audience verification and add aud="authenticated" to
+        # test token fixtures so a token from another audience cannot be accepted.
         payload = jwt.decode(
             token, settings.supabase_jwt_secret,
             algorithms=["HS256"], audience="authenticated",
