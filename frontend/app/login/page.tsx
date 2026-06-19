@@ -1,5 +1,4 @@
 "use client";
-export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -26,7 +25,7 @@ export default function Login() {
       <input className="border p-2 w-full" type="password" placeholder="Kata Laluan"
         value={password} onChange={(e) => setPassword(e.target.value)} />
       {err && <p className="text-red-600 text-sm">{err}</p>}
-      <button className="bg-black text-white px-4 py-2 w-full">Masuk</button>
+      <button type="submit" className="bg-black text-white px-4 py-2 w-full">Masuk</button>
     </form>
   );
 }
