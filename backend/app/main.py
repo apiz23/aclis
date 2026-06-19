@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import me, stats
+from app.routers import me, stats, kampung
 from app.config import settings
 
 app = FastAPI(title="ACLIS API")
@@ -15,6 +15,7 @@ app.add_middleware(
 
 app.include_router(me.router)
 app.include_router(stats.router)
+app.include_router(kampung.router)
 
 @app.get("/health")
 def health():
