@@ -1,59 +1,28 @@
--- DEV SUPERADMIN USER
--- Run in Supabase SQL Editor BEFORE 01_sample_data.sql
--- Creates login: admin@aclis.my / Admin@1234
--- DELETE THIS USER before going to production
-
-DO $$
-DECLARE
-  _uid uuid := gen_random_uuid();
-BEGIN
-
-  -- 1. Create auth user (bypasses email confirmation for dev)
-  INSERT INTO auth.users (
-    id,
-    instance_id,
-    aud,
-    role,
-    email,
-    encrypted_password,
-    email_confirmed_at,
-    raw_app_meta_data,
-    raw_user_meta_data,
-    created_at,
-    updated_at,
-    confirmation_token,
-    recovery_token,
-    is_super_admin
-  ) VALUES (
-    _uid,
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'admin@aclis.my',
-    crypt('Admin@1234', gen_salt('bf')),
-    now(),                                          -- email pre-confirmed
-    jsonb_build_object(
-      'provider',   'email',
-      'providers',  array['email'],
-      'role',       'admin_daerah'                  -- read by FastAPI JWT verify
-    ),
-    '{}'::jsonb,
-    now(),
-    now(),
-    '',
-    '',
-    false
-  );
-
-  -- 2. Insert app_user row (mirrors auth user, grants admin_daerah role)
-  INSERT INTO aclis_app_user (id, role, email)
-  VALUES (_uid, 'admin_daerah', 'admin@aclis.my');
-
-  RAISE NOTICE 'Created admin user id=%', _uid;
-END $$;
-
+-- DEV SUPERADMIN USER SETUP
 -- ============================================================
--- VERIFY
+-- STEP 1: Create user via Supabase Dashboard
+--   Authentication → Users → Add User → Create new user
+--   Email:    admin@aclis.my
+--   Password: Admin@1234
+--   ✓ Auto Confirm User
+--
+-- STEP 2: Run this SQL in SQL Editor (after user created in dashboard)
 -- ============================================================
--- SELECT id, email, raw_app_meta_data FROM auth.users WHERE email = 'admin@aclis.my';
--- SELECT * FROM aclis_app_user WHERE email = 'admin@aclis.my';
+
+-- Set admin_daerah role in JWT app_metadata
+UPDATE auth.users
+SET raw_app_meta_data = raw_app_meta_data || '{"role":"admin_daerah"}'::jsonb
+WHERE email = 'admin@aclis.my';
+
+-- Mirror into aclis_app_user so app queries work
+INSERT INTO aclis_app_user (id, role, email)
+SELECT id, 'admin_daerah', 'admin@aclis.my'
+FROM auth.users
+WHERE email = 'admin@aclis.my'
+ON CONFLICT (id) DO UPDATE SET role = 'admin_daerah';
+
+-- Verify
+SELECT u.id, u.email, u.raw_app_meta_data, a.role
+FROM auth.users u
+JOIN aclis_app_user a ON a.id = u.id
+WHERE u.email = 'admin@aclis.my';
