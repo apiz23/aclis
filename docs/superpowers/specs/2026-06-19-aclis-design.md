@@ -77,15 +77,15 @@ Derived from the actual sample files in the project folder.
 
 | Entity | Source file | Key fields |
 |--------|-------------|-----------|
-| `User` | — | id, role (`admin_daerah` / `ketua_kampung` / `penghulu`), email, leader_id (nullable) |
-| `Mukim` | xlsx sheet names (Benut, Serkat, Pontian…) | id, name, parlimen, dun |
-| `Kampung` | `ID KKG UBAH BETUL.xlsx` | id, name, mukim_id, profile, b40_count |
-| `Leader` | ID KKG + embedded photos | id, name, ic_no, type (ketua_kampung/penghulu), kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini |
-| `Resident` / `B40` | proposal modules | id, kampung_id, demographic fields |
-| `MonthlyReport` | proposal | id, kampung_id, period, content, status (draft/submitted/late), submitted_at |
-| `Issue` | `SENARAI...LAMPU JALAN...xlsx` | id, kampung_id, type, location, coords, description, ai_category, status |
-| `Evaluation` | `PENILAIAN KETUA KG.xlsx` + `LAPORAN PENILAIAN...docx` | id, leader_id, period, scores (jsonb), total, ulasan |
-| `Document` | `SURAT PEMASTAUTIN/PENDAPATAN.docx` | id, type (pemastautin/pendapatan), leader_id, generated_pdf_url |
+| `aclis_app_user` | — | id, role (`admin_daerah` / `ketua_kampung` / `penghulu`), email, leader_id (nullable) |
+| `aclis_mukim` | xlsx sheet names (Benut, Serkat, Pontian…) | id, name, parlimen, dun |
+| `aclis_kampung` | `ID KKG UBAH BETUL.xlsx` | id, name, mukim_id, profile, b40_count |
+| `aclis_leader` | ID KKG + embedded photos | id, name, ic_no, type (ketua_kampung/penghulu), kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini |
+| `aclis_resident` | proposal modules | id, kampung_id, demographic fields |
+| `aclis_monthly_report` | proposal | id, kampung_id, period, content, status (draft/submitted/late), submitted_at |
+| `aclis_issue` | `SENARAI...LAMPU JALAN...xlsx` | id, kampung_id, type, location, coords, description, ai_category, status |
+| `aclis_evaluation` | `PENILAIAN KETUA KG.xlsx` + `LAPORAN PENILAIAN...docx` | id, leader_id, period, scores (jsonb), total, ulasan |
+| `aclis_document` | `SURAT PEMASTAUTIN/PENDAPATAN.docx` | id, type (pemastautin/pendapatan), leader_id, generated_pdf_url |
 
 - ID photos → **Supabase Storage**; URL stored on `Leader.photo_url`.
 - `scores` jsonb holds the appraisal criteria (Akhlak, Mutu Kerja, Minat, Kebolehpercayaan, Komunikasi, Inisiatif, etc. — from the docx form).
