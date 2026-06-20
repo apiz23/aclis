@@ -7,9 +7,23 @@ import {
   Table, TableBody, TableCell,
   TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogHeader,
+  DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiGet } from "@/lib/api";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { apiGet, apiPost } from "@/lib/api";
+import { AlertCircle, Plus } from "lucide-react";
+
+interface KampungOption { id: string; name: string }
 
 interface IssueSummary {
   id: string;
@@ -30,6 +44,8 @@ const STATUS_CONFIG: Record<IssueStatus, { label: string; cls: string }> = {
   resolved:    { label: "Selesai",      cls: "bg-[var(--success-bg)] text-[var(--success)]" },
   closed:      { label: "Ditutup",      cls: "bg-muted text-muted-foreground" },
 };
+
+const ISSUE_TYPES = ["Lampu Jalan", "Jalan Rosak", "Paip Air", "Longkang", "Sampah", "Lain-lain"];
 
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as IssueStatus] ?? STATUS_CONFIG.open;
@@ -58,31 +74,75 @@ function EmptyState() {
       </div>
       <p className="text-sm font-semibold mb-1">Tiada isu komuniti</p>
       <p className="text-sm text-muted-foreground max-w-xs">
-        Aduan dan permohonan akan dipaparkan selepas import data selesai.
+        Klik "Laporkan Isu" untuk menambah isu baru.
       </p>
     </div>
   );
 }
 
+const EMPTY_FORM = { kampung_id: "", type: "", location: "", description: "" };
+
 export default function IssuesPage() {
-  const [issues, setIssues] = useState<IssueSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [issues, setIssues]         = useState<IssueSummary[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [kampungs, setKampungs]     = useState<KampungOption[]>([]);
+  const [form, setForm]             = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr]               = useState("");
   const router = useRouter();
 
-  useEffect(() => {
+  function load() {
+    setLoading(true);
     apiGet("/issues")
       .then(setIssues)
       .catch(() => setIssues([]))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  function openDialog() {
+    setForm(EMPTY_FORM);
+    setErr("");
+    setDialogOpen(true);
+    if (kampungs.length === 0) {
+      apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.kampung_id) { setErr("Sila pilih kampung."); return; }
+    setSubmitting(true);
+    setErr("");
+    try {
+      await apiPost("/issues", {
+        kampung_id:  form.kampung_id,
+        type:        form.type || null,
+        location:    form.location || null,
+        description: form.description || null,
+      });
+      setDialogOpen(false);
+      load();
+    } catch {
+      setErr("Gagal merekod isu. Cuba semula.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <AppLayout>
-      <div className="space-y-0.5">
-        <h1 className="font-heading text-2xl font-bold tracking-tight">Isu Komuniti</h1>
-        <p className="text-sm text-muted-foreground">
-          Aduan dan permohonan kemudahan awam
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="space-y-0.5">
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Isu Komuniti</h1>
+          <p className="text-sm text-muted-foreground">Aduan dan permohonan kemudahan awam</p>
+        </div>
+        <Button size="sm" onClick={openDialog}>
+          <Plus className="h-4 w-4 mr-1.5" />
+          Laporkan Isu
+        </Button>
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
@@ -119,6 +179,82 @@ export default function IssuesPage() {
           </Table>
         )}
       </div>
+
+      {/* Create Issue Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Laporkan Isu</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="kampung">Kampung *</Label>
+              <Select
+                value={form.kampung_id}
+                onValueChange={(v) => setForm((f) => ({ ...f, kampung_id: v }))}
+              >
+                <SelectTrigger id="kampung">
+                  <SelectValue placeholder="Pilih kampung..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {kampungs.map((k) => (
+                    <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="type">Jenis Isu</Label>
+              <Select
+                value={form.type}
+                onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}
+              >
+                <SelectTrigger id="type">
+                  <SelectValue placeholder="Pilih jenis..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {ISSUE_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="location">Lokasi</Label>
+              <Input
+                id="location"
+                placeholder="cth: Jalan Kampung Baru"
+                value={form.location}
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="description">Penerangan</Label>
+              <Textarea
+                id="description"
+                placeholder="Huraikan masalah dengan jelas..."
+                rows={3}
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+
+            {err && <p className="text-sm text-destructive">{err}</p>}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Menyimpan…" : "Hantar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
