@@ -29,6 +29,10 @@ class LeaderSummary(BaseModel):
     parti_lantikan: str | None
     parti_terkini: str | None
 
+class LeaderDetail(LeaderSummary):
+    mukim_name: str | None = None
+    evaluation_count: int = 0
+
 class ReportSummary(BaseModel):
     id: str
     kampung_id: str | None
