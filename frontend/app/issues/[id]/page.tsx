@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiGet } from "@/lib/api";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiGet, apiPatch } from "@/lib/api";
+import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface IssueDetail {
   id: string;
@@ -29,6 +30,13 @@ const STATUS_CONFIG: Record<IssueStatus, { label: string; cls: string }> = {
   closed:      { label: "Ditutup",      cls: "bg-muted text-muted-foreground" },
 };
 
+const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
+  open:        [{ label: "Proses",  next: "in_progress" }],
+  in_progress: [{ label: "Selesai", next: "resolved" }, { label: "Tutup", next: "closed" }],
+  resolved:    [{ label: "Tutup",   next: "closed" }],
+  closed:      [],
+};
+
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="py-3 border-b last:border-0">
@@ -39,20 +47,44 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function IssueDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id }  = useParams<{ id: string }>();
   const router  = useRouter();
-  const [data, setData]       = useState<IssueDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
+  const [data, setData]         = useState<IssueDetail | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(false);
+  const [isAdmin, setIsAdmin]   = useState(false);
+  const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
+  function load() {
+    setLoading(true);
     apiGet(`/issues/${id}`)
       .then(setData)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    load();
+    supabase.auth.getSession().then(({ data: s }) => {
+      const role = (s.session?.user?.app_metadata as Record<string,string> | undefined)?.role;
+      setIsAdmin(role === "admin_daerah");
+    });
   }, [id]);
 
+  async function handleStatusChange(next: string) {
+    setUpdating(true);
+    try {
+      const updated: IssueDetail = await apiPatch(`/issues/${id}`, { status: next });
+      setData(updated);
+    } catch {
+      alert("Gagal kemaskini status.");
+    } finally {
+      setUpdating(false);
+    }
+  }
+
   const statusConfig = STATUS_CONFIG[data?.status as IssueStatus] ?? STATUS_CONFIG.open;
+  const transitions  = STATUS_TRANSITIONS[data?.status ?? "open"] ?? [];
 
   return (
     <AppLayout>
@@ -76,6 +108,23 @@ export default function IssueDetailPage() {
       </div>
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan data isu.</p>}
+
+      {/* Status actions — admin only */}
+      {isAdmin && !loading && data && transitions.length > 0 && (
+        <div className="flex gap-2">
+          {transitions.map(({ label, next }) => (
+            <Button
+              key={next}
+              size="sm"
+              variant="outline"
+              onClick={() => handleStatusChange(next)}
+              disabled={updating}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">
@@ -103,7 +152,6 @@ export default function IssueDetailPage() {
         </div>
       </div>
 
-      {/* Description */}
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">
           <p className="text-sm font-semibold">Penerangan</p>
