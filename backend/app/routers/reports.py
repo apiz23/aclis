@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser
+from app.auth import get_current_user, CurrentUser, require_role
 from app.db import get_supabase
-from app.schemas import ReportSummary, ReportDetail
+from app.schemas import ReportSummary, ReportDetail, ReportCreate, ReportUpdate
 
 router = APIRouter()
+
+_SELECT_DETAIL = "id, kampung_id, period, status, submitted_at, content, aclis_kampung(name)"
 
 
 def _row_to_summary(r: dict) -> ReportSummary:
@@ -41,7 +43,7 @@ def get_report(
 ):
     rows = (
         sb.table("aclis_monthly_report")
-        .select("id, kampung_id, period, status, submitted_at, content, aclis_kampung(name)")
+        .select(_SELECT_DETAIL)
         .eq("id", report_id)
         .execute()
         .data
@@ -49,4 +51,50 @@ def get_report(
     if not rows:
         raise HTTPException(404, "Report not found")
     r = rows[0]
+    return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
+
+
+@router.post("/reports", response_model=ReportDetail, status_code=201)
+def create_report(
+    body: ReportCreate,
+    _: CurrentUser = Depends(get_current_user),
+    sb: Client = Depends(get_supabase),
+):
+    result = (
+        sb.table("aclis_monthly_report")
+        .insert({
+            "kampung_id": body.kampung_id,
+            "period": body.period,
+            "content": body.content,
+            "status": "draft",
+        })
+        .select(_SELECT_DETAIL)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(500, "Insert failed")
+    r = result.data[0]
+    return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
+
+
+@router.patch("/reports/{report_id}", response_model=ReportDetail)
+def update_report(
+    report_id: str,
+    body: ReportUpdate,
+    _: CurrentUser = Depends(require_role("admin_daerah")),
+    sb: Client = Depends(get_supabase),
+):
+    payload = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not payload:
+        raise HTTPException(400, "No fields to update")
+    result = (
+        sb.table("aclis_monthly_report")
+        .update(payload)
+        .eq("id", report_id)
+        .select(_SELECT_DETAIL)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(404, "Report not found")
+    r = result.data[0]
     return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
