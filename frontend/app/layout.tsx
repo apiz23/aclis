@@ -1,23 +1,31 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Outfit, Merriweather, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "ACLIS",
-  description: "AI Community Leadership Intelligence System",
+  title: "ACLIS — Pejabat Daerah Pontian",
+  description: "Sistem AI Pengurusan Data Ketua Kampung & Penghulu",
 };
 
 export default function RootLayout({
@@ -28,11 +36,14 @@ export default function RootLayout({
   return (
     <html
       lang="ms"
-      className={cn("h-full", "antialiased", plusJakartaSans.variable, geistMono.variable, "font-sans")}
+      suppressHydrationWarning
+      className={cn("h-full antialiased", outfit.variable, merriweather.variable, jetbrainsMono.variable, "font-sans")}
     >
       <body className="min-h-full flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <TooltipProvider>{children}</TooltipProvider>
-        </body>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

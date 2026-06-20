@@ -1,37 +1,90 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell,
+  TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiGet } from "@/lib/api";
+import { Users } from "lucide-react";
+
+interface LeaderSummary {
+  id: string;
+  name: string;
+  ic_no: string | null;
+  type: string;
+  kampung_id: string | null;
+  kampung_name: string | null;
+  tarikh_lantikan: string | null;
+  photo_url: string | null;
+  parti_lantikan: string | null;
+  parti_terkini: string | null;
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  ketua_kampung: "Ketua Kampung",
+  penghulu:      "Penghulu",
+};
+
+function TableSkeleton() {
+  return (
+    <div className="p-4 space-y-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-5">
+        <Users className="h-7 w-7 text-primary" />
+      </div>
+      <p className="text-sm font-semibold mb-1">Belum ada data pemimpin</p>
+      <p className="text-sm text-muted-foreground max-w-xs">
+        Data akan dipaparkan selepas import fail Excel selesai dalam Fasa 2.
+      </p>
+    </div>
+  );
+}
 
 export default function LeadersPage() {
+  const [leaders, setLeaders] = useState<LeaderSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    apiGet("/leaders")
+      .then(setLeaders)
+      .catch(() => setLeaders([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <AppLayout>
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Pemimpin</h1>
+      <div className="space-y-0.5">
+        <h1 className="font-heading text-2xl font-bold tracking-tight">Pemimpin</h1>
         <p className="text-sm text-muted-foreground">
-          Senarai Ketua Kampung &amp; Penghulu
+          Senarai Ketua Kampung &amp; Penghulu daerah Pontian
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Senarai Pemimpin</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="px-5 py-4 border-b">
+          <p className="text-sm font-semibold">Senarai Pemimpin</p>
+        </div>
+
+        {loading ? <TableSkeleton /> : leaders.length === 0 ? <EmptyState /> : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-10" />
                 <TableHead>Nama</TableHead>
                 <TableHead>Jawatan</TableHead>
                 <TableHead>Kampung</TableHead>
@@ -40,27 +93,35 @@ export default function LeadersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
+              {leaders.map((l) => (
+                <TableRow
+                  key={l.id}
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/leaders/${l.id}`)}
+                >
                   <TableCell>
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback>—</AvatarFallback>
+                      {l.photo_url && <AvatarImage src={l.photo_url} alt={l.name} />}
+                      <AvatarFallback className="text-xs">
+                        {l.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                      </AvatarFallback>
                     </Avatar>
                   </TableCell>
-                  <TableCell><Skeleton className="h-4 w-36" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell className="font-medium">{l.name}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {TYPE_LABEL[l.type] ?? l.type}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{l.kampung_name ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground tabular-nums">
+                    {l.tarikh_lantikan ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{l.parti_terkini ?? "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Data akan dipaparkan selepas import selesai
-          </p>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </AppLayout>
   );
 }
