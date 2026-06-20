@@ -67,3 +67,27 @@ class EvaluationSummary(BaseModel):
 
 class EvaluationDetail(EvaluationSummary):
     scores: dict
+
+class IssueCreate(BaseModel):
+    kampung_id: str
+    type: str | None = None
+    location: str | None = None
+    description: str | None = None
+    coords: str | None = None
+
+class IssueUpdate(BaseModel):
+    status: str | None = None
+    type: str | None = None
+    location: str | None = None
+    description: str | None = None
+    ai_category: str | None = None
+    coords: str | None = None
+
+class ReportCreate(BaseModel):
+    kampung_id: str
+    period: str
+    content: str | None = None
+
+class ReportUpdate(BaseModel):
+    content: str | None = None
+    status: str | None = None
