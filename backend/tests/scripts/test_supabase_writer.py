@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from scripts.supabase_writer import SupabaseWriter
 from scripts.models import MukimRow, KampungRow, LeaderRow
 

@@ -42,7 +42,7 @@ class SupabaseWriter:
     def upsert_leader(self, row: LeaderRow, kampung_id: str) -> str:
         """Upsert aclis_leader by ic_no; return id."""
         if self._dry_run:
-            print(f"  [dry-run] upsert aclis_leader ic={row.ic_no}")
+            print(f"  [dry-run] upsert aclis_leader ic=<redacted>")
             return "dry-run"
         payload: dict = {
             "name": row.name,
