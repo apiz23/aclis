@@ -4,11 +4,37 @@ export function buildAuthHeaders(token: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function apiGet(path: string) {
+async function getToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token ?? null;
+  return data.session?.access_token ?? null;
+}
+
+export async function apiGet(path: string) {
+  const token = await getToken();
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
     headers: buildAuthHeaders(token),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function apiPost(path: string, body: unknown) {
+  const token = await getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...buildAuthHeaders(token) },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function apiPatch(path: string, body: unknown) {
+  const token = await getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...buildAuthHeaders(token) },
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
