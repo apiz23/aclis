@@ -4,9 +4,16 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiGet } from "@/lib/api";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog, DialogContent, DialogHeader,
+  DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { apiGet, apiPatch } from "@/lib/api";
+import { ArrowLeft, Pencil, Send } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface ReportDetail {
   id: string;
@@ -38,18 +45,62 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
-  const [data, setData]       = useState<ReportDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
+  const [data, setData]           = useState<ReportDetail | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(false);
+  const [isAdmin, setIsAdmin]     = useState(false);
+  const [editOpen, setEditOpen]   = useState(false);
+  const [content, setContent]     = useState("");
+  const [saving, setSaving]       = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [editErr, setEditErr]     = useState("");
 
-  useEffect(() => {
+  function load() {
+    setLoading(true);
     apiGet(`/reports/${id}`)
-      .then(setData)
+      .then((d: ReportDetail) => { setData(d); setContent(d.content ?? ""); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    load();
+    supabase.auth.getSession().then(({ data: s }) => {
+      const role = (s.session?.user?.app_metadata as Record<string,string> | undefined)?.role;
+      setIsAdmin(role === "admin_daerah");
+    });
   }, [id]);
 
+  async function handleSaveContent(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setEditErr("");
+    try {
+      const updated: ReportDetail = await apiPatch(`/reports/${id}`, { content });
+      setData(updated);
+      setEditOpen(false);
+    } catch {
+      setEditErr("Gagal menyimpan. Cuba semula.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSubmit() {
+    if (!confirm("Hantar laporan ini? Status akan bertukar kepada Dihantar.")) return;
+    setSubmitting(true);
+    try {
+      const updated: ReportDetail = await apiPatch(`/reports/${id}`, { status: "submitted" });
+      setData(updated);
+    } catch {
+      alert("Gagal menghantar laporan.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const statusConfig = STATUS_CONFIG[data?.status as ReportStatus] ?? STATUS_CONFIG.draft;
+  const isDraft      = data?.status === "draft";
 
   return (
     <AppLayout>
@@ -73,6 +124,20 @@ export default function ReportDetailPage() {
       </div>
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan laporan.</p>}
+
+      {/* Actions — admin + draft only */}
+      {isAdmin && !loading && isDraft && (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => { setEditErr(""); setEditOpen(true); }}>
+            <Pencil className="h-3.5 w-3.5 mr-1.5" />
+            Edit Kandungan
+          </Button>
+          <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+            <Send className="h-3.5 w-3.5 mr-1.5" />
+            {submitting ? "Menghantar…" : "Hantar Laporan"}
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">
@@ -98,7 +163,6 @@ export default function ReportDetailPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">
           <p className="text-sm font-semibold">Kandungan Laporan</p>
@@ -115,6 +179,36 @@ export default function ReportDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Edit Content Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Kandungan Laporan</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveContent} className="space-y-4 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-content">Kandungan</Label>
+              <Textarea
+                id="edit-content"
+                rows={8}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Tuliskan kandungan laporan..."
+              />
+            </div>
+            {editErr && <p className="text-sm text-destructive">{editErr}</p>}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Menyimpan…" : "Simpan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
