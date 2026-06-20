@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from unittest.mock import MagicMock
 from scripts.import_issues import parse_issues_file, import_issues
 from scripts.import_evaluations import parse_evaluations_file, import_evaluations
@@ -36,3 +38,39 @@ def test_import_evaluations_dry_run(evaluations_xlsx):
     leader_map = {"800101011234": "leader-uuid-1"}
     count = import_evaluations(evaluations_xlsx, writer, leader_map)
     assert count == 1
+
+
+def test_dry_run_exits_zero(leaders_xlsx, issues_xlsx, evaluations_xlsx):
+    """Full pipeline dry-run must exit 0."""
+    result = subprocess.run(
+        [
+            sys.executable, "scripts/run_import.py",
+            "--leaders", leaders_xlsx,
+            "--issues",  issues_xlsx,
+            "--evals",   evaluations_xlsx,
+            "--dry-run",
+        ],
+        capture_output=True, text=True,
+        env={
+            **__import__("os").environ,
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_SERVICE_ROLE_KEY": "dummy",
+        },
+        cwd=str(__import__("pathlib").Path(__file__).parent.parent.parent),  # backend/
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_discover_lists_sheets(leaders_xlsx):
+    """--discover prints sheet names and exits 0."""
+    result = subprocess.run(
+        [sys.executable, "scripts/run_import.py", "--discover", "--leaders", leaders_xlsx],
+        capture_output=True, text=True,
+        env={**__import__("os").environ,
+             "SUPABASE_URL": "https://test.supabase.co",
+             "SUPABASE_SERVICE_ROLE_KEY": "dummy"},
+        cwd=str(__import__("pathlib").Path(__file__).parent.parent.parent),
+    )
+    assert result.returncode == 0, result.stderr
+    assert "BENUT" in result.stdout
+    assert "SKIP_SHEET" in result.stdout
