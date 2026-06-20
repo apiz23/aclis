@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 import openpyxl
 from scripts.supabase_writer import SupabaseWriter
 
@@ -59,7 +60,6 @@ def parse_evaluations_file(xlsx_path: str) -> list[dict]:
         ic_raw = str(get("ic_no") or "").strip()
         if not ic_raw:
             continue
-        import re
         ic_norm = re.sub(r"[\-\s]", "", ic_raw)
         scores = {
             sf: (get(f"score_{sf}") if get(f"score_{sf}") is not None else 0)
