@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Outfit, Merriweather, JetBrains_Mono } from "next/font/google";
+import { Barlow_Semi_Condensed, Figtree, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const outfit = Outfit({
+const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700"],
 });
 
-const merriweather = Merriweather({
+const barlowSemiCondensed = Barlow_Semi_Condensed({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "700"],
+  weight: ["400", "600", "700"],
+  style: ["normal"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -24,7 +25,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ACLIS — Pejabat Daerah Pontian",
+  title: {
+    template: "%s — ACLIS",
+    default: "ACLIS — Pejabat Daerah Pontian",
+  },
   description: "Sistem AI Pengurusan Data Ketua Kampung & Penghulu",
 };
 
@@ -37,10 +41,16 @@ export default function RootLayout({
     <html
       lang="ms"
       suppressHydrationWarning
-      className={cn("h-full antialiased", outfit.variable, merriweather.variable, jetbrainsMono.variable, "font-sans")}
+      className={cn(
+        "h-full antialiased",
+        figtree.variable,
+        barlowSemiCondensed.variable,
+        jetbrainsMono.variable,
+        "font-sans"
+      )}
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
       </body>

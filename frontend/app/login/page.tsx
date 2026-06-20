@@ -28,8 +28,8 @@ export default function Login() {
   return (
     <div className="min-h-dvh flex">
 
-      {/* ── Left: identity panel (dark = bg-primary in light mode, light in dark mode) ── */}
-      <div className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 pt-[52px] bg-primary text-primary-foreground relative overflow-hidden">
+      {/* ── Left: identity panel ── */}
+      <div className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 pt-[52px] bg-primary text-primary-foreground relative overflow-hidden animate-in fade-in-0 duration-500">
 
         {/* Thin accent strip at top */}
         <div className="absolute top-0 inset-x-0 h-[3px] bg-primary-foreground/20 z-10" />
@@ -107,7 +107,7 @@ export default function Login() {
       </div>
 
       {/* ── Right: form panel ── */}
-      <div className="flex-1 flex flex-col justify-center p-10 lg:p-16 bg-background">
+      <div className="flex-1 flex flex-col justify-center p-10 lg:p-16 bg-background animate-in fade-in-0 slide-in-from-bottom-3 duration-400">
 
         {/* Mobile header */}
         <div className="lg:hidden mb-10 space-y-1">

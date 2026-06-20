@@ -33,25 +33,21 @@ function StatCard({ label, icon: Icon, value, sub, loading }: {
   loading: boolean;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5 flex flex-col gap-4">
-      <div className="flex items-start justify-between">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+    <div className="border bg-card p-5 flex flex-col gap-2.5">
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           {label}
         </p>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10">
-          <Icon className="h-4 w-4 text-primary" />
-        </div>
       </div>
-      <div>
-        {loading ? (
-          <Skeleton className="h-9 w-16" />
-        ) : (
-          <p className="font-heading text-3xl font-bold tabular-nums tracking-tight">
-            {value}
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-      </div>
+      {loading ? (
+        <Skeleton className="h-10 w-20 mt-1" />
+      ) : (
+        <p className="font-heading text-[42px] leading-none font-bold tabular-nums tracking-tight">
+          {value}
+        </p>
+      )}
+      <p className="text-xs text-muted-foreground">{sub}</p>
     </div>
   );
 }
@@ -105,9 +101,12 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="rounded-lg border border-dashed bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Carta dan analisis AI akan tersedia selepas import data selesai
+      <div className="border border-dashed bg-card p-10 flex flex-col items-start gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          Analisis AI
+        </p>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Carta prestasi dan laporan AI akan tersedia selepas import data Excel selesai.
         </p>
       </div>
     </AppLayout>

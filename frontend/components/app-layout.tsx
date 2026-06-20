@@ -140,7 +140,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </span>
         </header>
 
-        <div className="flex flex-1 flex-col gap-6 p-6">
+        <div key={pathname} className="flex flex-1 flex-col gap-6 p-6 page-enter">
           {children}
         </div>
       </SidebarInset>
