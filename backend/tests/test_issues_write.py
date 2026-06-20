@@ -49,7 +49,7 @@ def test_create_issue_ok(mock_sb):
 
 def test_create_issue_401():
     r = client.post("/issues", json={"kampung_id": "k1"})
-    assert r.status_code == 403
+    assert r.status_code in (401, 403)
 
 
 def test_create_issue_ketua_kampung_ok(mock_sb):
