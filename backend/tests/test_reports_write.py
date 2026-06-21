@@ -87,3 +87,28 @@ def test_update_report_404(mock_sb):
 def test_update_report_400_empty_body(mock_sb):
     r = client.patch("/reports/r1", headers=auth(), json={})
     assert r.status_code == 400
+
+
+def test_get_report_summary_ok(mock_sb):
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        {"content": "Laporan bulan Januari."}
+    ]
+    r = client.get("/reports/r1/summary", headers=auth())
+    assert r.status_code == 200
+    body = r.json()
+    assert "summary" in body
+
+
+def test_get_report_summary_empty_content(mock_sb):
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        {"content": None}
+    ]
+    r = client.get("/reports/r1/summary", headers=auth())
+    assert r.status_code == 200
+    assert r.json()["summary"] is None
+
+
+def test_get_report_summary_404(mock_sb):
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+    r = client.get("/reports/missing/summary", headers=auth())
+    assert r.status_code == 404

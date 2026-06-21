@@ -91,3 +91,17 @@ class ReportCreate(BaseModel):
 class ReportUpdate(BaseModel):
     content: str | None = None
     status: str | None = None
+
+class StatusCount(BaseModel):
+    status: str
+    count: int
+
+class StatsExtended(Stats):
+    issues_by_status: list[StatusCount]
+    reports_by_status: list[StatusCount]
+
+class InsightsResponse(BaseModel):
+    insights: list[str]
+
+class ReportSummaryAI(BaseModel):
+    summary: str | None

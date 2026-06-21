@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role
 from app.db import get_supabase
-from app.schemas import ReportSummary, ReportDetail, ReportCreate, ReportUpdate
+from app.schemas import ReportSummary, ReportDetail, ReportCreate, ReportUpdate, ReportSummaryAI
 
 router = APIRouter()
 
@@ -98,3 +98,26 @@ def update_report(
         raise HTTPException(404, "Report not found")
     r = result.data[0]
     return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
+
+
+@router.get("/reports/{report_id}/summary", response_model=ReportSummaryAI)
+def get_report_summary(
+    report_id: str,
+    _: CurrentUser = Depends(get_current_user),
+    sb: Client = Depends(get_supabase),
+):
+    from app.ai import ai
+    rows = (
+        sb.table("aclis_monthly_report")
+        .select("content")
+        .eq("id", report_id)
+        .execute()
+        .data
+    )
+    if not rows:
+        raise HTTPException(404, "Report not found")
+    content = rows[0].get("content") or ""
+    if not content:
+        return ReportSummaryAI(summary=None)
+    summary = ai().summarize_report(content)
+    return ReportSummaryAI(summary=summary)

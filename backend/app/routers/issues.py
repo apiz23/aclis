@@ -1,10 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException
+import logging
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role
 from app.db import get_supabase
 from app.schemas import IssueSummary, IssueDetail, IssueCreate, IssueUpdate
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+def _bg_categorize(issue_id: str, description: str, issue_type: str | None, sb: Client):
+    from app.ai import ai
+    try:
+        category = ai().categorize_issue(description, issue_type)
+        if category:
+            sb.table("aclis_issue").update({"ai_category": category}).eq("id", issue_id).execute()
+    except Exception as e:
+        logger.warning("bg_categorize issue %s: %s", issue_id, e)
 
 _SELECT_DETAIL = "id, kampung_id, type, location, description, ai_category, status, coords, aclis_kampung(name)"
 
@@ -59,6 +71,7 @@ def get_issue(
 @router.post("/issues", response_model=IssueDetail, status_code=201)
 def create_issue(
     body: IssueCreate,
+    background_tasks: BackgroundTasks,
     _: CurrentUser = Depends(get_current_user),
     sb: Client = Depends(get_supabase),
 ):
@@ -78,6 +91,8 @@ def create_issue(
     if not result.data:
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
+    if body.description:
+        background_tasks.add_task(_bg_categorize, r["id"], body.description, body.type, sb)
     return IssueDetail(**_row_to_summary(r).model_dump(), coords=r.get("coords"))
 
 

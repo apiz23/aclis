@@ -28,23 +28,27 @@ def mock_sb():
     yield m
     app.dependency_overrides.pop(db.get_supabase, None)
 
-def _setup_counts(mock_sb, kampung=14, leader=17, reports=3, issues=5):
+def _setup_sb(mock_sb, kampung=14, leader=17, reports=3, issues=5):
+    tbl = mock_sb.table.return_value
+    sel = tbl.select.return_value
+
+    # _count() uses .select().limit().execute().count
     counts = [kampung, leader, reports, issues]
     idx = {"i": 0}
-
-    def make_execute():
+    def make_count_exec():
         r = MagicMock()
         r.count = counts[idx["i"] % len(counts)]
         idx["i"] += 1
         return r
+    sel.limit.return_value.execute.side_effect = make_count_exec
+    sel.limit.return_value.eq.return_value.execute.side_effect = make_count_exec
 
-    tbl = mock_sb.table.return_value
-    sel = tbl.select.return_value
-    sel.limit.return_value.execute.side_effect = make_execute
-    sel.limit.return_value.eq.return_value.execute.side_effect = make_execute
+    # _count_by_status() uses .select().execute().data
+    sel.execute.return_value.data = [{"status": "open"}, {"status": "draft"}]
+
 
 def test_stats_ok(mock_sb):
-    _setup_counts(mock_sb)
+    _setup_sb(mock_sb)
     r = client.get("/stats", headers=auth())
     assert r.status_code == 200
     body = r.json()
@@ -52,7 +56,19 @@ def test_stats_ok(mock_sb):
     assert body["leader_count"] == 17
     assert body["pending_reports"] == 3
     assert body["open_issues"] == 5
+    assert "issues_by_status" in body
+    assert "reports_by_status" in body
+
+
+def test_stats_insights_ok(mock_sb):
+    _setup_sb(mock_sb)
+    r = client.get("/stats/insights", headers=auth())
+    assert r.status_code == 200
+    body = r.json()
+    assert "insights" in body
+    assert isinstance(body["insights"], list)
+
 
 def test_stats_401_without_token():
     r = client.get("/stats")
-    assert r.status_code == 403  # HTTPBearer returns 403 when no credentials
+    assert r.status_code == 403
