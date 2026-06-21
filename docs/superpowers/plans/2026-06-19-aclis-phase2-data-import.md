@@ -24,7 +24,7 @@
 1. Create Supabase project; copy URL, anon key, service_role key, JWT secret into `backend/.env`.
 2. Apply `supabase/migrations/0001_init.sql` via Supabase SQL editor or CLI.
 3. Verify the 8 `aclis_*` tables exist in the Supabase dashboard.
-4. Create a Storage bucket named `leader-photos` (public read, or private — see Task 6 note).
+4. Create a Storage bucket named `aclis_leader_photos` (public read, or private — see Task 6 note).
 
 ---
 
@@ -957,13 +957,13 @@ def test_upload_photo_calls_storage():
     writer, mock_client = _make_writer()
     mock_client.storage.from_.return_value.upload.return_value = MagicMock()
     writer.upload_leader_photo(ic_no="800101011234", photo_bytes=b"\x89PNG")
-    mock_client.storage.from_.assert_called_with("leader-photos")
+    mock_client.storage.from_.assert_called_with("aclis_leader_photos")
 
 
 def test_get_public_url():
     writer, _ = _make_writer()
     url = writer.get_public_url("800101011234.jpg")
-    assert url.startswith("https://test.supabase.co/storage/v1/object/public/leader-photos/")
+    assert url.startswith("https://test.supabase.co/storage/v1/object/public/aclis_leader_photos/")
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1050,7 +1050,7 @@ class SupabaseWriter:
             print(f"  [dry-run] upload photo {filename}")
             return self.get_public_url(filename)
         (
-            self._client.storage.from_("leader-photos")
+            self._client.storage.from_("aclis_leader_photos")
             .upload(
                 path=filename,
                 file=photo_bytes,
@@ -1060,7 +1060,7 @@ class SupabaseWriter:
         return self.get_public_url(filename)
 
     def get_public_url(self, filename: str) -> str:
-        return f"{self._url}/storage/v1/object/public/leader-photos/{filename}"
+        return f"{self._url}/storage/v1/object/public/aclis_leader_photos/{filename}"
 
 
 def make_writer(dry_run: bool = False) -> SupabaseWriter:
@@ -1683,4 +1683,4 @@ Verify in Supabase Table Editor:
 - `aclis_mukim`: rows for Pontian mukims
 - `aclis_kampung`: kampung rows linked to mukims
 - `aclis_leader`: leader rows with `photo_url` populated
-- Supabase Storage → `leader-photos` bucket: photo files
+- Supabase Storage → `aclis_leader_photos` bucket: photo files
