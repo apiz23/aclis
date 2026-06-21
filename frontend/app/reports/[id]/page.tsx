@@ -45,17 +45,17 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
-  const [data, setData]           = useState<ReportDetail | null>(null);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(false);
-  const [isAdmin, setIsAdmin]     = useState(false);
-  const [editOpen, setEditOpen]   = useState(false);
-  const [content, setContent]     = useState("");
-  const [saving, setSaving]       = useState(false);
+  const [data, setData]             = useState<ReportDetail | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
+  const [isAdmin, setIsAdmin]       = useState(false);
+  const [editOpen, setEditOpen]     = useState(false);
+  const [content, setContent]       = useState("");
+  const [saving, setSaving]         = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [editErr, setEditErr]     = useState("");
-  const [summary, setSummary]     = useState<string | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [editErr, setEditErr]       = useState("");
+  const [aiSummary, setAiSummary]   = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   function load() {
     setLoading(true);
@@ -79,6 +79,11 @@ export default function ReportDetailPage() {
       const role = (s.session?.user?.app_metadata as Record<string,string> | undefined)?.role;
       setIsAdmin(role === "admin_daerah");
     });
+    setSummaryLoading(true);
+    apiGet(`/reports/${id}/summary`)
+      .then((d: { summary: string | null }) => setAiSummary(d.summary))
+      .catch(() => setAiSummary(null))
+      .finally(() => setSummaryLoading(false));
   }, [id]);
 
   async function handleSaveContent(e: React.FormEvent) {
@@ -135,7 +140,6 @@ export default function ReportDetailPage() {
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan laporan.</p>}
 
-      {/* Actions — admin + draft only */}
       {isAdmin && !loading && isDraft && (
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => { setEditErr(""); setEditOpen(true); }}>
@@ -190,47 +194,25 @@ export default function ReportDetailPage() {
         </div>
       </div>
 
-      {/* AI Summary card */}
-      {!loading && data?.content && (
+      {(summaryLoading || aiSummary) && (
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="px-5 py-4 border-b flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <Sparkles className="h-4 w-4 text-primary" />
             <p className="text-sm font-semibold">Ringkasan AI</p>
-            <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
-              JamAI
-            </span>
+            <span className="ml-auto text-[10px] uppercase tracking-wide font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">JamAI</span>
           </div>
           <div className="p-5">
-            {summary == null && !summaryLoading ? (
-              <div className="flex items-center gap-3">
-                <p className="text-sm text-muted-foreground flex-1">
-                  Klik untuk menjana ringkasan AI daripada kandungan laporan ini.
-                </p>
-                <button
-                  onClick={loadSummary}
-                  className="shrink-0 text-xs font-medium text-primary underline underline-offset-2 hover:no-underline"
-                >
-                  Jana Ringkasan
-                </button>
-              </div>
-            ) : summaryLoading ? (
+            {summaryLoading ? (
               <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-4 w-3/5" />
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
               </div>
-            ) : summary ? (
-              <p className="text-sm leading-relaxed">{summary}</p>
             ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Gagal menjana ringkasan. Pastikan AI_PROVIDER dikonfigurasikan.
-              </p>
+              <p className="text-sm leading-relaxed text-foreground/80">{aiSummary}</p>
             )}
           </div>
         </div>
       )}
 
-      {/* Edit Content Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

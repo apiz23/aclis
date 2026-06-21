@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
-import { Barlow_Semi_Condensed, Figtree, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Lora, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const figtree = Figtree({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const barlowSemiCondensed = Barlow_Semi_Condensed({
+const lora = Lora({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "600", "700"],
-  style: ["normal"],
+  style: ["normal", "italic"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-geist-mono",
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
 });
@@ -43,9 +43,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "h-full antialiased",
-        figtree.variable,
-        barlowSemiCondensed.variable,
-        jetbrainsMono.variable,
+        plusJakartaSans.variable,
+        lora.variable,
+        ibmPlexMono.variable,
         "font-sans"
       )}
     >
