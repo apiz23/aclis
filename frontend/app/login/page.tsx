@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail]       = useState("");
@@ -63,19 +64,8 @@ export default function Login() {
           {/* Logo mark */}
           <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-foreground/10 border border-primary-foreground/20 mb-8">
             <svg viewBox="0 0 20 20" className="h-7 w-7" fill="none" aria-hidden>
-              <path
-                d="M4 16L10 4L16 16"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6.5 12h7"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
+              <path d="M4 16L10 4L16 16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M6.5 12h7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
             </svg>
           </div>
 
@@ -107,70 +97,81 @@ export default function Login() {
       </div>
 
       {/* ── Right: form panel ── */}
-      <div className="flex-1 flex flex-col justify-center p-10 lg:p-16 bg-background animate-in fade-in-0 slide-in-from-bottom-3 duration-400">
+      <div className="flex-1 flex items-center justify-center bg-background animate-in fade-in-0 slide-in-from-bottom-3 duration-400 p-6">
+        <div className="w-full max-w-sm">
 
-        {/* Mobile header */}
-        <div className="lg:hidden mb-10 space-y-1">
-          <p className="font-heading text-base font-bold uppercase tracking-[0.14em]">ACLIS</p>
-          <p className="text-xs text-muted-foreground">Pejabat Daerah Pontian</p>
-        </div>
-
-        <div className="w-full max-w-[360px]">
-          <div className="mb-9">
-            <h2 className="font-heading text-3xl font-bold tracking-tight mb-2">
-              Log Masuk
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Masukkan kelayakan akaun anda
-            </p>
+          {/* Logo + heading */}
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-md">
+              <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" aria-hidden>
+                <path d="M4 16L10 4L16 16" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6.5 12h7" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div className="text-center">
+              <h2 className="font-heading text-2xl font-bold tracking-tight">Selamat Datang</h2>
+              <p className="text-sm text-muted-foreground mt-1">Log masuk ke akaun ACLIS anda</p>
+            </div>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mel</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="admin@pontian.gov.my"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Kata Laluan</Label>
-              <div className="relative">
+          {/* Form card */}
+          <div className="rounded-2xl border bg-card shadow-sm p-7">
+            <form onSubmit={onSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-sm font-medium">E-mel</Label>
                 <Input
-                  id="password"
-                  type={showPw ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="admin@pontian.gov.my"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pr-24"
+                  className="h-10"
                 />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPw((v) => !v)}
-                  className="absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  {showPw ? "Sembunyikan" : "Tunjukkan"}
-                </button>
               </div>
-            </div>
 
-            {err && (
-              <p className="text-sm text-destructive" role="alert">{err}</p>
-            )}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium">Kata Laluan</Label>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPw ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPw((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPw ? "Sembunyikan kata laluan" : "Tunjukkan kata laluan"}
+                  >
+                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
 
-            <Button type="submit" className="w-full mt-1" disabled={loading}>
-              {loading ? "Memasuk…" : "Log Masuk"}
-            </Button>
-          </form>
+              {err && (
+                <p className="text-sm text-destructive" role="alert">{err}</p>
+              )}
+
+              <Button type="submit" className="w-full h-10" disabled={loading}>
+                {loading ? "Memasuk…" : "Log Masuk"}
+              </Button>
+            </form>
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            Pejabat Daerah Pontian &mdash; Johor Darul Ta&apos;zim
+          </p>
         </div>
       </div>
 

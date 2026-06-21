@@ -43,6 +43,10 @@
   --warning:    oklch(0.65 0.13 75);
   --warning-bg: oklch(0.96 0.04 80);
 
+  --font-sans: Plus Jakarta Sans, sans-serif;
+  --font-serif: Lora, serif;
+  --font-mono: IBM Plex Mono, monospace;
+
   --radius: 1.4rem;
   --shadow-x: 0;
   --shadow-y: 1px;
@@ -101,6 +105,10 @@
   --warning:    oklch(0.75 0.13 75);
   --warning-bg: oklch(0.20 0.04 80);
 
+  --font-sans: Plus Jakarta Sans, sans-serif;
+  --font-serif: Lora, serif;
+  --font-mono: IBM Plex Mono, monospace;
+
   --radius: 1.4rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -150,6 +158,9 @@
     --success-bg: oklch(0.20 0.04 145);
     --warning:    oklch(0.75 0.13 75);
     --warning-bg: oklch(0.20 0.04 80);
+    --font-sans: Plus Jakarta Sans, sans-serif;
+    --font-serif: Lora, serif;
+    --font-mono: IBM Plex Mono, monospace;
     --radius: 1.4rem;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -198,7 +209,7 @@
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-serif: var(--font-display);
+  --font-serif: var(--font-serif);
   --font-heading: var(--font-display);
 
   --radius-sm: calc(var(--radius) - 4px);
