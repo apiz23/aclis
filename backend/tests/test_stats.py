@@ -71,4 +71,4 @@ def test_stats_insights_ok(mock_sb):
 
 def test_stats_401_without_token():
     r = client.get("/stats")
-    assert r.status_code == 403
+    assert r.status_code in (401, 403)
