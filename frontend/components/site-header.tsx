@@ -1,50 +1,63 @@
 "use client"
 
-import { SearchForm } from "@/components/search-form"
+import { usePathname } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useSidebar } from "@/components/ui/sidebar"
-import { PanelLeftIcon } from "lucide-react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+
+const PATH_LABEL: Record<string, string> = {
+  "/dashboard":   "Papan Pemuka",
+  "/kampung":     "Profil Kampung",
+  "/leaders":     "Pemimpin",
+  "/reports":     "Laporan Bulanan",
+  "/issues":      "Isu Komuniti",
+  "/evaluations": "Penilaian Prestasi",
+  "/profile":     "Profil Saya",
+}
 
 export function SiteHeader() {
-  const { toggleSidebar } = useSidebar()
+  const pathname = usePathname()
+
+  const segments = pathname.split("/").filter(Boolean)
+  const rootPath = "/" + (segments[0] ?? "")
+  const rootLabel = PATH_LABEL[rootPath] ?? segments[0] ?? "ACLIS"
+  const isDetail = segments.length > 1
 
   return (
     <header className="sticky top-0 z-50 flex w-full items-center border-b bg-background">
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
-        <Button
-          className="h-8 w-8"
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-        >
-          <PanelLeftIcon
-          />
-        </Button>
+        <SidebarTrigger className="-ml-1" />
         <Separator
           orientation="vertical"
           className="mr-2 data-vertical:h-4 data-vertical:self-auto"
         />
-        <Breadcrumb className="hidden sm:block">
+        <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Build Your Application</BreadcrumbLink>
+              {isDetail ? (
+                <a href={rootPath} className="text-muted-foreground hover:text-foreground text-sm">
+                  {rootLabel}
+                </a>
+              ) : (
+                <BreadcrumbPage className="text-sm font-medium">{rootLabel}</BreadcrumbPage>
+              )}
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-            </BreadcrumbItem>
+            {isDetail && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-sm font-medium">Butiran</BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            )}
           </BreadcrumbList>
         </Breadcrumb>
-        <SearchForm className="w-full sm:ml-auto sm:w-auto" />
       </div>
     </header>
   )

@@ -1,6 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+"use client";
 
 import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/app-layout";

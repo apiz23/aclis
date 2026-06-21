@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -162,24 +162,9 @@ export default function IssuesPage() {
                   <TableCell><AICategoryBadge category={issue.ai_category} /></TableCell>
                   <TableCell><StatusBadge status={issue.status} /></TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((issue) => (
-                  <TableRow
-                    key={issue.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/issues/${issue.id}`)}
-                  >
-                    <TableCell className="font-medium">{issue.kampung_name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{issue.type ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{issue.location ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{issue.ai_category ?? "—"}</TableCell>
-                    <TableCell><StatusBadge status={issue.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
 

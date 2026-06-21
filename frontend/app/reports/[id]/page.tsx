@@ -65,14 +65,6 @@ export default function ReportDetailPage() {
       .finally(() => setLoading(false));
   }
 
-  function loadSummary() {
-    setSummaryLoading(true);
-    apiGet(`/reports/${id}/summary`)
-      .then((d: { summary: string | null }) => setSummary(d.summary))
-      .catch(() => setSummary(null))
-      .finally(() => setSummaryLoading(false));
-  }
-
   useEffect(() => {
     load();
     supabase.auth.getSession().then(({ data: s }) => {
