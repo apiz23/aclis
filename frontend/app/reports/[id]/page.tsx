@@ -12,7 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiGet, apiPatch } from "@/lib/api";
-import { ArrowLeft, Pencil, Send } from "lucide-react";
+import { ArrowLeft, Pencil, Send, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ReportDetail {
@@ -45,15 +45,17 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
-  const [data, setData]           = useState<ReportDetail | null>(null);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(false);
-  const [isAdmin, setIsAdmin]     = useState(false);
-  const [editOpen, setEditOpen]   = useState(false);
-  const [content, setContent]     = useState("");
-  const [saving, setSaving]       = useState(false);
+  const [data, setData]             = useState<ReportDetail | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
+  const [isAdmin, setIsAdmin]       = useState(false);
+  const [editOpen, setEditOpen]     = useState(false);
+  const [content, setContent]       = useState("");
+  const [saving, setSaving]         = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [editErr, setEditErr]     = useState("");
+  const [editErr, setEditErr]       = useState("");
+  const [aiSummary, setAiSummary]   = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   function load() {
     setLoading(true);
@@ -69,6 +71,11 @@ export default function ReportDetailPage() {
       const role = (s.session?.user?.app_metadata as Record<string,string> | undefined)?.role;
       setIsAdmin(role === "admin_daerah");
     });
+    setSummaryLoading(true);
+    apiGet(`/reports/${id}/summary`)
+      .then((d: { summary: string | null }) => setAiSummary(d.summary))
+      .catch(() => setAiSummary(null))
+      .finally(() => setSummaryLoading(false));
   }, [id]);
 
   async function handleSaveContent(e: React.FormEvent) {
@@ -125,7 +132,6 @@ export default function ReportDetailPage() {
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan laporan.</p>}
 
-      {/* Actions — admin + draft only */}
       {isAdmin && !loading && isDraft && (
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => { setEditErr(""); setEditOpen(true); }}>
@@ -180,7 +186,25 @@ export default function ReportDetailPage() {
         </div>
       </div>
 
-      {/* Edit Content Dialog */}
+      {(summaryLoading || aiSummary) && (
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold">Ringkasan AI</p>
+            <span className="ml-auto text-[10px] uppercase tracking-wide font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">JamAI</span>
+          </div>
+          <div className="p-5">
+            {summaryLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-foreground/80">{aiSummary}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

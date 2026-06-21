@@ -8,6 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiGet } from "@/lib/api";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ChartContainer, ChartTooltip, ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
 
 interface EvaluationDetail {
   id: string;
@@ -19,29 +24,11 @@ interface EvaluationDetail {
   scores: Record<string, number>;
 }
 
-const SCORE_LABELS: Record<string, string> = {
-  Akhlak:             "Akhlak",
-  "Mutu Kerja":       "Mutu Kerja",
-  Minat:              "Minat",
-  Kebolehpercayaan:   "Kebolehpercayaan",
-  Komunikasi:         "Komunikasi",
-  Inisiatif:          "Inisiatif",
-};
-
-const MAX_PER_CRITERION = 10;
 const MAX_SCORE = 60;
 
-function ScoreRow({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center gap-4 py-2.5 border-b last:border-0">
-      <p className="text-sm w-40 shrink-0">{label}</p>
-      <Progress value={(value / MAX_PER_CRITERION) * 100} className="flex-1 h-1.5" />
-      <p className="text-sm font-medium tabular-nums w-12 text-right">
-        {value} / {MAX_PER_CRITERION}
-      </p>
-    </div>
-  );
-}
+const scoreChartConfig: ChartConfig = {
+  nilai: { label: "Markah", color: "var(--chart-1)" },
+};
 
 export default function EvaluationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -79,7 +66,6 @@ export default function EvaluationDetailPage() {
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan data penilaian.</p>}
 
-      {/* Total score card */}
       <div className="rounded-lg border bg-card p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Jumlah Markah</p>
@@ -98,31 +84,37 @@ export default function EvaluationDetailPage() {
         </div>
       </div>
 
-      {/* Score breakdown */}
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">
           <p className="text-sm font-semibold">Pecahan Markah</p>
         </div>
-        <div className="px-5">
-          {loading ? (
-            <div className="py-4 space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
-            </div>
-          ) : data?.scores && Object.keys(data.scores).length > 0 ? (
-            Object.entries(data.scores).map(([key, val]) => (
-              <ScoreRow
-                key={key}
-                label={SCORE_LABELS[key] ?? key}
-                value={typeof val === "number" ? val : 0}
-              />
-            ))
-          ) : (
-            <p className="py-4 text-sm text-muted-foreground italic">Tiada pecahan markah.</p>
-          )}
-        </div>
+        {loading ? (
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+          </div>
+        ) : data?.scores && Object.keys(data.scores).length > 0 ? (
+          <div className="p-4">
+            <ChartContainer config={scoreChartConfig} className="h-[220px] w-full">
+              <BarChart
+                data={Object.entries(data.scores).map(([key, val]) => ({
+                  kriteria: key,
+                  nilai: typeof val === "number" ? val : 0,
+                }))}
+                margin={{ left: 0, right: 8, top: 16 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="kriteria" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 10]} tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="nilai" fill="var(--chart-1)" radius={4} label={{ position: "top", fontSize: 10 }} />
+              </BarChart>
+            </ChartContainer>
+          </div>
+        ) : (
+          <p className="p-5 text-sm text-muted-foreground italic">Tiada pecahan markah.</p>
+        )}
       </div>
 
-      {/* Ulasan */}
       {!loading && data?.ulasan && (
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="px-5 py-4 border-b">
