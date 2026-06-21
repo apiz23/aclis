@@ -12,7 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiGet, apiPatch } from "@/lib/api";
-import { ArrowLeft, Pencil, Send } from "lucide-react";
+import { ArrowLeft, Pencil, Send, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ReportDetail {
@@ -54,6 +54,8 @@ export default function ReportDetailPage() {
   const [saving, setSaving]       = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editErr, setEditErr]     = useState("");
+  const [summary, setSummary]     = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   function load() {
     setLoading(true);
@@ -61,6 +63,14 @@ export default function ReportDetailPage() {
       .then((d: ReportDetail) => { setData(d); setContent(d.content ?? ""); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
+  }
+
+  function loadSummary() {
+    setSummaryLoading(true);
+    apiGet(`/reports/${id}/summary`)
+      .then((d: { summary: string | null }) => setSummary(d.summary))
+      .catch(() => setSummary(null))
+      .finally(() => setSummaryLoading(false));
   }
 
   useEffect(() => {
@@ -179,6 +189,46 @@ export default function ReportDetailPage() {
           )}
         </div>
       </div>
+
+      {/* AI Summary card */}
+      {!loading && data?.content && (
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <p className="text-sm font-semibold">Ringkasan AI</p>
+            <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
+              JamAI
+            </span>
+          </div>
+          <div className="p-5">
+            {summary == null && !summaryLoading ? (
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted-foreground flex-1">
+                  Klik untuk menjana ringkasan AI daripada kandungan laporan ini.
+                </p>
+                <button
+                  onClick={loadSummary}
+                  className="shrink-0 text-xs font-medium text-primary underline underline-offset-2 hover:no-underline"
+                >
+                  Jana Ringkasan
+                </button>
+              </div>
+            ) : summaryLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-4 w-3/5" />
+              </div>
+            ) : summary ? (
+              <p className="text-sm leading-relaxed">{summary}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                Gagal menjana ringkasan. Pastikan AI_PROVIDER dikonfigurasikan.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Edit Content Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

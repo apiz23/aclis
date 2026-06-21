@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
 import {
@@ -38,11 +38,11 @@ interface IssueSummary {
 
 type IssueStatus = "open" | "in_progress" | "resolved" | "closed";
 
-const STATUS_CONFIG: Record<IssueStatus, { label: string; cls: string }> = {
-  open:        { label: "Terbuka",      cls: "bg-primary/10 text-primary" },
-  in_progress: { label: "Dalam Proses", cls: "bg-[var(--warning-bg)] text-[var(--warning)]" },
-  resolved:    { label: "Selesai",      cls: "bg-[var(--success-bg)] text-[var(--success)]" },
-  closed:      { label: "Ditutup",      cls: "bg-muted text-muted-foreground" },
+const STATUS_CONFIG: Record<IssueStatus, { label: string; cls: string; pillCls: string }> = {
+  open:        { label: "Terbuka",      cls: "bg-primary/10 text-primary",                                  pillCls: "bg-primary/10 text-primary hover:bg-primary/20" },
+  in_progress: { label: "Dalam Proses", cls: "bg-[var(--warning-bg)] text-[var(--warning)]",               pillCls: "bg-[var(--warning-bg)] text-[var(--warning)] hover:opacity-80" },
+  resolved:    { label: "Selesai",      cls: "bg-[var(--success-bg)] text-[var(--success)]",               pillCls: "bg-[var(--success-bg)] text-[var(--success)] hover:opacity-80" },
+  closed:      { label: "Ditutup",      cls: "bg-muted text-muted-foreground",                              pillCls: "bg-muted text-muted-foreground hover:bg-muted/70" },
 };
 
 const ISSUE_TYPES = ["Lampu Jalan", "Jalan Rosak", "Paip Air", "Longkang", "Sampah", "Lain-lain"];
@@ -50,7 +50,7 @@ const ISSUE_TYPES = ["Lampu Jalan", "Jalan Rosak", "Paip Air", "Longkang", "Samp
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as IssueStatus] ?? STATUS_CONFIG.open;
   return (
-    <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${config.cls}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${config.cls}`}>
       {config.label}
     </span>
   );
@@ -85,6 +85,7 @@ const EMPTY_FORM = { kampung_id: "", type: "", location: "", description: "" };
 export default function IssuesPage() {
   const [issues, setIssues]         = useState<IssueSummary[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [filterStatus, setFilter]   = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [kampungs, setKampungs]     = useState<KampungOption[]>([]);
   const [form, setForm]             = useState(EMPTY_FORM);
@@ -132,6 +133,21 @@ export default function IssuesPage() {
     }
   }
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const issue of issues) {
+      counts[issue.status] = (counts[issue.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [issues]);
+
+  const filtered = useMemo(
+    () => filterStatus === "all" ? issues : issues.filter((i) => i.status === filterStatus),
+    [issues, filterStatus],
+  );
+
+  const STATUS_KEYS: IssueStatus[] = ["open", "in_progress", "resolved", "closed"];
+
   return (
     <AppLayout>
       <div className="flex items-start justify-between">
@@ -145,38 +161,85 @@ export default function IssuesPage() {
         </Button>
       </div>
 
+      {/* Status summary strip */}
+      {!loading && issues.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilter("all")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              filterStatus === "all"
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:bg-muted/70"
+            }`}
+          >
+            Semua
+            <span className="font-bold">{issues.length}</span>
+          </button>
+          {STATUS_KEYS.map((s) => {
+            const cnt = statusCounts[s] ?? 0;
+            if (cnt === 0) return null;
+            const cfg = STATUS_CONFIG[s];
+            return (
+              <button
+                key={s}
+                onClick={() => setFilter(filterStatus === s ? "all" : s)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  filterStatus === s
+                    ? cfg.cls + " ring-2 ring-current ring-offset-1"
+                    : cfg.pillCls
+                }`}
+              >
+                {cfg.label}
+                <span className="font-bold">{cnt}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card overflow-hidden">
-        <div className="px-5 py-4 border-b">
+        <div className="px-5 py-4 border-b flex items-center justify-between">
           <p className="text-sm font-semibold">Senarai Isu</p>
+          {filterStatus !== "all" && (
+            <p className="text-xs text-muted-foreground">
+              {filtered.length} daripada {issues.length}
+            </p>
+          )}
         </div>
 
-        {loading ? <TableSkeleton /> : issues.length === 0 ? <EmptyState /> : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kampung</TableHead>
-                <TableHead>Jenis</TableHead>
-                <TableHead>Lokasi</TableHead>
-                <TableHead>Kategori AI</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {issues.map((issue) => (
-                <TableRow
-                  key={issue.id}
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/issues/${issue.id}`)}
-                >
-                  <TableCell className="font-medium">{issue.kampung_name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{issue.type ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{issue.location ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{issue.ai_category ?? "—"}</TableCell>
-                  <TableCell><StatusBadge status={issue.status} /></TableCell>
+        {loading ? <TableSkeleton /> : filtered.length === 0 && issues.length === 0 ? <EmptyState /> : (
+          filtered.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Tiada isu dengan status ini.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Kampung</TableHead>
+                  <TableHead>Jenis</TableHead>
+                  <TableHead>Lokasi</TableHead>
+                  <TableHead>Kategori AI</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((issue) => (
+                  <TableRow
+                    key={issue.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/issues/${issue.id}`)}
+                  >
+                    <TableCell className="font-medium">{issue.kampung_name ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{issue.type ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{issue.location ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{issue.ai_category ?? "—"}</TableCell>
+                    <TableCell><StatusBadge status={issue.status} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )
         )}
       </div>
 

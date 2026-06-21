@@ -20,7 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { apiGet, apiPost } from "@/lib/api";
-import { FileText, Plus } from "lucide-react";
+import { AlertTriangle, FileText, Plus } from "lucide-react";
 
 interface KampungOption { id: string; name: string }
 
@@ -35,16 +35,17 @@ interface ReportSummary {
 
 type ReportStatus = "submitted" | "draft" | "late";
 
-const STATUS_CONFIG: Record<ReportStatus, { label: string; cls: string }> = {
+const STATUS_CONFIG: Record<ReportStatus, { label: string; cls: string; icon?: React.ReactNode }> = {
   submitted: { label: "Dihantar", cls: "bg-[var(--success-bg)] text-[var(--success)]" },
   draft:     { label: "Draf",     cls: "bg-muted text-muted-foreground" },
-  late:      { label: "Lewat",    cls: "bg-destructive/10 text-destructive" },
+  late:      { label: "Lewat",    cls: "bg-destructive/10 text-destructive", icon: <AlertTriangle className="h-3 w-3 mr-1" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as ReportStatus] ?? STATUS_CONFIG.draft;
   return (
-    <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${config.cls}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${config.cls}`}>
+      {config.icon}
       {config.label}
     </span>
   );
@@ -150,6 +151,32 @@ export default function ReportsPage() {
           Hantar Laporan
         </Button>
       </div>
+
+      {/* Submission rate strip */}
+      {!loading && reports.length > 0 && (() => {
+        const submitted = reports.filter((r) => r.status === "submitted").length;
+        const late      = reports.filter((r) => r.status === "late").length;
+        const pct       = Math.round((submitted / reports.length) * 100);
+        return (
+          <div className="rounded-lg border bg-card p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Kadar Penghantaran</span>
+              <span className="tabular-nums font-bold text-[var(--success)]">{pct}%</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[var(--success)] transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="flex gap-4 text-xs text-muted-foreground">
+              <span><span className="font-medium text-[var(--success)]">{submitted}</span> dihantar</span>
+              <span><span className="font-medium text-muted-foreground">{reports.filter(r=>r.status==="draft").length}</span> draf</span>
+              {late > 0 && <span><span className="font-medium text-destructive">{late}</span> lewat</span>}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">

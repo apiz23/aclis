@@ -30,6 +30,16 @@ const TYPE_LABEL: Record<string, string> = {
   penghulu:      "Penghulu",
 };
 
+const TYPE_AVATAR_CLS: Record<string, string> = {
+  ketua_kampung: "bg-primary/15 text-primary",
+  penghulu:      "bg-[var(--accent-gold)]/20 text-[var(--accent-gold)]",
+};
+
+const TYPE_BADGE_CLS: Record<string, string> = {
+  ketua_kampung: "bg-primary/10 text-primary",
+  penghulu:      "bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]",
+};
+
 function TableSkeleton() {
   return (
     <div className="p-4 space-y-2">
@@ -102,14 +112,16 @@ export default function LeadersPage() {
                   <TableCell>
                     <Avatar className="h-8 w-8">
                       {l.photo_url && <AvatarImage src={l.photo_url} alt={l.name} />}
-                      <AvatarFallback className="text-xs">
+                      <AvatarFallback className={`text-xs font-semibold ${TYPE_AVATAR_CLS[l.type] ?? "bg-muted text-muted-foreground"}`}>
                         {l.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                       </AvatarFallback>
                     </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">{l.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {TYPE_LABEL[l.type] ?? l.type}
+                  <TableCell>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_BADGE_CLS[l.type] ?? "bg-muted text-muted-foreground"}`}>
+                      {TYPE_LABEL[l.type] ?? l.type}
+                    </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{l.kampung_name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground tabular-nums">

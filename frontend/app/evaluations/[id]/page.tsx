@@ -8,6 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiGet } from "@/lib/api";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis, YAxis, Cell } from "recharts";
 
 interface EvaluationDetail {
   id: string;
@@ -31,16 +35,15 @@ const SCORE_LABELS: Record<string, string> = {
 const MAX_PER_CRITERION = 10;
 const MAX_SCORE = 60;
 
-function ScoreRow({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center gap-4 py-2.5 border-b last:border-0">
-      <p className="text-sm w-40 shrink-0">{label}</p>
-      <Progress value={(value / MAX_PER_CRITERION) * 100} className="flex-1 h-1.5" />
-      <p className="text-sm font-medium tabular-nums w-12 text-right">
-        {value} / {MAX_PER_CRITERION}
-      </p>
-    </div>
-  );
+const scoreChartConfig: ChartConfig = {
+  score: { label: "Markah" },
+};
+
+function scoreBarColor(value: number): string {
+  const pct = (value / MAX_PER_CRITERION) * 100;
+  if (pct >= 80) return "var(--chart-2)";
+  if (pct >= 60) return "var(--chart-3)";
+  return "var(--chart-5)";
 }
 
 export default function EvaluationDetailPage() {
@@ -84,39 +87,79 @@ export default function EvaluationDetailPage() {
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Jumlah Markah</p>
           {loading ? <Skeleton className="h-12 w-24" /> : (
-            <p className="font-heading text-5xl font-bold tabular-nums">
-              {data?.total ?? 0}
-              <span className="text-xl text-muted-foreground font-normal"> / {MAX_SCORE}</span>
-            </p>
+            <div className="flex items-end gap-2">
+              <p className={`font-heading text-5xl font-bold tabular-nums ${
+                pct >= 80 ? "text-[var(--success)]" : pct >= 60 ? "text-[var(--warning)]" : "text-destructive"
+              }`}>
+                {data?.total ?? 0}
+                <span className="text-xl text-muted-foreground font-normal"> / {MAX_SCORE}</span>
+              </p>
+              <span className={`mb-1 text-xs font-semibold rounded-full px-2 py-0.5 ${
+                pct >= 80
+                  ? "bg-[var(--success-bg)] text-[var(--success)]"
+                  : pct >= 60
+                  ? "bg-[var(--warning-bg)] text-[var(--warning)]"
+                  : "bg-destructive/10 text-destructive"
+              }`}>
+                {pct >= 80 ? "Cemerlang" : pct >= 60 ? "Memuaskan" : "Perlu Baik"}
+              </span>
+            </div>
           )}
         </div>
         <div className="flex-1 w-full">
-          <Progress value={loading ? 0 : pct} className="h-2.5" />
+          <Progress
+            value={loading ? 0 : pct}
+            className={`h-2.5 ${
+              !loading && (pct >= 80
+                ? "[&>div]:bg-[var(--success)]"
+                : pct >= 60
+                ? "[&>div]:bg-[var(--warning)]"
+                : "[&>div]:bg-destructive")
+            }`}
+          />
           <p className="text-xs text-muted-foreground mt-1.5 text-right tabular-nums">
             {loading ? "—" : `${pct.toFixed(1)}%`}
           </p>
         </div>
       </div>
 
-      {/* Score breakdown */}
+      {/* Score breakdown chart */}
       <div className="rounded-lg border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b">
           <p className="text-sm font-semibold">Pecahan Markah</p>
         </div>
-        <div className="px-5">
+        <div className="p-4">
           {loading ? (
-            <div className="py-4 space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
-            </div>
-          ) : data?.scores && Object.keys(data.scores).length > 0 ? (
-            Object.entries(data.scores).map(([key, val]) => (
-              <ScoreRow
-                key={key}
-                label={SCORE_LABELS[key] ?? key}
-                value={typeof val === "number" ? val : 0}
-              />
-            ))
-          ) : (
+            <Skeleton className="h-48 w-full" />
+          ) : data?.scores && Object.keys(data.scores).length > 0 ? (() => {
+            const chartData = Object.entries(data.scores).map(([key, val]) => ({
+              criterion: SCORE_LABELS[key] ?? key,
+              score: typeof val === "number" ? val : 0,
+              key,
+            }));
+            return (
+              <ChartContainer config={scoreChartConfig} className="h-48 w-full">
+                <BarChart data={chartData} margin={{ left: 4, right: 8 }}>
+                  <XAxis
+                    dataKey="criterion"
+                    tick={{ fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis domain={[0, MAX_PER_CRITERION]} hide />
+                  <ChartTooltip
+                    content={<ChartTooltipContent hideLabel />}
+                    formatter={(value) => [`${value} / ${MAX_PER_CRITERION}`, "Markah"]}
+                  />
+                  <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry) => (
+                      <Cell key={entry.key} fill={scoreBarColor(entry.score)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            );
+          })() : (
             <p className="py-4 text-sm text-muted-foreground italic">Tiada pecahan markah.</p>
           )}
         </div>

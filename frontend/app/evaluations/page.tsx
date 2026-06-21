@@ -23,6 +23,30 @@ interface EvaluationSummary {
 
 const MAX_SCORE = 60;
 
+function scoreTierCls(total: number | null): string {
+  if (total == null) return "text-muted-foreground";
+  const pct = (total / MAX_SCORE) * 100;
+  if (pct >= 80) return "text-[var(--success)] font-semibold";
+  if (pct >= 60) return "text-[var(--warning)] font-semibold";
+  return "text-destructive font-semibold";
+}
+
+function scoreTierLabel(total: number | null): string {
+  if (total == null) return "";
+  const pct = (total / MAX_SCORE) * 100;
+  if (pct >= 80) return "Cemerlang";
+  if (pct >= 60) return "Memuaskan";
+  return "Perlu Baik";
+}
+
+function progressTierCls(total: number | null): string {
+  if (total == null) return "";
+  const pct = (total / MAX_SCORE) * 100;
+  if (pct >= 80) return "[&>div]:bg-[var(--success)]";
+  if (pct >= 60) return "[&>div]:bg-[var(--warning)]";
+  return "[&>div]:bg-destructive";
+}
+
 function TableSkeleton() {
   return (
     <div className="p-4 space-y-2">
@@ -93,13 +117,20 @@ export default function EvaluationsPage() {
                 >
                   <TableCell className="font-medium">{ev.leader_name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground tabular-nums">{ev.period ?? "—"}</TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">
-                    {ev.total != null ? ev.total : "—"}
+                  <TableCell className="text-right tabular-nums">
+                    <span className={scoreTierCls(ev.total)}>
+                      {ev.total != null ? ev.total : "—"}
+                    </span>
+                    {ev.total != null && (
+                      <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">
+                        {scoreTierLabel(ev.total)}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Progress
                       value={ev.total != null ? (ev.total / MAX_SCORE) * 100 : 0}
-                      className="h-1.5"
+                      className={`h-1.5 ${progressTierCls(ev.total)}`}
                     />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs truncate max-w-[160px]">
