@@ -105,3 +105,53 @@ class InsightsResponse(BaseModel):
 
 class ReportSummaryAI(BaseModel):
     summary: str | None
+
+class EvaluationCreate(BaseModel):
+    leader_id: str
+    period: str
+    scores: dict[str, float] = {}
+    ulasan: str | None = None
+
+class EvaluationUpdate(BaseModel):
+    scores: dict[str, float] | None = None
+    ulasan: str | None = None
+
+class LeaderCreate(BaseModel):
+    name: str
+    type: str
+    kampung_id: str | None = None
+    ic_no: str | None = None
+    tarikh_lantikan: str | None = None
+    photo_url: str | None = None
+    parti_lantikan: str | None = None
+    parti_terkini: str | None = None
+
+class LeaderUpdate(BaseModel):
+    name: str | None = None
+    type: str | None = None
+    kampung_id: str | None = None
+    ic_no: str | None = None
+    tarikh_lantikan: str | None = None
+    photo_url: str | None = None
+    parti_lantikan: str | None = None
+    parti_terkini: str | None = None
+
+class KampungCreate(BaseModel):
+    name: str
+    mukim_id: str | None = None
+    b40_count: int | None = None
+    profile: str | None = None
+
+class KampungUpdate(BaseModel):
+    name: str | None = None
+    mukim_id: str | None = None
+    b40_count: int | None = None
+    profile: str | None = None
+
+class MukimOption(BaseModel):
+    id: str
+    name: str
+
+class RecategorizeResponse(BaseModel):
+    status: str
+    issue_id: str

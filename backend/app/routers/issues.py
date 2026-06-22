@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role
 from app.db import get_supabase
-from app.schemas import IssueSummary, IssueDetail, IssueCreate, IssueUpdate
+from app.schemas import IssueSummary, IssueDetail, IssueCreate, IssueUpdate, RecategorizeResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -94,6 +94,30 @@ def create_issue(
     if body.description:
         background_tasks.add_task(_bg_categorize, r["id"], body.description, body.type, sb)
     return IssueDetail(**_row_to_summary(r).model_dump(), coords=r.get("coords"))
+
+
+@router.post("/issues/{issue_id}/recategorize", response_model=RecategorizeResponse, status_code=202)
+def recategorize_issue(
+    issue_id: str,
+    background_tasks: BackgroundTasks,
+    _: CurrentUser = Depends(require_role("admin_daerah")),
+    sb: Client = Depends(get_supabase),
+):
+    rows = (
+        sb.table("aclis_issue")
+        .select("description, type")
+        .eq("id", issue_id)
+        .execute()
+        .data
+    )
+    if not rows:
+        raise HTTPException(404, "Issue not found")
+    r = rows[0]
+    description = r.get("description") or ""
+    if not description:
+        raise HTTPException(400, "Issue has no description to categorize")
+    background_tasks.add_task(_bg_categorize, issue_id, description, r.get("type"), sb)
+    return RecategorizeResponse(status="queued", issue_id=issue_id)
 
 
 @router.patch("/issues/{issue_id}", response_model=IssueDetail)

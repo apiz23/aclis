@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser
+from app.auth import get_current_user, CurrentUser, require_role
 from app.db import get_supabase
-from app.schemas import KampungSummary, KampungDetail
+from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpdate, MukimOption
 
 router = APIRouter()
 
@@ -41,4 +41,63 @@ def get_kampung(
     resident_count = sb.table("aclis_resident") \
         .select("id", count="exact").limit(0) \
         .eq("kampung_id", kampung_id).execute().count or 0
+    return KampungDetail(**_row_to_summary(r).model_dump(), resident_count=resident_count)
+
+
+@router.get("/mukim", response_model=list[MukimOption])
+def list_mukim(
+    _: CurrentUser = Depends(get_current_user),
+    sb: Client = Depends(get_supabase),
+):
+    rows = sb.table("aclis_mukim").select("id, name").execute().data or []
+    return [MukimOption(id=r["id"], name=r["name"]) for r in rows]
+
+
+@router.post("/kampung", response_model=KampungDetail, status_code=201)
+def create_kampung(
+    body: KampungCreate,
+    _: CurrentUser = Depends(require_role("admin_daerah")),
+    sb: Client = Depends(get_supabase),
+):
+    payload = {k: v for k, v in body.model_dump().items() if v is not None}
+    result = (
+        sb.table("aclis_kampung")
+        .insert(payload)
+        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)")
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(500, "Insert failed")
+    r = result.data[0]
+    return KampungDetail(**_row_to_summary(r).model_dump(), resident_count=0)
+
+
+@router.patch("/kampung/{kampung_id}", response_model=KampungDetail)
+def update_kampung(
+    kampung_id: str,
+    body: KampungUpdate,
+    _: CurrentUser = Depends(require_role("admin_daerah")),
+    sb: Client = Depends(get_supabase),
+):
+    payload = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not payload:
+        raise HTTPException(400, "No fields to update")
+    result = (
+        sb.table("aclis_kampung")
+        .update(payload)
+        .eq("id", kampung_id)
+        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)")
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(404, "Kampung not found")
+    r = result.data[0]
+    resident_count = (
+        sb.table("aclis_resident")
+        .select("id", count="exact")
+        .limit(0)
+        .eq("kampung_id", kampung_id)
+        .execute()
+        .count or 0
+    )
     return KampungDetail(**_row_to_summary(r).model_dump(), resident_count=resident_count)
