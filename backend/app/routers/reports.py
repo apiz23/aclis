@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser, require_role
+from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.db import get_supabase
 from app.schemas import ReportSummary, ReportDetail, ReportCreate, ReportUpdate, ReportSummaryAI
 
@@ -22,23 +22,23 @@ def _row_to_summary(r: dict) -> ReportSummary:
 
 @router.get("/reports", response_model=list[ReportSummary])
 def list_reports(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    rows = (
-        sb.table("aclis_monthly_report")
+    q = sb.table("aclis_monthly_report") \
         .select("id, kampung_id, period, status, submitted_at, aclis_kampung(name)")
-        .limit(50)
-        .execute()
-        .data or []
-    )
+    if not scope.is_admin:
+        if not scope.allowed_kampung_ids:
+            return []
+        q = q.in_("kampung_id", scope.allowed_kampung_ids)
+    rows = q.limit(50).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 
 @router.get("/reports/{report_id}", response_model=ReportDetail)
 def get_report(
     report_id: str,
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     rows = (
@@ -51,6 +51,8 @@ def get_report(
     if not rows:
         raise HTTPException(404, "Report not found")
     r = rows[0]
+    if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Report not found")
     return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
 
 
@@ -103,20 +105,23 @@ def update_report(
 @router.get("/reports/{report_id}/summary", response_model=ReportSummaryAI)
 def get_report_summary(
     report_id: str,
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     from app.ai import ai
     rows = (
         sb.table("aclis_monthly_report")
-        .select("content")
+        .select("kampung_id, content")
         .eq("id", report_id)
         .execute()
         .data
     )
     if not rows:
         raise HTTPException(404, "Report not found")
-    content = rows[0].get("content") or ""
+    r = rows[0]
+    if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Report not found")
+    content = r.get("content") or ""
     if not content:
         return ReportSummaryAI(summary=None)
     summary = ai().summarize_report(content)

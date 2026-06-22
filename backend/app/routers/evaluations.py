@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser, require_role
+from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.db import get_supabase
 from app.schemas import EvaluationSummary, EvaluationDetail, EvaluationCreate, EvaluationUpdate
 
@@ -20,23 +20,23 @@ def _row_to_summary(r: dict) -> EvaluationSummary:
 
 @router.get("/evaluations", response_model=list[EvaluationSummary])
 def list_evaluations(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    rows = (
-        sb.table("aclis_evaluation")
+    q = sb.table("aclis_evaluation") \
         .select("id, leader_id, period, total, ulasan, aclis_leader(name)")
-        .limit(50)
-        .execute()
-        .data or []
-    )
+    if not scope.is_admin:
+        if not scope.allowed_leader_ids:
+            return []
+        q = q.in_("leader_id", scope.allowed_leader_ids)
+    rows = q.limit(50).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 
 @router.get("/evaluations/{eval_id}", response_model=EvaluationDetail)
 def get_evaluation(
     eval_id: str,
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     rows = (
@@ -49,6 +49,8 @@ def get_evaluation(
     if not rows:
         raise HTTPException(404, "Evaluation not found")
     r = rows[0]
+    if not scope.is_admin and r.get("leader_id") not in scope.allowed_leader_ids:
+        raise HTTPException(404, "Evaluation not found")
     return EvaluationDetail(
         **_row_to_summary(r).model_dump(),
         scores=r.get("scores") or {},

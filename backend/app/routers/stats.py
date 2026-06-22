@@ -1,21 +1,41 @@
 from fastapi import APIRouter, Depends
 from supabase import Client
-from app.auth import get_current_user, CurrentUser
+from app.auth import get_user_scope, UserScope
 from app.db import get_supabase
 from app.schemas import StatsExtended, StatusCount, InsightsResponse
 
 router = APIRouter()
 
 
-def _count(sb: Client, table: str, **filters) -> int:
+def _count_scoped(sb: Client, table: str, scope: UserScope, **eq_filters) -> int:
     q = sb.table(table).select("id", count="exact").limit(0)
-    for col, val in filters.items():
+    for col, val in eq_filters.items():
         q = q.eq(col, val)
+    if not scope.is_admin:
+        if table == "aclis_kampung":
+            if not scope.allowed_kampung_ids:
+                return 0
+            q = q.in_("id", scope.allowed_kampung_ids)
+        elif table == "aclis_leader":
+            if not scope.allowed_leader_ids:
+                return 0
+            q = q.in_("id", scope.allowed_leader_ids)
+        else:
+            if not scope.allowed_kampung_ids:
+                return 0
+            q = q.in_("kampung_id", scope.allowed_kampung_ids)
     return q.execute().count or 0
 
 
-def _count_by_status(sb: Client, table: str, status_col: str = "status") -> list[StatusCount]:
-    rows = sb.table(table).select(status_col).execute().data or []
+def _count_by_status_scoped(
+    sb: Client, table: str, scope: UserScope, status_col: str = "status"
+) -> list[StatusCount]:
+    q = sb.table(table).select(status_col)
+    if not scope.is_admin:
+        if not scope.allowed_kampung_ids:
+            return []
+        q = q.in_("kampung_id", scope.allowed_kampung_ids)
+    rows = q.execute().data or []
     counts: dict[str, int] = {}
     for r in rows:
         s = r.get(status_col) or "unknown"
@@ -23,31 +43,31 @@ def _count_by_status(sb: Client, table: str, status_col: str = "status") -> list
     return [StatusCount(status=s, count=c) for s, c in sorted(counts.items())]
 
 
-def _build_stats(sb: Client) -> StatsExtended:
+def _build_stats(sb: Client, scope: UserScope) -> StatsExtended:
     return StatsExtended(
-        kampung_count=_count(sb, "aclis_kampung"),
-        leader_count=_count(sb, "aclis_leader"),
-        pending_reports=_count(sb, "aclis_monthly_report", status="draft"),
-        open_issues=_count(sb, "aclis_issue", status="open"),
-        issues_by_status=_count_by_status(sb, "aclis_issue"),
-        reports_by_status=_count_by_status(sb, "aclis_monthly_report"),
+        kampung_count=_count_scoped(sb, "aclis_kampung", scope),
+        leader_count=_count_scoped(sb, "aclis_leader", scope),
+        pending_reports=_count_scoped(sb, "aclis_monthly_report", scope, status="draft"),
+        open_issues=_count_scoped(sb, "aclis_issue", scope, status="open"),
+        issues_by_status=_count_by_status_scoped(sb, "aclis_issue", scope),
+        reports_by_status=_count_by_status_scoped(sb, "aclis_monthly_report", scope),
     )
 
 
 @router.get("/stats", response_model=StatsExtended)
 def get_stats(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    return _build_stats(sb)
+    return _build_stats(sb, scope)
 
 
 @router.get("/stats/insights", response_model=InsightsResponse)
 def get_insights(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     from app.ai import ai
-    stats = _build_stats(sb)
+    stats = _build_stats(sb, scope)
     insights = ai().trend_insights(stats.model_dump())
     return InsightsResponse(insights=insights)

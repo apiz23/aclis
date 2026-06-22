@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser, require_role
+from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.db import get_supabase
 from app.schemas import LeaderSummary, LeaderDetail, LeaderCreate, LeaderUpdate
 
@@ -24,23 +24,23 @@ def _row_to_summary(r: dict) -> LeaderSummary:
 
 @router.get("/leaders", response_model=list[LeaderSummary])
 def list_leaders(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    rows = (
-        sb.table("aclis_leader")
+    q = sb.table("aclis_leader") \
         .select("id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, aclis_kampung(name)")
-        .limit(50)
-        .execute()
-        .data or []
-    )
+    if not scope.is_admin:
+        if not scope.allowed_kampung_ids:
+            return []
+        q = q.in_("kampung_id", scope.allowed_kampung_ids)
+    rows = q.limit(50).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 
 @router.get("/leaders/{leader_id}", response_model=LeaderDetail)
 def get_leader(
     leader_id: str,
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     rows = (
@@ -53,6 +53,8 @@ def get_leader(
     if not rows:
         raise HTTPException(404, "Leader not found")
     r = rows[0]
+    if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Leader not found")
     kampung = r.get("aclis_kampung") or {}
     mukim = kampung.get("aclis_mukim") or {}
     eval_count = (

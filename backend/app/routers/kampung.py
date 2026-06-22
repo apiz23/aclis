@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser, require_role
+from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.db import get_supabase
 from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpdate, MukimOption
 
@@ -18,18 +18,23 @@ def _row_to_summary(r: dict) -> KampungSummary:
 
 @router.get("/kampung", response_model=list[KampungSummary])
 def list_kampung(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    rows = sb.table("aclis_kampung") \
-        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)") \
-        .limit(50).execute().data or []
+    q = sb.table("aclis_kampung") \
+        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)")
+    if not scope.is_admin:
+        if not scope.allowed_kampung_ids:
+            return []
+        q = q.in_("id", scope.allowed_kampung_ids)
+    rows = q.limit(50).execute().data or []
     return [_row_to_summary(r) for r in rows]
+
 
 @router.get("/kampung/{kampung_id}", response_model=KampungDetail)
 def get_kampung(
     kampung_id: str,
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     rows = sb.table("aclis_kampung") \
@@ -38,6 +43,8 @@ def get_kampung(
     if not rows:
         raise HTTPException(404, "Kampung not found")
     r = rows[0]
+    if not scope.is_admin and kampung_id not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Kampung not found")
     resident_count = sb.table("aclis_resident") \
         .select("id", count="exact").limit(0) \
         .eq("kampung_id", kampung_id).execute().count or 0

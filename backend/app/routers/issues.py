@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from supabase import Client
-from app.auth import get_current_user, CurrentUser, require_role
+from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.db import get_supabase
 from app.schemas import IssueSummary, IssueDetail, IssueCreate, IssueUpdate, RecategorizeResponse
 
@@ -36,23 +36,23 @@ def _row_to_summary(r: dict) -> IssueSummary:
 
 @router.get("/issues", response_model=list[IssueSummary])
 def list_issues(
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    rows = (
-        sb.table("aclis_issue")
+    q = sb.table("aclis_issue") \
         .select("id, kampung_id, type, location, description, ai_category, status, aclis_kampung(name)")
-        .limit(50)
-        .execute()
-        .data or []
-    )
+    if not scope.is_admin:
+        if not scope.allowed_kampung_ids:
+            return []
+        q = q.in_("kampung_id", scope.allowed_kampung_ids)
+    rows = q.limit(50).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 
 @router.get("/issues/{issue_id}", response_model=IssueDetail)
 def get_issue(
     issue_id: str,
-    _: CurrentUser = Depends(get_current_user),
+    scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     rows = (
@@ -65,6 +65,8 @@ def get_issue(
     if not rows:
         raise HTTPException(404, "Issue not found")
     r = rows[0]
+    if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Issue not found")
     return IssueDetail(**_row_to_summary(r).model_dump(), coords=r.get("coords"))
 
 
