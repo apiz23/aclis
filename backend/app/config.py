@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     jamai_token: str = ""
     jamai_project_id: str = ""
-    jamai_model: str = "openai/gpt-4o-mini"
+    jamai_model: str = ""
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

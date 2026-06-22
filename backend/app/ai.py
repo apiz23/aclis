@@ -40,15 +40,21 @@ class JamAIProvider:
 
     def _ensure_tables(self):
         try:
-            from jamaibase.protocol import ActionTableSchemaCreate, ColumnSchemaCreate
+            from jamaibase.types import ActionTableSchemaCreate, ColumnSchemaCreate
         except ImportError:
-            logger.warning("jamaibase.protocol not available")
-            return
+            try:
+                from jamaibase.protocol import ActionTableSchemaCreate, ColumnSchemaCreate  # type: ignore[no-redef]
+            except ImportError:
+                logger.warning("jamaibase schema types not available")
+                return
 
         existing = self._existing_tables()
 
         def _gen(system: str, prompt: str) -> dict:
-            return {"model": self._model, "system_prompt": system, "prompt": prompt}
+            cfg: dict = {"system_prompt": system, "prompt": prompt}
+            if self._model:
+                cfg["model"] = self._model
+            return cfg
 
         if self.TABLE_CATEGORIZER not in existing:
             try:
@@ -110,8 +116,11 @@ class JamAIProvider:
 
     def _run(self, table_id: str, data: dict, output_col: str) -> str | None:
         try:
-            from jamaibase.protocol import RowAddRequest
-            req = RowAddRequest(table_id=table_id, data=[data], stream=False)
+            try:
+                from jamaibase.types import MultiRowAddRequest as _Req
+            except ImportError:
+                from jamaibase.types import RowAddRequest as _Req  # type: ignore[no-redef,attr-defined]
+            req = _Req(table_id=table_id, data=[data], stream=False)
             resp = self._client.table.add_table_rows("action", req)
             return resp.rows[0].columns[output_col].choices[0].message.content
         except Exception as e:
@@ -161,3 +170,9 @@ def ai():
     if _provider is None:
         _provider = _get_provider()
     return _provider
+
+
+def reset_ai_provider():
+    """Reset cached provider — call in tests to force re-init."""
+    global _provider
+    _provider = None
