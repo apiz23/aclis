@@ -34,8 +34,9 @@ def test_upsert_kampung_calls_table(leaders_xlsx):
 def test_upsert_leader_calls_table(leaders_xlsx):
     writer, mock_client = _make_writer()
     leader_id = writer.upsert_leader(
-        LeaderRow(name="Ahmad", ic_no="800101011234", type="ketua_kampung",
-                  kampung_name="Kg. Bukit", mukim_name="Benut"),
+        LeaderRow(name="Ahmad", type="ketua_kampung",
+                  kampung_name="Kg. Bukit", mukim_name="Benut",
+                  ic_no="800101011234"),
         kampung_id="kampung-uuid",
     )
     mock_client.table.assert_called_with("aclis_leader")

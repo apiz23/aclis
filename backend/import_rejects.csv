@@ -1,0 +1,2 @@
+source_file,sheet,row_num,reason,raw_data
+C:\Users\SCSM11\AppData\Local\Temp\pytest-of-SCSM11\pytest-39\fixtures0\leaders.xlsx,BENUT,4,invalid IC: '12345',"name=Reject Row, kampung=Kg. Test"

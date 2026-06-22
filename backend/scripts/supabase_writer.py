@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+from pathlib import Path
 from supabase import create_client, Client
 from scripts.models import MukimRow, KampungRow, LeaderRow
 
@@ -84,8 +85,26 @@ class SupabaseWriter:
         return f"{self._url}/storage/v1/object/public/aclis_leader_photos/{filename}"
 
 
+def _load_dotenv() -> None:
+    """Load backend/.env into os.environ if vars not already set."""
+    env_path = Path(__file__).parent.parent / ".env"
+    if not env_path.exists():
+        return
+    with open(env_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = val
+
+
 def make_writer(dry_run: bool = False) -> SupabaseWriter:
     """Build SupabaseWriter from environment. Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."""
+    _load_dotenv()
     url = os.environ["SUPABASE_URL"]
     key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     client = create_client(url, key)
