@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -45,11 +46,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <svg viewBox="0 0 20 20" className="size-4" fill="none" aria-hidden>
-                    <path d="M4 16L10 4L16 16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M6.5 12h7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                  </svg>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                  <Image
+                    src="/icons/android-chrome-192x192.png"
+                    alt="ACLIS"
+                    width={32}
+                    height={32}
+                    className="size-full object-cover"
+                    priority
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">ACLIS</span>

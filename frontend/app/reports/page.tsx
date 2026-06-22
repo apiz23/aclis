@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/app-layout";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { apiGet, apiPost } from "@/lib/api";
 import { FileText, Plus, AlertTriangle } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface KampungOption { id: string; name: string }
 interface ReportSummary {
@@ -22,10 +27,10 @@ interface ReportSummary {
 
 type ReportStatus = "submitted" | "draft" | "late";
 
-const STATUS_CONFIG: Record<ReportStatus, { label: string; cls: string; icon?: React.ReactNode }> = {
+const STATUS_CONFIG: Record<ReportStatus, { label: string; cls: string }> = {
   submitted: { label: "Dihantar", cls: "bg-[var(--success-bg)] text-[var(--success)]" },
   draft:     { label: "Draf",     cls: "bg-muted text-muted-foreground" },
-  late:      { label: "Lewat",    cls: "bg-destructive/10 text-destructive", icon: <AlertTriangle className="h-3 w-3 mr-1" /> },
+  late:      { label: "Lewat",    cls: "bg-destructive/10 text-destructive" },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -47,17 +52,59 @@ function buildPeriodOptions(): string[] {
   return result;
 }
 
-const EMPTY_FORM = { kampung_id: "", period: "", content: "" };
+const reportSchema = z.object({
+  kampung_id: z.string().min(1, "Sila pilih kampung."),
+  period: z.string().min(1, "Sila pilih tempoh laporan."),
+  content: z.string().optional(),
+});
+type ReportFormValues = z.infer<typeof reportSchema>;
+
+const columns: ColumnDef<ReportSummary>[] = [
+  {
+    id: "no",
+    header: () => <div className="text-center">No.</div>,
+    enableSorting: false,
+    cell: ({ row }) => (
+      <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
+    ),
+  },
+  {
+    accessorKey: "kampung_name",
+    header: ({ column }) => <SortableHeader column={column} title="Kampung" />,
+    cell: ({ row }) => <span className="font-medium">{row.original.kampung_name ?? "—"}</span>,
+  },
+  {
+    accessorKey: "period",
+    header: ({ column }) => <SortableHeader column={column} title="Tempoh" />,
+    cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{row.original.period}</span>,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => <SortableHeader column={column} title="Status" />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+  },
+  {
+    accessorKey: "submitted_at",
+    header: ({ column }) => <SortableHeader column={column} title="Tarikh Hantar" />,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground tabular-nums">
+        {row.original.submitted_at ? row.original.submitted_at.slice(0, 10) : "—"}
+      </span>
+    ),
+  },
+];
 
 export default function ReportsPage() {
   const [reports, setReports]       = useState<ReportSummary[]>([]);
   const [loading, setLoading]       = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [kampungs, setKampungs]     = useState<KampungOption[]>([]);
-  const [form, setForm]             = useState(EMPTY_FORM);
-  const [submitting, setSubmitting] = useState(false);
-  const [err, setErr]               = useState("");
   const router = useRouter();
+
+  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<ReportFormValues>({
+    resolver: zodResolver(reportSchema),
+    defaultValues: { kampung_id: "", period: "", content: "" },
+  });
 
   function load() {
     setLoading(true);
@@ -67,20 +114,27 @@ export default function ReportsPage() {
   useEffect(() => { load(); }, []);
 
   function openDialog() {
-    setForm(EMPTY_FORM); setErr(""); setDialogOpen(true);
-    if (kampungs.length === 0) apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
+    reset();
+    setDialogOpen(true);
+    if (kampungs.length === 0) {
+      apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
+    }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.kampung_id) { setErr("Sila pilih kampung."); return; }
-    if (!form.period)     { setErr("Sila pilih tempoh laporan."); return; }
-    setSubmitting(true); setErr("");
+  async function onSubmit(values: ReportFormValues) {
     try {
-      await apiPost("/reports", { kampung_id: form.kampung_id, period: form.period, content: form.content || null });
-      setDialogOpen(false); load();
-    } catch { setErr("Gagal mencipta laporan. Cuba semula."); }
-    finally { setSubmitting(false); }
+      await apiPost("/reports", {
+        kampung_id: values.kampung_id,
+        period: values.period,
+        content: values.content || null,
+      });
+      setDialogOpen(false);
+      reset();
+      load();
+      toast.success("Laporan berjaya disimpan sebagai draf.");
+    } catch {
+      toast.error("Gagal mencipta laporan. Cuba semula.");
+    }
   }
 
   const submittedCount = reports.filter(r => r.status === "submitted").length;
@@ -88,7 +142,7 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
           <h1 className="font-heading text-2xl font-bold tracking-tight">Laporan Bulanan</h1>
           <p className="text-sm text-muted-foreground">Hantar dan semak laporan aktiviti kampung bulanan</p>
@@ -113,9 +167,8 @@ export default function ReportsPage() {
       )}
 
       <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b flex items-center">
-          <p className="text-sm font-semibold flex-1">Rekod Laporan</p>
-          {!loading && <span className="text-xs text-muted-foreground">{reports.length} rekod</span>}
+        <div className="px-5 py-4 border-b">
+          <p className="text-sm font-semibold">Rekod Laporan</p>
         </div>
 
         {loading ? (
@@ -126,55 +179,82 @@ export default function ReportsPage() {
             <p className="text-sm font-medium">Tiada rekod laporan</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kampung</TableHead>
-                <TableHead>Tempoh</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tarikh Hantar</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reports.map((r) => (
-                <TableRow key={r.id} className={`cursor-pointer hover:bg-muted/40 ${r.status === "late" ? "bg-destructive/5" : ""}`} onClick={() => router.push(`/reports/${r.id}`)}>
-                  <TableCell className="font-medium">{r.kampung_name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground tabular-nums">{r.period}</TableCell>
-                  <TableCell><StatusBadge status={r.status} /></TableCell>
-                  <TableCell className="text-muted-foreground tabular-nums">{r.submitted_at ? r.submitted_at.slice(0, 10) : "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={reports}
+            searchPlaceholder="Cari kampung atau tempoh..."
+            onRowClick={(r) => router.push(`/reports/${r.id}`)}
+            getRowClassName={(r) => r.status === "late" ? "bg-destructive/5" : ""}
+          />
         )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Hantar Laporan Bulanan</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            <div className="space-y-1.5">
-              <Label htmlFor="rpt-kampung">Kampung *</Label>
-              <Select value={form.kampung_id} onValueChange={(v) => setForm((f) => ({...f, kampung_id: v}))}>
-                <SelectTrigger id="rpt-kampung"><SelectValue placeholder="Pilih kampung..." /></SelectTrigger>
-                <SelectContent>{kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="rpt-period">Tempoh *</Label>
-              <Select value={form.period} onValueChange={(v) => setForm((f) => ({...f, period: v}))}>
-                <SelectTrigger id="rpt-period"><SelectValue placeholder="Pilih bulan..." /></SelectTrigger>
-                <SelectContent>{buildPeriodOptions().map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="rpt-content">Kandungan Laporan</Label>
-              <Textarea id="rpt-content" placeholder="Tuliskan ringkasan aktiviti bulan ini..." rows={5} value={form.content} onChange={(e) => setForm((f) => ({...f, content: e.target.value}))} />
-            </div>
-            {err && <p className="text-sm text-destructive">{err}</p>}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+
+            <Controller
+              name="kampung_id"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Kampung *</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange} name={field.name}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Pilih kampung..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="period"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Tempoh *</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange} name={field.name}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Pilih bulan..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buildPeriodOptions().map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="content"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Kandungan Laporan</FieldLabel>
+                  <Textarea
+                    {...field}
+                    id={field.name}
+                    placeholder="Tuliskan ringkasan aktiviti bulan ini..."
+                    rows={5}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Menyimpan…" : "Simpan Draf"}</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Menyimpan…" : "Simpan Draf"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

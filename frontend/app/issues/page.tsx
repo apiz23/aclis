@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/app-layout";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { apiGet, apiPost } from "@/lib/api";
 import { AlertCircle, Plus, Bot } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface KampungOption { id: string; name: string }
 interface IssueSummary {
@@ -23,15 +28,22 @@ interface IssueSummary {
 
 type IssueStatus = "open" | "in_progress" | "resolved" | "closed";
 
-const STATUS_CONFIG: Record<IssueStatus, { label: string; cls: string; pillCls: string }> = {
-  open:        { label: "Terbuka",      cls: "bg-primary/10 text-primary",                                  pillCls: "bg-primary/10 text-primary hover:bg-primary/20" },
-  in_progress: { label: "Dalam Proses", cls: "bg-[var(--warning-bg)] text-[var(--warning)]",               pillCls: "bg-[var(--warning-bg)] text-[var(--warning)] hover:opacity-80" },
-  resolved:    { label: "Selesai",      cls: "bg-[var(--success-bg)] text-[var(--success)]",               pillCls: "bg-[var(--success-bg)] text-[var(--success)] hover:opacity-80" },
-  closed:      { label: "Ditutup",      cls: "bg-muted text-muted-foreground",                              pillCls: "bg-muted text-muted-foreground hover:bg-muted/70" },
+const STATUS_CONFIG: Record<IssueStatus, { label: string; cls: string }> = {
+  open:        { label: "Terbuka",      cls: "bg-primary/10 text-primary" },
+  in_progress: { label: "Dalam Proses", cls: "bg-[var(--warning-bg)] text-[var(--warning)]" },
+  resolved:    { label: "Selesai",      cls: "bg-[var(--success-bg)] text-[var(--success)]" },
+  closed:      { label: "Ditutup",      cls: "bg-muted text-muted-foreground" },
 };
 
 const ISSUE_TYPES = ["Lampu Jalan", "Jalan Rosak", "Paip Air", "Longkang", "Sampah", "Lain-lain"];
-const EMPTY_FORM = { kampung_id: "", type: "", location: "", description: "" };
+
+const issueSchema = z.object({
+  kampung_id: z.string().min(1, "Sila pilih kampung."),
+  type: z.string().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+});
+type IssueFormValues = z.infer<typeof issueSchema>;
 
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as IssueStatus] ?? STATUS_CONFIG.open;
@@ -52,16 +64,54 @@ function AICategoryBadge({ category }: { category: string | null }) {
   );
 }
 
+const columns: ColumnDef<IssueSummary>[] = [
+  {
+    id: "no",
+    header: () => <div className="text-center">No.</div>,
+    enableSorting: false,
+    cell: ({ row }) => (
+      <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
+    ),
+  },
+  {
+    accessorKey: "kampung_name",
+    header: ({ column }) => <SortableHeader column={column} title="Kampung" />,
+    cell: ({ row }) => <span className="font-medium">{row.original.kampung_name ?? "—"}</span>,
+  },
+  {
+    accessorKey: "type",
+    header: ({ column }) => <SortableHeader column={column} title="Jenis" />,
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.type ?? "—"}</span>,
+  },
+  {
+    accessorKey: "location",
+    header: "Lokasi",
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.location ?? "—"}</span>,
+  },
+  {
+    accessorKey: "ai_category",
+    header: "Kategori AI",
+    cell: ({ row }) => <AICategoryBadge category={row.original.ai_category} />,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => <SortableHeader column={column} title="Status" />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+  },
+];
+
 export default function IssuesPage() {
   const [issues, setIssues]             = useState<IssueSummary[]>([]);
   const [loading, setLoading]           = useState(true);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen]     = useState(false);
   const [kampungs, setKampungs]         = useState<KampungOption[]>([]);
-  const [form, setForm]                 = useState(EMPTY_FORM);
-  const [submitting, setSubmitting]     = useState(false);
-  const [err, setErr]                   = useState("");
   const router = useRouter();
+
+  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<IssueFormValues>({
+    resolver: zodResolver(issueSchema),
+    defaultValues: { kampung_id: "", type: "", location: "", description: "" },
+  });
 
   function load() {
     setLoading(true);
@@ -74,19 +124,28 @@ export default function IssuesPage() {
   useEffect(() => { load(); }, []);
 
   function openDialog() {
-    setForm(EMPTY_FORM); setErr(""); setDialogOpen(true);
-    if (kampungs.length === 0) apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
+    reset();
+    setDialogOpen(true);
+    if (kampungs.length === 0) {
+      apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
+    }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.kampung_id) { setErr("Sila pilih kampung."); return; }
-    setSubmitting(true); setErr("");
+  async function onSubmit(values: IssueFormValues) {
     try {
-      await apiPost("/issues", { kampung_id: form.kampung_id, type: form.type || null, location: form.location || null, description: form.description || null });
-      setDialogOpen(false); load();
-    } catch { setErr("Gagal merekod isu. Cuba semula."); }
-    finally { setSubmitting(false); }
+      await apiPost("/issues", {
+        kampung_id: values.kampung_id,
+        type: values.type || null,
+        location: values.location || null,
+        description: values.description || null,
+      });
+      setDialogOpen(false);
+      reset();
+      load();
+      toast.success("Isu berjaya dilaporkan.");
+    } catch {
+      toast.error("Gagal merekod isu. Cuba semula.");
+    }
   }
 
   const statusCounts = (Object.keys(STATUS_CONFIG) as IssueStatus[]).reduce((acc, s) => {
@@ -98,7 +157,7 @@ export default function IssuesPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
           <h1 className="font-heading text-2xl font-bold tracking-tight">Isu Komuniti</h1>
           <p className="text-sm text-muted-foreground">Aduan dan permohonan kemudahan awam</p>
@@ -130,74 +189,110 @@ export default function IssuesPage() {
       )}
 
       <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b flex items-center">
-          <p className="text-sm font-semibold flex-1">Senarai Isu</p>
-          {!loading && <span className="text-xs text-muted-foreground">{filtered.length} rekod</span>}
+        <div className="px-5 py-4 border-b">
+          <p className="text-sm font-semibold">Senarai Isu</p>
         </div>
 
         {loading ? (
           <div className="p-4 space-y-2">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-        ) : filtered.length === 0 ? (
+        ) : issues.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <AlertCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm font-medium">{issues.length === 0 ? "Tiada isu komuniti" : "Tiada isu untuk status ini"}</p>
+            <p className="text-sm font-medium">Tiada isu komuniti</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kampung</TableHead>
-                <TableHead>Jenis</TableHead>
-                <TableHead>Lokasi</TableHead>
-                <TableHead>Kategori AI</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((issue) => (
-                <TableRow key={issue.id} className="cursor-pointer hover:bg-muted/40" onClick={() => router.push(`/issues/${issue.id}`)}>
-                  <TableCell className="font-medium">{issue.kampung_name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{issue.type ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{issue.location ?? "—"}</TableCell>
-                  <TableCell><AICategoryBadge category={issue.ai_category} /></TableCell>
-                  <TableCell><StatusBadge status={issue.status} /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            searchPlaceholder="Cari kampung atau jenis..."
+            onRowClick={(issue) => router.push(`/issues/${issue.id}`)}
+          />
         )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Laporkan Isu</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            <div className="space-y-1.5">
-              <Label htmlFor="kampung">Kampung *</Label>
-              <Select value={form.kampung_id} onValueChange={(v) => setForm((f) => ({ ...f, kampung_id: v }))}>
-                <SelectTrigger id="kampung"><SelectValue placeholder="Pilih kampung..." /></SelectTrigger>
-                <SelectContent>{kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="type">Jenis Isu</Label>
-              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
-                <SelectTrigger id="type"><SelectValue placeholder="Pilih jenis..." /></SelectTrigger>
-                <SelectContent>{ISSUE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="location">Lokasi</Label>
-              <Input id="location" placeholder="cth: Jalan Kampung Baru" value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="description">Penerangan</Label>
-              <Textarea id="description" placeholder="Huraikan masalah dengan jelas..." rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-            </div>
-            {err && <p className="text-sm text-destructive">{err}</p>}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+
+            <Controller
+              name="kampung_id"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Kampung *</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange} name={field.name}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Pilih kampung..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="type"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Jenis Isu</FieldLabel>
+                  <Select value={field.value ?? ""} onValueChange={field.onChange} name={field.name}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Pilih jenis..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ISSUE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="location"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Lokasi</FieldLabel>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    placeholder="cth: Jalan Kampung Baru"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="description"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Penerangan</FieldLabel>
+                  <Textarea
+                    {...field}
+                    id={field.name}
+                    placeholder="Huraikan masalah dengan jelas..."
+                    rows={3}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Menyimpan…" : "Hantar"}</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Menyimpan…" : "Hantar"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

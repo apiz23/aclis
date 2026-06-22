@@ -1,20 +1,62 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller, useWatch, Control } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/app-layout";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiGet } from "@/lib/api";
-import { ClipboardList, Star } from "lucide-react";
+import { DataTable, SortableHeader } from "@/components/ui/data-table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { apiGet, apiPost } from "@/lib/api";
+import { ClipboardList, Star, Plus } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface EvaluationSummary {
   id: string; leader_id: string; leader_name: string | null;
   period: string | null; total: number | null; ulasan: string | null;
 }
 
+interface LeaderOption { id: string; name: string; type: string }
+
 const MAX_SCORE = 60;
+
+const SCORE_KEYS = ["kehadiran", "khidmat_komuniti", "pengurusan", "komunikasi", "inisiatif", "kerjasama"] as const;
+const SCORE_LABELS: Record<typeof SCORE_KEYS[number], string> = {
+  kehadiran: "Kehadiran Mesyuarat",
+  khidmat_komuniti: "Khidmat Komuniti",
+  pengurusan: "Pengurusan Kampung",
+  komunikasi: "Komunikasi",
+  inisiatif: "Inisiatif",
+  kerjasama: "Kerjasama Agensi",
+};
+
+const evalSchema = z.object({
+  leader_id: z.string().min(1, "Sila pilih pemimpin."),
+  period: z.string().min(1, "Sila masukkan tempoh.").regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM"),
+  ulasan: z.string().optional(),
+  kehadiran:        z.coerce.number().min(0).max(10),
+  khidmat_komuniti: z.coerce.number().min(0).max(10),
+  pengurusan:       z.coerce.number().min(0).max(10),
+  komunikasi:       z.coerce.number().min(0).max(10),
+  inisiatif:        z.coerce.number().min(0).max(10),
+  kerjasama:        z.coerce.number().min(0).max(10),
+});
+type EvalFormValues = z.infer<typeof evalSchema>;
+
+const DEFAULT_VALS: EvalFormValues = {
+  leader_id: "", period: "", ulasan: "",
+  kehadiran: 0, khidmat_komuniti: 0, pengurusan: 0,
+  komunikasi: 0, inisiatif: 0, kerjasama: 0,
+};
 
 function scoreTier(total: number | null) {
   if (total == null) return { label: "—", cls: "bg-muted text-muted-foreground" };
@@ -32,33 +74,164 @@ function TableSkeleton() {
   );
 }
 
+function ScoreLiveTotal({ control }: { control: Control<EvalFormValues> }) {
+  const vals = useWatch({ control, name: SCORE_KEYS });
+  const total = (vals as number[]).reduce((s, v) => s + (Number(v) || 0), 0);
+  const pct = (total / MAX_SCORE) * 100;
+  return (
+    <div className="rounded-md bg-muted/60 px-3 py-2.5 space-y-1.5">
+      <div className="flex justify-between text-xs font-medium">
+        <span className="text-muted-foreground">Jumlah Sementara</span>
+        <span className={pct >= 80 ? "text-[var(--success)]" : pct >= 60 ? "text-[var(--warning)]" : "text-destructive"}>
+          {total} / {MAX_SCORE}
+        </span>
+      </div>
+      <Progress value={pct} className="h-1.5" />
+    </div>
+  );
+}
+
 export default function EvaluationsPage() {
   const [evaluations, setEvaluations] = useState<EvaluationSummary[]>([]);
   const [loading, setLoading]         = useState(true);
+  const [dialogOpen, setDialogOpen]   = useState(false);
+  const [leaders, setLeaders]         = useState<LeaderOption[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    apiGet("/evaluations")
-      .then(setEvaluations)
-      .catch(() => setEvaluations([]))
+  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<EvalFormValues>({
+    resolver: zodResolver(evalSchema),
+    defaultValues: DEFAULT_VALS,
+  });
+
+  function load() {
+    setLoading(true);
+    apiGet("/evaluations").then(setEvaluations).catch(() => setEvaluations([]))
       .finally(() => setLoading(false));
-  }, []);
+  }
+  useEffect(() => { load(); }, []);
+
+  function openDialog() {
+    reset(DEFAULT_VALS);
+    setDialogOpen(true);
+    if (leaders.length === 0) {
+      apiGet("/leaders").then((list: LeaderOption[]) => setLeaders(list)).catch(() => {});
+    }
+  }
+
+  async function onSubmit(values: EvalFormValues) {
+    const scores = Object.fromEntries(SCORE_KEYS.map((k) => [k, Number(values[k])]));
+    try {
+      await apiPost("/evaluations", {
+        leader_id: values.leader_id,
+        period: values.period,
+        scores,
+        ulasan: values.ulasan || null,
+      });
+      setDialogOpen(false);
+      reset(DEFAULT_VALS);
+      load();
+      toast.success("Penilaian berjaya disimpan.");
+    } catch {
+      toast.error("Gagal menyimpan penilaian. Cuba semula.");
+    }
+  }
 
   const topId = evaluations.length > 0
     ? evaluations.reduce((a, b) => (b.total ?? 0) > (a.total ?? 0) ? b : a).id
     : null;
 
+  const columns = useMemo((): ColumnDef<EvaluationSummary>[] => [
+    {
+      id: "no",
+      header: () => <div className="text-center">No.</div>,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
+      ),
+    },
+    {
+      accessorKey: "leader_name",
+      header: ({ column }) => <SortableHeader column={column} title="Pemimpin" />,
+      cell: ({ row }) => {
+        const isTop = row.original.id === topId;
+        return (
+          <div className="flex items-center gap-2">
+            {isTop && <Star className="h-3.5 w-3.5 text-amber-500 shrink-0" fill="currentColor" />}
+            <span className="font-medium">{row.original.leader_name ?? "—"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "period",
+      header: ({ column }) => <SortableHeader column={column} title="Tempoh" />,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground tabular-nums">{row.original.period ?? "—"}</span>
+      ),
+    },
+    {
+      id: "progress",
+      header: "Pencapaian",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const pct = row.original.total != null ? (row.original.total / MAX_SCORE) * 100 : 0;
+        return <Progress value={pct} className="h-2 w-28" />;
+      },
+    },
+    {
+      accessorKey: "total",
+      header: ({ column }) => (
+        <div className="text-right">
+          <SortableHeader column={column} title="Markah" />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-right tabular-nums font-semibold">
+          {row.original.total ?? "—"}
+          <span className="text-muted-foreground font-normal text-xs">/{MAX_SCORE}</span>
+        </div>
+      ),
+    },
+    {
+      id: "tier",
+      header: "Prestasi",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const tier = scoreTier(row.original.total);
+        return (
+          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${tier.cls}`}>
+            {tier.label}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "ulasan",
+      header: "Ulasan",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs truncate max-w-[140px] block">
+          {row.original.ulasan ?? "—"}
+        </span>
+      ),
+    },
+  ], [topId]);
+
   return (
     <AppLayout>
-      <div className="space-y-0.5">
-        <h1 className="font-heading text-2xl font-bold tracking-tight">Penilaian Prestasi</h1>
-        <p className="text-sm text-muted-foreground">Rekod penilaian prestasi Ketua Kampung &amp; Penghulu</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-0.5">
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Penilaian Prestasi</h1>
+          <p className="text-sm text-muted-foreground">Rekod penilaian prestasi Ketua Kampung &amp; Penghulu</p>
+        </div>
+        <Button size="sm" onClick={openDialog}>
+          <Plus className="h-4 w-4 mr-1.5" />
+          Tambah Penilaian
+        </Button>
       </div>
 
       <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b flex items-center gap-2">
-          <p className="text-sm font-semibold flex-1">Rekod Penilaian</p>
-          {!loading && <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{evaluations.length} rekod</span>}
+        <div className="px-5 py-4 border-b">
+          <p className="text-sm font-semibold">Rekod Penilaian</p>
         </div>
 
         {loading ? <TableSkeleton /> : evaluations.length === 0 ? (
@@ -67,54 +240,111 @@ export default function EvaluationsPage() {
             <p className="text-sm font-medium">Tiada rekod penilaian</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pemimpin</TableHead>
-                <TableHead>Tempoh</TableHead>
-                <TableHead className="w-36">Pencapaian</TableHead>
-                <TableHead className="text-right">Markah</TableHead>
-                <TableHead>Prestasi</TableHead>
-                <TableHead>Ulasan</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {evaluations.map((ev) => {
-                const tier = scoreTier(ev.total);
-                const pct  = ev.total != null ? (ev.total / MAX_SCORE) * 100 : 0;
-                const isTop = ev.id === topId;
-                return (
-                  <TableRow
-                    key={ev.id}
-                    className={`cursor-pointer hover:bg-muted/40 ${isTop ? "bg-[var(--success-bg)]/30" : ""}`}
-                    onClick={() => router.push(`/evaluations/${ev.id}`)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {isTop && <Star className="h-3.5 w-3.5 text-amber-500 shrink-0" fill="currentColor" />}
-                        <span className="font-medium">{ev.leader_name ?? "—"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground tabular-nums">{ev.period ?? "—"}</TableCell>
-                    <TableCell>
-                      <Progress value={pct} className="h-2" />
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">
-                      {ev.total ?? "—"}<span className="text-muted-foreground font-normal text-xs">/{MAX_SCORE}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${tier.cls}`}>
-                        {tier.label}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs truncate max-w-[140px]">{ev.ulasan ?? "—"}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={evaluations}
+            searchPlaceholder="Cari pemimpin atau tempoh..."
+            onRowClick={(ev) => router.push(`/evaluations/${ev.id}`)}
+            getRowClassName={(ev) => ev.id === topId ? "bg-[var(--success-bg)]/30" : ""}
+          />
         )}
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Tambah Penilaian</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+
+            <Controller
+              name="leader_id"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Pemimpin *</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange} name={field.name}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Pilih pemimpin..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leaders.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="period"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Tempoh * <span className="text-muted-foreground font-normal">(YYYY-MM)</span></FieldLabel>
+                  <Input {...field} id={field.name} placeholder="cth: 2026-06" aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Markah Penilaian (0–10 setiap kriteria)</p>
+              <div className="grid grid-cols-2 gap-3">
+                {SCORE_KEYS.map((key) => (
+                  <Controller
+                    key={key}
+                    name={key}
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={key} className="text-xs">{SCORE_LABELS[key]}</FieldLabel>
+                        <Input
+                          {...field}
+                          id={key}
+                          type="number"
+                          min={0}
+                          max={10}
+                          step={1}
+                          aria-invalid={fieldState.invalid}
+                          className="h-8 text-sm"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                ))}
+              </div>
+              <ScoreLiveTotal control={control} />
+            </div>
+
+            <Controller
+              name="ulasan"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Ulasan</FieldLabel>
+                  <Textarea
+                    {...field}
+                    id={field.name}
+                    placeholder="Tulis ulasan prestasi..."
+                    rows={3}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Menyimpan…" : "Simpan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

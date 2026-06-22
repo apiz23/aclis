@@ -5,9 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { apiGet, apiPatch } from "@/lib/api";
-import { ArrowLeft } from "lucide-react";
+import { apiGet, apiPatch, apiPost } from "@/lib/api";
+import { ArrowLeft, Bot, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface IssueDetail {
   id: string;
@@ -49,11 +50,12 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export default function IssueDetailPage() {
   const { id }  = useParams<{ id: string }>();
   const router  = useRouter();
-  const [data, setData]         = useState<IssueDetail | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(false);
-  const [isAdmin, setIsAdmin]   = useState(false);
-  const [updating, setUpdating] = useState(false);
+  const [data, setData]               = useState<IssueDetail | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(false);
+  const [isAdmin, setIsAdmin]         = useState(false);
+  const [updating, setUpdating]       = useState(false);
+  const [recategorizing, setRecategorizing] = useState(false);
 
   function load() {
     setLoading(true);
@@ -77,9 +79,21 @@ export default function IssueDetailPage() {
       const updated: IssueDetail = await apiPatch(`/issues/${id}`, { status: next });
       setData(updated);
     } catch {
-      alert("Gagal kemaskini status.");
+      toast.error("Gagal kemaskini status.");
     } finally {
       setUpdating(false);
+    }
+  }
+
+  async function handleRecategorize() {
+    setRecategorizing(true);
+    try {
+      await apiPost(`/issues/${id}/recategorize`, {});
+      toast.success("Permintaan kategori AI dihantar. Sila muat semula sebentar.");
+    } catch {
+      toast.error("Gagal menghantar permintaan kategori AI.");
+    } finally {
+      setRecategorizing(false);
     }
   }
 
@@ -133,7 +147,7 @@ export default function IssueDetailPage() {
         <div className="px-5">
           {loading ? (
             <div className="py-4 space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
           ) : (
             <>
@@ -141,7 +155,6 @@ export default function IssueDetailPage() {
               <Field label="Jenis Isu" value={data?.type} />
               <Field label="Lokasi" value={data?.location} />
               <Field label="Koordinat" value={data?.coords} />
-              <Field label="Kategori AI" value={data?.ai_category} />
               <Field label="Status" value={
                 <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${statusConfig.cls}`}>
                   {statusConfig.label}
@@ -165,6 +178,41 @@ export default function IssueDetailPage() {
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{data.description}</p>
           ) : (
             <p className="text-sm text-muted-foreground italic">Tiada penerangan.</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── AI Category card ── */}
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="px-5 py-4 border-b flex items-center gap-2">
+          <Bot className="h-4 w-4 text-primary" />
+          <p className="text-sm font-semibold">Kategori AI</p>
+          <span className="ml-auto text-[10px] uppercase tracking-wide font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">JamAI</span>
+          {isAdmin && !loading && data?.description && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs"
+              onClick={handleRecategorize}
+              disabled={recategorizing}
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${recategorizing ? "animate-spin" : ""}`} />
+              {recategorizing ? "Memproses…" : "Kemas Semula"}
+            </Button>
+          )}
+        </div>
+        <div className="p-5">
+          {loading ? (
+            <Skeleton className="h-6 w-32" />
+          ) : data?.ai_category ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium bg-accent text-accent-foreground">
+              <Bot className="h-3.5 w-3.5" />
+              {data.ai_category}
+            </span>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              Kategori belum dijana. {data?.description ? "AI akan memproses dalam masa terdekat." : "Tiada penerangan untuk dikategori."}
+            </p>
           )}
         </div>
       </div>

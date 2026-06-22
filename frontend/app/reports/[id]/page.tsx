@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -9,8 +13,8 @@ import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPatch } from "@/lib/api";
 import { ArrowLeft, Pencil, Send, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -33,7 +37,12 @@ const STATUS_CONFIG: Record<ReportStatus, { label: string; cls: string }> = {
   late:      { label: "Lewat",    cls: "bg-destructive/10 text-destructive" },
 };
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+const editSchema = z.object({
+  content: z.string().min(1, "Kandungan tidak boleh kosong."),
+});
+type EditValues = z.infer<typeof editSchema>;
+
+function FieldRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="py-3 border-b last:border-0">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
@@ -50,17 +59,22 @@ export default function ReportDetailPage() {
   const [error, setError]           = useState(false);
   const [isAdmin, setIsAdmin]       = useState(false);
   const [editOpen, setEditOpen]     = useState(false);
-  const [content, setContent]       = useState("");
-  const [saving, setSaving]         = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [editErr, setEditErr]       = useState("");
   const [aiSummary, setAiSummary]   = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+
+  const { control, handleSubmit, reset: resetEdit, formState: { isSubmitting: isSaving } } = useForm<EditValues>({
+    resolver: zodResolver(editSchema),
+    defaultValues: { content: "" },
+  });
 
   function load() {
     setLoading(true);
     apiGet(`/reports/${id}`)
-      .then((d: ReportDetail) => { setData(d); setContent(d.content ?? ""); })
+      .then((d: ReportDetail) => {
+        setData(d);
+        resetEdit({ content: d.content ?? "" });
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }
@@ -76,31 +90,29 @@ export default function ReportDetailPage() {
       .then((d: { summary: string | null }) => setAiSummary(d.summary))
       .catch(() => setAiSummary(null))
       .finally(() => setSummaryLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  async function handleSaveContent(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setEditErr("");
+  async function onEditSubmit(values: EditValues) {
     try {
-      const updated: ReportDetail = await apiPatch(`/reports/${id}`, { content });
+      const updated: ReportDetail = await apiPatch(`/reports/${id}`, { content: values.content });
       setData(updated);
       setEditOpen(false);
+      toast.success("Kandungan berjaya disimpan.");
     } catch {
-      setEditErr("Gagal menyimpan. Cuba semula.");
-    } finally {
-      setSaving(false);
+      toast.error("Gagal menyimpan. Cuba semula.");
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmitReport() {
     if (!confirm("Hantar laporan ini? Status akan bertukar kepada Dihantar.")) return;
     setSubmitting(true);
     try {
       const updated: ReportDetail = await apiPatch(`/reports/${id}`, { status: "submitted" });
       setData(updated);
+      toast.success("Laporan berjaya dihantar.");
     } catch {
-      alert("Gagal menghantar laporan.");
+      toast.error("Gagal menghantar laporan.");
     } finally {
       setSubmitting(false);
     }
@@ -134,11 +146,11 @@ export default function ReportDetailPage() {
 
       {isAdmin && !loading && isDraft && (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => { setEditErr(""); setEditOpen(true); }}>
+          <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
             <Pencil className="h-3.5 w-3.5 mr-1.5" />
             Edit Kandungan
           </Button>
-          <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+          <Button size="sm" onClick={handleSubmitReport} disabled={submitting}>
             <Send className="h-3.5 w-3.5 mr-1.5" />
             {submitting ? "Menghantar…" : "Hantar Laporan"}
           </Button>
@@ -156,14 +168,14 @@ export default function ReportDetailPage() {
             </div>
           ) : (
             <>
-              <Field label="Kampung" value={data?.kampung_name} />
-              <Field label="Tempoh" value={data?.period} />
-              <Field label="Status" value={
+              <FieldRow label="Kampung" value={data?.kampung_name} />
+              <FieldRow label="Tempoh" value={data?.period} />
+              <FieldRow label="Status" value={
                 <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${statusConfig.cls}`}>
                   {statusConfig.label}
                 </span>
               } />
-              <Field label="Tarikh Dihantar" value={data?.submitted_at ? data.submitted_at.slice(0, 10) : null} />
+              <FieldRow label="Tarikh Dihantar" value={data?.submitted_at ? data.submitted_at.slice(0, 10) : null} />
             </>
           )}
         </div>
@@ -210,24 +222,30 @@ export default function ReportDetailPage() {
           <DialogHeader>
             <DialogTitle>Edit Kandungan Laporan</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveContent} className="space-y-4 pt-1">
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-content">Kandungan</Label>
-              <Textarea
-                id="edit-content"
-                rows={8}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Tuliskan kandungan laporan..."
-              />
-            </div>
-            {editErr && <p className="text-sm text-destructive">{editErr}</p>}
+          <form onSubmit={handleSubmit(onEditSubmit)} className="space-y-4 pt-1">
+            <Controller
+              name="content"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Kandungan</FieldLabel>
+                  <Textarea
+                    {...field}
+                    id={field.name}
+                    rows={8}
+                    placeholder="Tuliskan kandungan laporan..."
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
                 Batal
               </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? "Menyimpan…" : "Simpan"}
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Menyimpan…" : "Simpan"}
               </Button>
             </DialogFooter>
           </form>
