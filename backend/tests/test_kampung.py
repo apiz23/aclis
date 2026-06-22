@@ -46,7 +46,7 @@ def test_list_kampung_ok(mock_sb):
 
 def test_list_kampung_401():
     r = client.get("/kampung")
-    assert r.status_code == 403
+    assert r.status_code == 401
 
 def test_get_kampung_ok(mock_sb):
     sel = mock_sb.table.return_value.select.return_value
