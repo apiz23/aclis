@@ -39,3 +39,15 @@ export async function apiPatch(path: string, body: unknown) {
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+export async function uploadLeaderPhoto(file: File): Promise<string> {
+  const { supabase } = await import("@/lib/supabase");
+  const ext  = file.name.split(".").pop() ?? "jpg";
+  const path = `pending/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("leader-photos")
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw new Error(error.message);
+  const { data } = supabase.storage.from("leader-photos").getPublicUrl(path);
+  return data.publicUrl;
+}

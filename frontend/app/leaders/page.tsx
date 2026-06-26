@@ -141,6 +141,7 @@ export default function LeadersPage() {
     queryFn: () => apiGet("/kampung"),
   });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const isAdmin = me?.role === "admin_daerah";
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<LeaderFormValues>({
@@ -291,8 +292,48 @@ export default function LeadersPage() {
 
               <Controller name="photo_url" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>URL Foto</FieldLabel>
-                  <Input {...field} id={field.name} placeholder="https://..." aria-invalid={fieldState.invalid} />
+                  <FieldLabel>Foto</FieldLabel>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors">
+                        {photoUploading ? "Memuat naik…" : "Pilih fail foto"}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        disabled={photoUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setPhotoUploading(true);
+                          try {
+                            const { uploadLeaderPhoto } = await import("@/lib/api");
+                            const url = await uploadLeaderPhoto(file);
+                            field.onChange(url);
+                            toast.success("Foto berjaya dimuat naik.");
+                          } catch {
+                            toast.error("Gagal memuat naik foto.");
+                          } finally {
+                            setPhotoUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                    {field.value && (
+                      <div className="flex items-center gap-2">
+                        <img src={field.value} alt="preview" className="h-10 w-10 rounded-full object-cover border" />
+                        <span className="text-xs text-muted-foreground truncate max-w-[180px]">{field.value}</span>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("")}
+                          className="text-xs text-destructive hover:underline shrink-0"
+                        >
+                          Padam
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )} />
