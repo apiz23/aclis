@@ -6,6 +6,8 @@ from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpd
 
 router = APIRouter()
 
+_SELECT = "id, name, mukim_id, profile, b40_count, lat, lng, aclis_mukim(name)"
+
 def _row_to_summary(r: dict) -> KampungSummary:
     return KampungSummary(
         id=r["id"],
@@ -14,6 +16,8 @@ def _row_to_summary(r: dict) -> KampungSummary:
         mukim_name=(r.get("aclis_mukim") or {}).get("name"),
         b40_count=r.get("b40_count") or 0,
         profile=r.get("profile"),
+        lat=r.get("lat"),
+        lng=r.get("lng"),
     )
 
 @router.get("/kampung", response_model=list[KampungSummary])
@@ -21,8 +25,7 @@ def list_kampung(
     scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    q = sb.table("aclis_kampung") \
-        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)")
+    q = sb.table("aclis_kampung").select(_SELECT)
     if not scope.is_admin:
         if not scope.allowed_kampung_ids:
             return []
@@ -37,9 +40,7 @@ def get_kampung(
     scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
-    rows = sb.table("aclis_kampung") \
-        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)") \
-        .eq("id", kampung_id).execute().data
+    rows = sb.table("aclis_kampung").select(_SELECT).eq("id", kampung_id).execute().data
     if not rows:
         raise HTTPException(404, "Kampung not found")
     r = rows[0]
@@ -70,7 +71,7 @@ def create_kampung(
     result = (
         sb.table("aclis_kampung")
         .insert(payload)
-        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)")
+        .select(_SELECT)
         .execute()
     )
     if not result.data:
@@ -93,7 +94,7 @@ def update_kampung(
         sb.table("aclis_kampung")
         .update(payload)
         .eq("id", kampung_id)
-        .select("id, name, mukim_id, profile, b40_count, aclis_mukim(name)")
+        .select(_SELECT)
         .execute()
     )
     if not result.data:

@@ -11,6 +11,7 @@ client = TestClient(app)
 KAMPUNG_ROW = {
     "id": "k1", "name": "Kg Parit Sulong", "mukim_id": "m1",
     "profile": "Kampung nelayan", "b40_count": 12,
+    "lat": 1.4855, "lng": 103.3892,
     "aclis_mukim": {"name": "Mukim Parit Sulong"},
 }
 
@@ -65,3 +66,12 @@ def test_get_kampung_404(mock_sb):
     sel.eq.return_value.execute.return_value.data = []
     r = client.get("/kampung/missing", headers=auth())
     assert r.status_code == 404
+
+def test_list_kampung_includes_coords(mock_sb):
+    tbl = mock_sb.table.return_value
+    tbl.select.return_value.order.return_value.limit.return_value.execute.return_value.data = [KAMPUNG_ROW]
+    r = client.get("/kampung", headers=auth())
+    assert r.status_code == 200
+    body = r.json()
+    assert body[0]["lat"] == 1.4855
+    assert body[0]["lng"] == 103.3892

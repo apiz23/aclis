@@ -11,6 +11,7 @@ client = TestClient(app)
 KAMPUNG_ROW = {
     "id": "k1", "name": "Kg Parit Sulong", "mukim_id": "m1",
     "profile": "Kampung nelayan", "b40_count": 12,
+    "lat": 1.4855, "lng": 103.3892,
     "aclis_mukim": {"name": "Mukim Parit Sulong"},
 }
 

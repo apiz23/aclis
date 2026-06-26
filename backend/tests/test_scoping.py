@@ -100,6 +100,7 @@ class TestGetUserScope:
 KAMPUNG_ROW = {
     "id": "k1", "name": "Kampung Satu", "mukim_id": "m1",
     "b40_count": 10, "profile": None,
+    "lat": None, "lng": None,
     "aclis_mukim": {"name": "Mukim A"},
 }
 KAMPUNG_ROW_K2 = {**KAMPUNG_ROW, "id": "k2", "name": "Kampung Lain"}

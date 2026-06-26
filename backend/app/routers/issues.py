@@ -31,6 +31,7 @@ def _row_to_summary(r: dict) -> IssueSummary:
         description=r.get("description"),
         ai_category=r.get("ai_category"),
         status=r.get("status", "open"),
+        coords=r.get("coords"),
     )
 
 
@@ -40,7 +41,7 @@ def list_issues(
     sb: Client = Depends(get_supabase),
 ):
     q = sb.table("aclis_issue") \
-        .select("id, kampung_id, type, location, description, ai_category, status, aclis_kampung(name)")
+        .select("id, kampung_id, type, location, description, ai_category, status, coords, aclis_kampung(name)")
     if not scope.is_admin:
         if not scope.allowed_kampung_ids:
             return []
@@ -67,7 +68,7 @@ def get_issue(
     r = rows[0]
     if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
         raise HTTPException(404, "Issue not found")
-    return IssueDetail(**_row_to_summary(r).model_dump(), coords=r.get("coords"))
+    return IssueDetail(**_row_to_summary(r).model_dump())
 
 
 @router.post("/issues", response_model=IssueDetail, status_code=201)
@@ -95,7 +96,7 @@ def create_issue(
     r = result.data[0]
     if body.description:
         background_tasks.add_task(_bg_categorize, r["id"], body.description, body.type, sb)
-    return IssueDetail(**_row_to_summary(r).model_dump(), coords=r.get("coords"))
+    return IssueDetail(**_row_to_summary(r).model_dump())
 
 
 @router.post("/issues/{issue_id}/recategorize", response_model=RecategorizeResponse, status_code=202)
@@ -142,4 +143,4 @@ def update_issue(
     if not result.data:
         raise HTTPException(404, "Issue not found")
     r = result.data[0]
-    return IssueDetail(**_row_to_summary(r).model_dump(), coords=r.get("coords"))
+    return IssueDetail(**_row_to_summary(r).model_dump())

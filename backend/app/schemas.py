@@ -13,6 +13,8 @@ class KampungSummary(BaseModel):
     mukim_name: str | None
     b40_count: int
     profile: str | None
+    lat: float | None = None
+    lng: float | None = None
 
 class KampungDetail(KampungSummary):
     resident_count: int
@@ -56,9 +58,10 @@ class IssueSummary(BaseModel):
     description: str | None
     ai_category: str | None
     status: str
+    coords: str | None = None
 
 class IssueDetail(IssueSummary):
-    coords: str | None
+    pass
 
 class EvaluationSummary(BaseModel):
     id: str
@@ -147,12 +150,16 @@ class KampungCreate(BaseModel):
     mukim_id: str | None = None
     b40_count: int | None = None
     profile: str | None = None
+    lat: float | None = None
+    lng: float | None = None
 
 class KampungUpdate(BaseModel):
     name: str | None = None
     mukim_id: str | None = None
     b40_count: int | None = None
     profile: str | None = None
+    lat: float | None = None
+    lng: float | None = None
 
 class MukimOption(BaseModel):
     id: str
