@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPost } from "@/lib/api";
 import { MapPin, Plus } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
+import { useCurrentUser, useKampung, QUERY_KEYS } from "@/lib/queries";
 
 interface KampungSummary {
   id: string;
@@ -92,30 +95,26 @@ function TableSkeleton() {
 }
 
 export default function KampungPage() {
-  const [kampungs, setKampungs]     = useState<KampungSummary[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [mukims, setMukims]         = useState<MukimOption[]>([]);
   const router = useRouter();
+  const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const { data: kampungs = [], isLoading } = useKampung();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const isAdmin = me?.role === "admin_daerah";
+
+  const { data: mukims = [] } = useQuery<MukimOption[]>({
+    queryKey: ["mukims"],
+    queryFn: () => apiGet("/mukim"),
+  });
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<KampungFormValues>({
     resolver: zodResolver(kampungSchema),
     defaultValues: EMPTY,
   });
 
-  function load() {
-    setLoading(true);
-    apiGet("/kampung").then(setKampungs).catch(() => setKampungs([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(() => { load(); }, []);
-
   function openDialog() {
     reset(EMPTY);
     setDialogOpen(true);
-    if (mukims.length === 0) {
-      apiGet("/mukim").then((list: MukimOption[]) => setMukims(list)).catch(() => {});
-    }
   }
 
   async function onSubmit(values: KampungFormValues) {
@@ -128,7 +127,7 @@ export default function KampungPage() {
       });
       setDialogOpen(false);
       reset(EMPTY);
-      load();
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.kampung });
       toast.success("Kampung berjaya ditambah.");
     } catch {
       toast.error("Gagal menambah kampung. Cuba semula.");
@@ -144,10 +143,12 @@ export default function KampungPage() {
             Senarai kampung di bawah Pejabat Daerah Pontian
           </p>
         </div>
-        <Button size="sm" onClick={openDialog}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Tambah Kampung
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openDialog}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Tambah Kampung
+          </Button>
+        )}
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
@@ -155,7 +156,7 @@ export default function KampungPage() {
           <p className="text-sm font-semibold">Senarai Kampung</p>
         </div>
 
-        {loading ? <TableSkeleton /> : kampungs.length === 0 ? (
+        {isLoading ? <TableSkeleton /> : (kampungs as KampungSummary[]).length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-5">
               <MapPin className="h-7 w-7 text-primary" />
@@ -168,96 +169,100 @@ export default function KampungPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={kampungs}
+            data={kampungs as KampungSummary[]}
             searchPlaceholder="Cari nama atau mukim..."
             onRowClick={(k) => router.push(`/kampung/${k.id}`)}
           />
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Tambah Kampung</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>Tambah Kampung</DialogTitle></DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
 
-            <Controller
-              name="name"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Nama Kampung *</FieldLabel>
-                  <Input {...field} id={field.name} placeholder="cth: Kg. Parit Sulong" aria-invalid={fieldState.invalid} />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="name"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Nama Kampung *</FieldLabel>
+                    <Input {...field} id={field.name} placeholder="cth: Kg. Parit Sulong" aria-invalid={fieldState.invalid} />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <Controller
-              name="mukim_id"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Mukim</FieldLabel>
-                  <Select value={field.value ?? ""} onValueChange={field.onChange} name={field.name}>
-                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
-                      <SelectValue placeholder="Pilih mukim..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mukims.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="mukim_id"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Mukim</FieldLabel>
+                    <Select value={field.value ?? ""} onValueChange={field.onChange} name={field.name}>
+                      <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Pilih mukim..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(mukims as MukimOption[]).map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <Controller
-              name="b40_count"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Bilangan Isi Rumah B40</FieldLabel>
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    id={field.name}
-                    type="number"
-                    min={0}
-                    placeholder="0"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="b40_count"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Bilangan Isi Rumah B40</FieldLabel>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      id={field.name}
+                      type="number"
+                      min={0}
+                      placeholder="0"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <Controller
-              name="profile"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Profil Kampung</FieldLabel>
-                  <Textarea
-                    {...field}
-                    id={field.name}
-                    placeholder="Huraikan latar belakang kampung..."
-                    rows={3}
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="profile"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Profil Kampung</FieldLabel>
+                    <Textarea
+                      {...field}
+                      id={field.name}
+                      placeholder="Huraikan latar belakang kampung..."
+                      rows={3}
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Menyimpan…" : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+                <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">
+                  Simpan
+                </LoadingButton>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </AppLayout>
   );
 }

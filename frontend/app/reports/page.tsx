@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,9 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { apiGet, apiPost } from "@/lib/api";
 import { FileText, Plus, AlertTriangle } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
+import { useReports, QUERY_KEYS } from "@/lib/queries";
 
 interface KampungOption { id: string; name: string }
 interface ReportSummary {
@@ -95,30 +98,23 @@ const columns: ColumnDef<ReportSummary>[] = [
 ];
 
 export default function ReportsPage() {
-  const [reports, setReports]       = useState<ReportSummary[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [kampungs, setKampungs]     = useState<KampungOption[]>([]);
   const router = useRouter();
+  const qc = useQueryClient();
+  const { data: reports = [], isLoading: loading } = useReports();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: kampungs = [] } = useQuery<KampungOption[]>({
+    queryKey: QUERY_KEYS.kampung,
+    queryFn: () => apiGet("/kampung"),
+  });
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
     defaultValues: { kampung_id: "", period: "", content: "" },
   });
 
-  function load() {
-    setLoading(true);
-    apiGet("/reports").then(setReports).catch(() => setReports([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(() => { load(); }, []);
-
   function openDialog() {
     reset();
     setDialogOpen(true);
-    if (kampungs.length === 0) {
-      apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
-    }
   }
 
   async function onSubmit(values: ReportFormValues) {
@@ -130,15 +126,16 @@ export default function ReportsPage() {
       });
       setDialogOpen(false);
       reset();
-      load();
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.reports });
       toast.success("Laporan berjaya disimpan sebagai draf.");
     } catch {
       toast.error("Gagal mencipta laporan. Cuba semula.");
     }
   }
 
-  const submittedCount = reports.filter(r => r.status === "submitted").length;
-  const submissionRate = reports.length > 0 ? (submittedCount / reports.length) * 100 : 0;
+  const reportList = reports as ReportSummary[];
+  const submittedCount = reportList.filter(r => r.status === "submitted").length;
+  const submissionRate = reportList.length > 0 ? (submittedCount / reportList.length) * 100 : 0;
 
   return (
     <AppLayout>
@@ -153,12 +150,12 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      {!loading && reports.length > 0 && (
+      {!loading && reportList.length > 0 && (
         <div className="border bg-card rounded-lg shadow-sm p-4 flex items-center gap-4">
           <div className="flex-1">
             <div className="flex justify-between text-xs mb-1.5">
               <span className="font-medium text-muted-foreground">Kadar Penghantaran</span>
-              <span className="font-semibold text-foreground">{submittedCount}/{reports.length} laporan</span>
+              <span className="font-semibold text-foreground">{submittedCount}/{reportList.length} laporan</span>
             </div>
             <Progress value={submissionRate} className="h-2" />
           </div>
@@ -173,7 +170,7 @@ export default function ReportsPage() {
 
         {loading ? (
           <div className="p-4 space-y-2">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-        ) : reports.length === 0 ? (
+        ) : reportList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <FileText className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium">Tiada rekod laporan</p>
@@ -181,7 +178,7 @@ export default function ReportsPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={reports}
+            data={reportList}
             searchPlaceholder="Cari kampung atau tempoh..."
             onRowClick={(r) => router.push(`/reports/${r.id}`)}
             getRowClassName={(r) => r.status === "late" ? "bg-destructive/5" : ""}
@@ -205,7 +202,7 @@ export default function ReportsPage() {
                       <SelectValue placeholder="Pilih kampung..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      {(kampungs as KampungOption[]).map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -252,9 +249,9 @@ export default function ReportsPage() {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Menyimpan…" : "Simpan Draf"}
-              </Button>
+              <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">
+                Simpan Draf
+              </LoadingButton>
             </DialogFooter>
           </form>
         </DialogContent>

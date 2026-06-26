@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPost } from "@/lib/api";
 import { Users, Plus } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
+import { useCurrentUser, useLeaders, QUERY_KEYS } from "@/lib/queries";
 
 interface LeaderSummary {
   id: string; name: string; ic_no: string | null; type: string;
@@ -48,18 +51,19 @@ function initials(name: string) {
 }
 
 const leaderSchema = z.object({
-  name: z.string().min(1, "Nama diperlukan."),
-  type: z.string().min(1, "Sila pilih jawatan."),
-  kampung_id: z.string().optional(),
+  name:            z.string().min(1, "Nama diperlukan."),
+  type:            z.string().min(1, "Sila pilih jawatan."),
+  ic_no:           z.string().optional(),
+  kampung_id:      z.string().optional(),
   tarikh_lantikan: z.string().optional(),
-  parti_lantikan: z.string().optional(),
-  parti_terkini: z.string().optional(),
-  photo_url: z.string().optional(),
+  parti_lantikan:  z.string().optional(),
+  parti_terkini:   z.string().optional(),
+  photo_url:       z.string().optional(),
 });
 type LeaderFormValues = z.infer<typeof leaderSchema>;
 
 const EMPTY: LeaderFormValues = {
-  name: "", type: "", kampung_id: "", tarikh_lantikan: "",
+  name: "", type: "", ic_no: "", kampung_id: "", tarikh_lantikan: "",
   parti_lantikan: "", parti_terkini: "", photo_url: "",
 };
 
@@ -128,46 +132,42 @@ function TableSkeleton() {
 }
 
 export default function LeadersPage() {
-  const [leaders, setLeaders]       = useState<LeaderSummary[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [kampungs, setKampungs]     = useState<KampungOption[]>([]);
   const router = useRouter();
+  const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const { data: leaders = [], isLoading } = useLeaders();
+  const { data: kampungs = [] } = useQuery<KampungOption[]>({
+    queryKey: QUERY_KEYS.kampung,
+    queryFn: () => apiGet("/kampung"),
+  });
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const isAdmin = me?.role === "admin_daerah";
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<LeaderFormValues>({
     resolver: zodResolver(leaderSchema),
     defaultValues: EMPTY,
   });
 
-  function load() {
-    setLoading(true);
-    apiGet("/leaders").then(setLeaders).catch(() => setLeaders([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(() => { load(); }, []);
-
   function openDialog() {
     reset(EMPTY);
     setDialogOpen(true);
-    if (kampungs.length === 0) {
-      apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
-    }
   }
 
   async function onSubmit(values: LeaderFormValues) {
     try {
       await apiPost("/leaders", {
-        name: values.name,
-        type: values.type,
-        kampung_id: values.kampung_id || null,
+        name:            values.name,
+        type:            values.type,
+        ic_no:           values.ic_no || null,
+        kampung_id:      values.kampung_id || null,
         tarikh_lantikan: values.tarikh_lantikan || null,
-        parti_lantikan: values.parti_lantikan || null,
-        parti_terkini: values.parti_terkini || null,
-        photo_url: values.photo_url || null,
+        parti_lantikan:  values.parti_lantikan || null,
+        parti_terkini:   values.parti_terkini || null,
+        photo_url:       values.photo_url || null,
       });
       setDialogOpen(false);
       reset(EMPTY);
-      load();
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.leaders });
       toast.success("Pemimpin berjaya ditambah.");
     } catch {
       toast.error("Gagal menambah pemimpin. Cuba semula.");
@@ -181,10 +181,12 @@ export default function LeadersPage() {
           <h1 className="font-heading text-2xl font-bold tracking-tight">Pemimpin</h1>
           <p className="text-sm text-muted-foreground">Senarai Ketua Kampung &amp; Penghulu daerah Pontian</p>
         </div>
-        <Button size="sm" onClick={openDialog}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Tambah Pemimpin
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openDialog}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Tambah Pemimpin
+          </Button>
+        )}
       </div>
 
       <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
@@ -192,7 +194,7 @@ export default function LeadersPage() {
           <p className="text-sm font-semibold">Senarai Pemimpin</p>
         </div>
 
-        {loading ? <TableSkeleton /> : leaders.length === 0 ? (
+        {isLoading ? <TableSkeleton /> : (leaders as LeaderSummary[]).length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium">Tiada rekod pemimpin</p>
@@ -200,34 +202,36 @@ export default function LeadersPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={leaders}
+            data={leaders as LeaderSummary[]}
             searchPlaceholder="Cari nama atau kampung..."
             onRowClick={(l) => router.push(`/leaders/${l.id}`)}
           />
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Tambah Pemimpin</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Tambah Pemimpin</DialogTitle></DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
 
-            <Controller
-              name="name"
-              control={control}
-              render={({ field, fieldState }) => (
+              <Controller name="name" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Nama *</FieldLabel>
                   <Input {...field} id={field.name} placeholder="Nama penuh" aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
-              )}
-            />
+              )} />
 
-            <Controller
-              name="type"
-              control={control}
-              render={({ field, fieldState }) => (
+              <Controller name="ic_no" control={control} render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>No. KP</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="cth: 900101-01-1234" aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )} />
+
+              <Controller name="type" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Jawatan *</FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange} name={field.name}>
@@ -241,13 +245,9 @@ export default function LeadersPage() {
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
-              )}
-            />
+              )} />
 
-            <Controller
-              name="kampung_id"
-              control={control}
-              render={({ field, fieldState }) => (
+              <Controller name="kampung_id" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Kampung</FieldLabel>
                   <Select value={field.value ?? ""} onValueChange={field.onChange} name={field.name}>
@@ -255,72 +255,58 @@ export default function LeadersPage() {
                       <SelectValue placeholder="Pilih kampung..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      {(kampungs as KampungOption[]).map((k) => (
+                        <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
-              )}
-            />
+              )} />
 
-            <Controller
-              name="tarikh_lantikan"
-              control={control}
-              render={({ field, fieldState }) => (
+              <Controller name="tarikh_lantikan" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Tarikh Lantikan</FieldLabel>
                   <Input {...field} id={field.name} type="date" aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
-              )}
-            />
+              )} />
 
-            <div className="grid grid-cols-2 gap-3">
-              <Controller
-                name="parti_lantikan"
-                control={control}
-                render={({ field, fieldState }) => (
+              <div className="grid grid-cols-2 gap-3">
+                <Controller name="parti_lantikan" control={control} render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Parti Lantikan</FieldLabel>
                     <Input {...field} id={field.name} placeholder="cth: UMNO" aria-invalid={fieldState.invalid} />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
-                )}
-              />
-              <Controller
-                name="parti_terkini"
-                control={control}
-                render={({ field, fieldState }) => (
+                )} />
+                <Controller name="parti_terkini" control={control} render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Parti Terkini</FieldLabel>
                     <Input {...field} id={field.name} placeholder="cth: UMNO" aria-invalid={fieldState.invalid} />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
-                )}
-              />
-            </div>
+                )} />
+              </div>
 
-            <Controller
-              name="photo_url"
-              control={control}
-              render={({ field, fieldState }) => (
+              <Controller name="photo_url" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>URL Foto</FieldLabel>
                   <Input {...field} id={field.name} placeholder="https://..." aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
-              )}
-            />
+              )} />
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Menyimpan…" : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+                <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">
+                  Simpan
+                </LoadingButton>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </AppLayout>
   );
 }

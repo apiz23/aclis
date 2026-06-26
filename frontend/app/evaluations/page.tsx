@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useForm, Controller, useWatch, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,9 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiPost } from "@/lib/api";
 import { ClipboardList, Star, Plus } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
+import { useCurrentUser, useLeaders, useEvaluations, QUERY_KEYS } from "@/lib/queries";
 
 interface EvaluationSummary {
   id: string; leader_id: string; leader_name: string | null;
@@ -92,30 +95,22 @@ function ScoreLiveTotal({ control }: { control: Control<EvalFormValues> }) {
 }
 
 export default function EvaluationsPage() {
-  const [evaluations, setEvaluations] = useState<EvaluationSummary[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [dialogOpen, setDialogOpen]   = useState(false);
-  const [leaders, setLeaders]         = useState<LeaderOption[]>([]);
   const router = useRouter();
+  const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const { data: evaluations = [], isLoading: loading } = useEvaluations();
+  const { data: leaderList = [] } = useLeaders();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const isAdmin = me?.role === "admin_daerah";
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<EvalFormValues>({
     resolver: zodResolver(evalSchema),
     defaultValues: DEFAULT_VALS,
   });
 
-  function load() {
-    setLoading(true);
-    apiGet("/evaluations").then(setEvaluations).catch(() => setEvaluations([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(() => { load(); }, []);
-
   function openDialog() {
     reset(DEFAULT_VALS);
     setDialogOpen(true);
-    if (leaders.length === 0) {
-      apiGet("/leaders").then((list: LeaderOption[]) => setLeaders(list)).catch(() => {});
-    }
   }
 
   async function onSubmit(values: EvalFormValues) {
@@ -129,15 +124,16 @@ export default function EvaluationsPage() {
       });
       setDialogOpen(false);
       reset(DEFAULT_VALS);
-      load();
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluations });
       toast.success("Penilaian berjaya disimpan.");
     } catch {
       toast.error("Gagal menyimpan penilaian. Cuba semula.");
     }
   }
 
-  const topId = evaluations.length > 0
-    ? evaluations.reduce((a, b) => (b.total ?? 0) > (a.total ?? 0) ? b : a).id
+  const evalList = evaluations as EvaluationSummary[];
+  const topId = evalList.length > 0
+    ? evalList.reduce((a, b) => (b.total ?? 0) > (a.total ?? 0) ? b : a).id
     : null;
 
   const columns = useMemo((): ColumnDef<EvaluationSummary>[] => [
@@ -223,10 +219,12 @@ export default function EvaluationsPage() {
           <h1 className="font-heading text-2xl font-bold tracking-tight">Penilaian Prestasi</h1>
           <p className="text-sm text-muted-foreground">Rekod penilaian prestasi Ketua Kampung &amp; Penghulu</p>
         </div>
-        <Button size="sm" onClick={openDialog}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Tambah Penilaian
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openDialog}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Tambah Penilaian
+          </Button>
+        )}
       </div>
 
       <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
@@ -234,7 +232,7 @@ export default function EvaluationsPage() {
           <p className="text-sm font-semibold">Rekod Penilaian</p>
         </div>
 
-        {loading ? <TableSkeleton /> : evaluations.length === 0 ? (
+        {loading ? <TableSkeleton /> : evalList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <ClipboardList className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium">Tiada rekod penilaian</p>
@@ -242,7 +240,7 @@ export default function EvaluationsPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={evaluations}
+            data={evalList}
             searchPlaceholder="Cari pemimpin atau tempoh..."
             onRowClick={(ev) => router.push(`/evaluations/${ev.id}`)}
             getRowClassName={(ev) => ev.id === topId ? "bg-[var(--success-bg)]/30" : ""}
@@ -250,101 +248,103 @@ export default function EvaluationsPage() {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Tambah Penilaian</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Tambah Penilaian</DialogTitle></DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
 
-            <Controller
-              name="leader_id"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Pemimpin *</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange} name={field.name}>
-                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
-                      <SelectValue placeholder="Pilih pemimpin..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leaders.map((l) => (
-                        <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="leader_id"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Pemimpin *</FieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange} name={field.name}>
+                      <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Pilih pemimpin..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(leaderList as LeaderOption[]).map((l) => (
+                          <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <Controller
-              name="period"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Tempoh * <span className="text-muted-foreground font-normal">(YYYY-MM)</span></FieldLabel>
-                  <Input {...field} id={field.name} placeholder="cth: 2026-06" aria-invalid={fieldState.invalid} />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="period"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Tempoh * <span className="text-muted-foreground font-normal">(YYYY-MM)</span></FieldLabel>
+                    <Input {...field} id={field.name} placeholder="cth: 2026-06" aria-invalid={fieldState.invalid} />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Markah Penilaian (0–10 setiap kriteria)</p>
-              <div className="grid grid-cols-2 gap-3">
-                {SCORE_KEYS.map((key) => (
-                  <Controller
-                    key={key}
-                    name={key}
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor={key} className="text-xs">{SCORE_LABELS[key]}</FieldLabel>
-                        <Input
-                          {...field}
-                          id={key}
-                          type="number"
-                          min={0}
-                          max={10}
-                          step={1}
-                          aria-invalid={fieldState.invalid}
-                          className="h-8 text-sm"
-                        />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                ))}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Markah Penilaian (0–10 setiap kriteria)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {SCORE_KEYS.map((key) => (
+                    <Controller
+                      key={key}
+                      name={key}
+                      control={control}
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel htmlFor={key} className="text-xs">{SCORE_LABELS[key]}</FieldLabel>
+                          <Input
+                            {...field}
+                            id={key}
+                            type="number"
+                            min={0}
+                            max={10}
+                            step={1}
+                            aria-invalid={fieldState.invalid}
+                            className="h-8 text-sm"
+                          />
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                  ))}
+                </div>
+                <ScoreLiveTotal control={control} />
               </div>
-              <ScoreLiveTotal control={control} />
-            </div>
 
-            <Controller
-              name="ulasan"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Ulasan</FieldLabel>
-                  <Textarea
-                    {...field}
-                    id={field.name}
-                    placeholder="Tulis ulasan prestasi..."
-                    rows={3}
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                name="ulasan"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Ulasan</FieldLabel>
+                    <Textarea
+                      {...field}
+                      id={field.name}
+                      placeholder="Tulis ulasan prestasi..."
+                      rows={3}
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Menyimpan…" : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+                <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">
+                  Simpan
+                </LoadingButton>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </AppLayout>
   );
 }

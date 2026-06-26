@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,9 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { apiGet, apiPost } from "@/lib/api";
 import { AlertCircle, Plus, Bot } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
+import { useIssues, QUERY_KEYS } from "@/lib/queries";
 
 interface KampungOption { id: string; name: string }
 interface IssueSummary {
@@ -101,34 +104,24 @@ const columns: ColumnDef<IssueSummary>[] = [
 ];
 
 export default function IssuesPage() {
-  const [issues, setIssues]             = useState<IssueSummary[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen]     = useState(false);
-  const [kampungs, setKampungs]         = useState<KampungOption[]>([]);
   const router = useRouter();
+  const qc = useQueryClient();
+  const { data: issues = [], isLoading: loading } = useIssues();
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: kampungs = [] } = useQuery<KampungOption[]>({
+    queryKey: QUERY_KEYS.kampung,
+    queryFn: () => apiGet("/kampung"),
+  });
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<IssueFormValues>({
     resolver: zodResolver(issueSchema),
     defaultValues: { kampung_id: "", type: "", location: "", description: "" },
   });
 
-  function load() {
-    setLoading(true);
-    apiGet("/issues")
-      .then(setIssues)
-      .catch(() => setIssues([]))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => { load(); }, []);
-
   function openDialog() {
     reset();
     setDialogOpen(true);
-    if (kampungs.length === 0) {
-      apiGet("/kampung").then((list: KampungOption[]) => setKampungs(list)).catch(() => {});
-    }
   }
 
   async function onSubmit(values: IssueFormValues) {
@@ -141,19 +134,20 @@ export default function IssuesPage() {
       });
       setDialogOpen(false);
       reset();
-      load();
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.issues });
       toast.success("Isu berjaya dilaporkan.");
     } catch {
       toast.error("Gagal merekod isu. Cuba semula.");
     }
   }
 
+  const issueList = issues as IssueSummary[];
   const statusCounts = (Object.keys(STATUS_CONFIG) as IssueStatus[]).reduce((acc, s) => {
-    acc[s] = issues.filter(i => i.status === s).length;
+    acc[s] = issueList.filter(i => i.status === s).length;
     return acc;
   }, {} as Record<string, number>);
 
-  const filtered = statusFilter ? issues.filter(i => i.status === statusFilter) : issues;
+  const filtered = statusFilter ? issueList.filter(i => i.status === statusFilter) : issueList;
 
   return (
     <AppLayout>
@@ -168,13 +162,13 @@ export default function IssuesPage() {
         </Button>
       </div>
 
-      {!loading && issues.length > 0 && (
+      {!loading && issueList.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setStatusFilter(null)}
             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${statusFilter === null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
           >
-            Semua ({issues.length})
+            Semua ({issueList.length})
           </button>
           {(Object.entries(STATUS_CONFIG) as [IssueStatus, { label: string; cls: string }][]).map(([s, cfg]) => statusCounts[s] > 0 && (
             <button
@@ -195,7 +189,7 @@ export default function IssuesPage() {
 
         {loading ? (
           <div className="p-4 space-y-2">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-        ) : issues.length === 0 ? (
+        ) : issueList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <AlertCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium">Tiada isu komuniti</p>
@@ -226,7 +220,7 @@ export default function IssuesPage() {
                       <SelectValue placeholder="Pilih kampung..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      {(kampungs as KampungOption[]).map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -290,9 +284,9 @@ export default function IssuesPage() {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Menyimpan…" : "Hantar"}
-              </Button>
+              <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">
+                Hantar
+              </LoadingButton>
             </DialogFooter>
           </form>
         </DialogContent>
