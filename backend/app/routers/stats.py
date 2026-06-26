@@ -44,13 +44,19 @@ def _count_by_status_scoped(
 
 
 def _build_stats(sb: Client, scope: UserScope) -> StatsExtended:
+    issues_by_status = _count_by_status_scoped(sb, "aclis_issue", scope)
+    reports_by_status = _count_by_status_scoped(sb, "aclis_monthly_report", scope)
+
+    issue_map = {s.status: s.count for s in issues_by_status}
+    report_map = {s.status: s.count for s in reports_by_status}
+
     return StatsExtended(
         kampung_count=_count_scoped(sb, "aclis_kampung", scope),
         leader_count=_count_scoped(sb, "aclis_leader", scope),
-        pending_reports=_count_scoped(sb, "aclis_monthly_report", scope, status="draft"),
-        open_issues=_count_scoped(sb, "aclis_issue", scope, status="open"),
-        issues_by_status=_count_by_status_scoped(sb, "aclis_issue", scope),
-        reports_by_status=_count_by_status_scoped(sb, "aclis_monthly_report", scope),
+        pending_reports=report_map.get("draft", 0),
+        open_issues=issue_map.get("open", 0),
+        issues_by_status=issues_by_status,
+        reports_by_status=reports_by_status,
     )
 
 
