@@ -29,7 +29,7 @@ def list_evaluations(
         if not scope.allowed_leader_ids:
             return []
         q = q.in_("leader_id", scope.allowed_leader_ids)
-    rows = q.limit(50).execute().data or []
+    rows = q.order("period", desc=True).limit(500).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 

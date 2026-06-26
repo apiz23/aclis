@@ -32,6 +32,9 @@ class LeaderSummary(BaseModel):
 class LeaderDetail(LeaderSummary):
     mukim_name: str | None = None
     evaluation_count: int = 0
+    phone: str | None = None
+    address: str | None = None
+    kampung_rangkaian: str | None = None
 
 class ReportSummary(BaseModel):
     id: str
@@ -135,6 +138,9 @@ class LeaderUpdate(BaseModel):
     photo_url: str | None = None
     parti_lantikan: str | None = None
     parti_terkini: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    kampung_rangkaian: str | None = None
 
 class KampungCreate(BaseModel):
     name: str

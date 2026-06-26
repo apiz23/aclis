@@ -33,8 +33,11 @@ def list_leaders(
         if not scope.allowed_kampung_ids:
             return []
         q = q.in_("kampung_id", scope.allowed_kampung_ids)
-    rows = q.limit(50).execute().data or []
+    rows = q.order("name").limit(500).execute().data or []
     return [_row_to_summary(r) for r in rows]
+
+
+_SELECT_DETAIL = "id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address, kampung_rangkaian, aclis_kampung(name, aclis_mukim(name))"
 
 
 @router.get("/leaders/{leader_id}", response_model=LeaderDetail)
@@ -45,7 +48,7 @@ def get_leader(
 ):
     rows = (
         sb.table("aclis_leader")
-        .select("id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, aclis_kampung(name, aclis_mukim(name))")
+        .select(_SELECT_DETAIL)
         .eq("id", leader_id)
         .execute()
         .data
@@ -69,10 +72,10 @@ def get_leader(
         **_row_to_summary(r).model_dump(),
         mukim_name=mukim.get("name"),
         evaluation_count=eval_count,
+        phone=r.get("phone"),
+        address=r.get("address"),
+        kampung_rangkaian=r.get("kampung_rangkaian"),
     )
-
-
-_SELECT_DETAIL = "id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, aclis_kampung(name, aclis_mukim(name))"
 
 
 @router.post("/leaders", response_model=LeaderDetail, status_code=201)
@@ -126,4 +129,11 @@ def update_leader(
         .execute()
         .count or 0
     )
-    return LeaderDetail(**_row_to_summary(r).model_dump(), mukim_name=mukim.get("name"), evaluation_count=eval_count)
+    return LeaderDetail(
+        **_row_to_summary(r).model_dump(),
+        mukim_name=mukim.get("name"),
+        evaluation_count=eval_count,
+        phone=r.get("phone"),
+        address=r.get("address"),
+        kampung_rangkaian=r.get("kampung_rangkaian"),
+    )

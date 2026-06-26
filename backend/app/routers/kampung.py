@@ -27,7 +27,7 @@ def list_kampung(
         if not scope.allowed_kampung_ids:
             return []
         q = q.in_("id", scope.allowed_kampung_ids)
-    rows = q.limit(50).execute().data or []
+    rows = q.order("name").limit(500).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 
