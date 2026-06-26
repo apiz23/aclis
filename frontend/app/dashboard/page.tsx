@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
-import { apiGet } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, MapPin, FileText, AlertCircle, Sparkles, TrendingUp } from "lucide-react";
 import {
@@ -11,17 +9,9 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Progress } from "@/components/ui/progress";
+import { useCurrentUser, useStats, useInsights, useEvaluations } from "@/lib/queries";
 
-interface MeResponse { id: string; email: string | null; role: string }
 interface StatusCount { status: string; count: number }
-interface StatsExtended {
-  kampung_count: number;
-  leader_count: number;
-  pending_reports: number;
-  open_issues: number;
-  issues_by_status: StatusCount[];
-  reports_by_status: StatusCount[];
-}
 interface EvalSummary { id: string; leader_id: string; leader_name: string | null; period: string | null; total: number | null; ulasan: string | null }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -75,50 +65,39 @@ function ChartCard({ title, children, loading }: { title: string; children: Reac
   );
 }
 
+const MAX_EVAL = 60;
+
 export default function DashboardPage() {
-  const [me, setMe]             = useState<MeResponse | null>(null);
-  const [stats, setStats]       = useState<StatsExtended | null>(null);
-  const [evals, setEvals]       = useState<EvalSummary[]>([]);
-  const [insights, setInsights] = useState<string[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [insightsLoading, setInsightsLoading] = useState(true);
+  const { data: me, isLoading: meLoading }           = useCurrentUser();
+  const { data: stats, isLoading: statsLoading }     = useStats();
+  const { data: evData, isLoading: evLoading }       = useEvaluations();
+  const { data: insightsData, isLoading: insightsLoading } = useInsights();
 
-  useEffect(() => {
-    Promise.all([
-      apiGet("/me").catch(() => null),
-      apiGet("/stats").catch(() => null),
-      apiGet("/evaluations").catch(() => []),
-    ]).then(([meData, statsData, evData]) => {
-      setMe(meData);
-      setStats(statsData);
-      const sorted = [...(evData as EvalSummary[])].sort((a, b) => (b.total ?? 0) - (a.total ?? 0));
-      setEvals(sorted.slice(0, 5));
-      setLoading(false);
-    });
+  const loading = meLoading || statsLoading || evLoading;
 
-    apiGet("/stats/insights")
-      .then((d: { insights: string[] }) => setInsights(d.insights ?? []))
-      .catch(() => setInsights([]))
-      .finally(() => setInsightsLoading(false));
-  }, []);
+  const evals = evData
+    ? [...(evData as EvalSummary[])].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 5)
+    : [];
 
-  const issueData = (stats?.issues_by_status ?? []).map(s => ({
+  const insights = insightsData?.insights ?? [];
+
+  const issueData = ((stats as { issues_by_status?: StatusCount[] } | null)?.issues_by_status ?? []).map(s => ({
     status: STATUS_LABEL[s.status] ?? s.status,
     count: s.count,
   }));
-  const reportData = (stats?.reports_by_status ?? []).map(s => ({
+  const reportData = ((stats as { reports_by_status?: StatusCount[] } | null)?.reports_by_status ?? []).map(s => ({
     status: STATUS_LABEL[s.status] ?? s.status,
     count: s.count,
   }));
+
+  const s = stats as { kampung_count?: number; leader_count?: number; pending_reports?: number; open_issues?: number } | null;
 
   const STAT_CARDS = [
-    { label: "Jumlah Kampung",   icon: MapPin,      value: stats?.kampung_count ?? 0,    sub: "Dalam daerah Pontian" },
-    { label: "Jumlah Pemimpin",  icon: Users,       value: stats?.leader_count ?? 0,     sub: "Ketua Kampung & Penghulu" },
-    { label: "Laporan Tertunda", icon: FileText,    value: stats?.pending_reports ?? 0,  sub: "Menunggu penghantaran" },
-    { label: "Isu Terbuka",      icon: AlertCircle, value: stats?.open_issues ?? 0,      sub: "Memerlukan perhatian" },
+    { label: "Jumlah Kampung",   icon: MapPin,      value: s?.kampung_count ?? 0,    sub: "Dalam daerah Pontian" },
+    { label: "Jumlah Pemimpin",  icon: Users,       value: s?.leader_count ?? 0,     sub: "Ketua Kampung & Penghulu" },
+    { label: "Laporan Tertunda", icon: FileText,    value: s?.pending_reports ?? 0,  sub: "Menunggu penghantaran" },
+    { label: "Isu Terbuka",      icon: AlertCircle, value: s?.open_issues ?? 0,      sub: "Memerlukan perhatian" },
   ];
-
-  const MAX_EVAL = 60;
 
   return (
     <AppLayout>
@@ -143,7 +122,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <ChartCard title="Status Isu Komuniti" loading={loading}>
+        <ChartCard title="Status Isu Komuniti" loading={statsLoading}>
           {issueData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-10">Tiada data isu.</p>
           ) : (
@@ -159,7 +138,7 @@ export default function DashboardPage() {
           )}
         </ChartCard>
 
-        <ChartCard title="Status Laporan Bulanan" loading={loading}>
+        <ChartCard title="Status Laporan Bulanan" loading={statsLoading}>
           {reportData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-10">Tiada data laporan.</p>
           ) : (
@@ -183,7 +162,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold">Prestasi Pemimpin Terbaik</p>
           </div>
           <div className="p-4 space-y-3">
-            {loading ? (
+            {evLoading ? (
               Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
             ) : evals.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Tiada data penilaian.</p>
