@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Lora, IBM_Plex_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Barlow_Semi_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/components/providers";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -12,11 +13,10 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const lora = Lora({
+const barlowSemiCondensed = Barlow_Semi_Condensed({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -55,16 +55,18 @@ export default function RootLayout({
       className={cn(
         "h-full antialiased",
         plusJakartaSans.variable,
-        lora.variable,
+        barlowSemiCondensed.variable,
         ibmPlexMono.variable,
         "font-sans"
       )}
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <TooltipProvider>{children}</TooltipProvider>
-          <Toaster richColors closeButton />
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+            <TooltipProvider>{children}</TooltipProvider>
+            <Toaster richColors closeButton />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
