@@ -36,7 +36,7 @@ def mock_sb():
 
 def test_list_kampung_ok(mock_sb):
     tbl = mock_sb.table.return_value
-    tbl.select.return_value.limit.return_value.execute.return_value.data = [KAMPUNG_ROW]
+    tbl.select.return_value.order.return_value.limit.return_value.execute.return_value.data = [KAMPUNG_ROW]
     r = client.get("/kampung", headers=auth())
     assert r.status_code == 200
     body = r.json()

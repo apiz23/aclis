@@ -22,6 +22,7 @@ def _seq_sb(*data_per_call):
         leaf.eq = MagicMock(return_value=leaf)
         leaf.in_ = MagicMock(return_value=leaf)
         leaf.limit = MagicMock(return_value=leaf)
+        leaf.order = MagicMock(return_value=leaf)
         m = MagicMock()
         m.select = MagicMock(return_value=leaf)
         return m
@@ -34,8 +35,8 @@ def _mock_sb_list(rows):
     """Mock sb that returns rows for any typical list/detail query chain."""
     sb = MagicMock()
     sel = sb.table.return_value.select.return_value
-    sel.limit.return_value.execute.return_value.data = rows              # list admin
-    sel.in_.return_value.limit.return_value.execute.return_value.data = rows  # list scoped
+    sel.order.return_value.limit.return_value.execute.return_value.data = rows              # list admin
+    sel.in_.return_value.order.return_value.limit.return_value.execute.return_value.data = rows  # list scoped
     sel.eq.return_value.execute.return_value.data = rows                 # detail
     sel.eq.return_value.limit.return_value.eq.return_value.execute.return_value.count = 0
     sel.limit.return_value.eq.return_value.execute.return_value.count = 0

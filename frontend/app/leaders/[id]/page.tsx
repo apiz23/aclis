@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPatch, uploadLeaderPhoto } from "@/lib/api";
+import { useCurrentUser } from "@/lib/queries";
 import { ArrowLeft, ClipboardList, Pencil, ZoomIn } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 
@@ -70,6 +71,9 @@ type EditValues = z.infer<typeof editSchema>;
 export default function LeaderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
+
+  const { data: me } = useCurrentUser();
+  const isAdmin = me?.role === "admin_daerah";
 
   const [data, setData]           = useState<LeaderDetail | null>(null);
   const [loading, setLoading]     = useState(true);
@@ -154,7 +158,7 @@ export default function LeaderDetailPage() {
             {loading ? "—" : (TYPE_LABEL[data?.type ?? ""] ?? data?.type ?? "—")}
           </p>
         </div>
-        {!loading && data && (
+        {!loading && data && isAdmin && (
           <Button size="sm" variant="outline" onClick={openEdit}>
             <Pencil className="h-3.5 w-3.5 mr-1.5" />
             Kemaskini
