@@ -112,3 +112,30 @@ def test_get_report_summary_404(mock_sb):
     mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
     r = client.get("/reports/missing/summary", headers=auth())
     assert r.status_code == 404
+
+
+def test_update_report_submitted_sets_submitted_at(mock_sb):
+    from unittest.mock import patch
+    import datetime
+    fixed_dt = datetime.datetime(2026, 6, 26, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    fixed_iso = fixed_dt.isoformat()
+
+    report_row = {
+        "id": "r1", "kampung_id": "k1", "period": "2026-06",
+        "status": "submitted", "submitted_at": fixed_iso,
+        "content": "Laporan", "aclis_kampung": {"name": "Kampung Satu"},
+    }
+    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [report_row]
+
+    with patch("app.routers.reports.datetime") as mock_dt:
+        mock_dt.now.return_value = fixed_dt
+        mock_dt.timezone = datetime.timezone
+        r = client.patch("/reports/r1", json={"status": "submitted"}, headers=auth())
+
+    assert r.status_code == 200
+    # Verify submitted_at was included in the update payload
+    call_args = mock_sb.table.return_value.update.call_args
+    payload_sent = call_args[0][0]
+    assert "submitted_at" in payload_sent
+    assert payload_sent["submitted_at"] == fixed_iso
+    assert payload_sent["status"] == "submitted"

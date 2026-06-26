@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
@@ -31,7 +32,7 @@ def list_reports(
         if not scope.allowed_kampung_ids:
             return []
         q = q.in_("kampung_id", scope.allowed_kampung_ids)
-    rows = q.limit(50).execute().data or []
+    rows = q.order("period", desc=True).limit(500).execute().data or []
     return [_row_to_summary(r) for r in rows]
 
 
@@ -89,6 +90,8 @@ def update_report(
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
     if not payload:
         raise HTTPException(400, "No fields to update")
+    if payload.get("status") == "submitted" and "submitted_at" not in payload:
+        payload["submitted_at"] = datetime.now(timezone.utc).isoformat()
     result = (
         sb.table("aclis_monthly_report")
         .update(payload)
