@@ -1,5 +1,6 @@
 import jwt
 from dataclasses import dataclass, field
+from cachetools import TTLCache
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
@@ -7,6 +8,8 @@ from app.config import settings
 from app.db import get_supabase
 
 bearer = HTTPBearer(auto_error=True)
+
+_scope_cache: TTLCache = TTLCache(maxsize=256, ttl=60)
 
 
 @dataclass
@@ -25,13 +28,9 @@ class UserScope:
 
 def decode_token(token: str) -> CurrentUser:
     try:
-        # TODO(security, Phase 8): aud is not verified (verify_aud=False). Before
-        # production, enable audience verification and add aud="authenticated" to
-        # test token fixtures so a token from another audience cannot be accepted.
         payload = jwt.decode(
             token, settings.supabase_jwt_secret,
             algorithms=["HS256"], audience="authenticated",
-            options={"verify_aud": False},
         )
     except jwt.PyJWTError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
@@ -51,10 +50,7 @@ def require_role(*roles: str):
     return checker
 
 
-def get_user_scope(
-    user: CurrentUser = Depends(get_current_user),
-    sb: Client = Depends(get_supabase),
-) -> UserScope:
+def _resolve_scope(user: CurrentUser, sb: Client) -> UserScope:
     if user.role == "admin_daerah":
         return UserScope(is_admin=True)
 
@@ -92,3 +88,16 @@ def get_user_scope(
         return UserScope(is_admin=False, allowed_kampung_ids=kampung_ids, allowed_leader_ids=leader_ids)
 
     return UserScope(is_admin=False)
+
+
+def get_user_scope(
+    user: CurrentUser = Depends(get_current_user),
+    sb: Client = Depends(get_supabase),
+) -> UserScope:
+    key = (user.id, user.role)
+    cached = _scope_cache.get(key)
+    if cached is not None:
+        return cached
+    scope = _resolve_scope(user, sb)
+    _scope_cache[key] = scope
+    return scope

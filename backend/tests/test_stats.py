@@ -14,7 +14,7 @@ def _patch_secret(monkeypatch):
 
 def tok(role="admin_daerah"):
     return jwt.encode(
-        {"sub": "u1", "email": "a@b.com", "app_metadata": {"role": role}},
+        {"sub": "u1", "email": "a@b.com", "app_metadata": {"role": role}, "aud": "authenticated"},
         SECRET, algorithm="HS256",
     )
 

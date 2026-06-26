@@ -13,7 +13,7 @@ def _set_secret(monkeypatch):
 
 def tok(role):
     return jwt.encode({"sub": "u1", "email": "a@b.com",
-                       "app_metadata": {"role": role}}, SECRET, algorithm="HS256")
+                       "app_metadata": {"role": role}, "aud": "authenticated"}, SECRET, algorithm="HS256")
 
 def test_me_returns_user():
     r = client.get("/me", headers={"Authorization": f"Bearer {tok('penghulu')}"})

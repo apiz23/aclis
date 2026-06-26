@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from app.main import app
-from app.auth import get_user_scope, UserScope, CurrentUser
+from app.auth import get_user_scope, UserScope, CurrentUser, _scope_cache
 from app import db
 
 client = TestClient(app)
@@ -46,6 +46,9 @@ def _mock_sb_list(rows):
 # ── Task 1: get_user_scope unit tests ─────────────────────────────────────────
 
 class TestGetUserScope:
+    def setup_method(self):
+        _scope_cache.clear()
+
     def test_admin_returns_admin_scope_no_db(self):
         from app.auth import get_user_scope
         user = CurrentUser(id="u1", email="a@b.com", role="admin_daerah")
