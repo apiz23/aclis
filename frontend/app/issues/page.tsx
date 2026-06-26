@@ -17,7 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { apiGet, apiPost } from "@/lib/api";
-import { AlertCircle, Plus, Bot } from "lucide-react";
+import { AlertCircle, Plus, Bot, TableIcon, MapIcon } from "lucide-react";
+import { MapMount } from "@/components/ui/map-mount";
+import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl, MapFullscreenControl } from "@/components/ui/map";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useIssues, QUERY_KEYS } from "@/lib/queries";
@@ -26,7 +28,7 @@ interface KampungOption { id: string; name: string }
 interface IssueSummary {
   id: string; kampung_id: string | null; kampung_name: string | null;
   type: string | null; location: string | null; description: string | null;
-  ai_category: string | null; status: string;
+  ai_category: string | null; status: string; coords: string | null;
 }
 
 type IssueStatus = "open" | "in_progress" | "resolved" | "closed";
@@ -103,12 +105,29 @@ const columns: ColumnDef<IssueSummary>[] = [
   },
 ];
 
+function parseCoords(coords: string | null): [number, number] | null {
+  if (!coords) return null;
+  const parts = coords.split(",").map(Number);
+  if (parts.length !== 2 || parts.some(isNaN)) return null;
+  return [parts[0], parts[1]];
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  open:        "text-destructive fill-destructive",
+  in_progress: "text-amber-500 fill-amber-500",
+  resolved:    "text-emerald-600 fill-emerald-600",
+  closed:      "text-muted-foreground fill-muted-foreground",
+};
+
+const PONTIAN: [number, number] = [1.4855, 103.3892];
+
 export default function IssuesPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const { data: issues = [], isLoading: loading } = useIssues();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [view, setView] = useState<"table" | "map">("table");
   const { data: kampungs = [] } = useQuery<KampungOption[]>({
     queryKey: QUERY_KEYS.kampung,
     queryFn: () => apiGet("/kampung"),
@@ -154,12 +173,22 @@ export default function IssuesPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
           <h1 className="font-heading text-2xl font-bold tracking-tight">Isu Komuniti</h1>
-          <p className="text-sm text-muted-foreground">Aduan dan permohonan kemudahan awam</p>
+          <p className="text-sm text-muted-foreground">Isu dan aduan daripada komuniti kampung</p>
         </div>
-        <Button size="sm" onClick={openDialog}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Laporkan Isu
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-md border overflow-hidden">
+            <Button size="sm" variant={view === "table" ? "default" : "ghost"} className="rounded-none px-3" onClick={() => setView("table")}>
+              <TableIcon className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant={view === "map" ? "default" : "ghost"} className="rounded-none px-3" onClick={() => setView("map")}>
+              <MapIcon className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button size="sm" onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Laporkan Isu
+          </Button>
+        </div>
       </div>
 
       {!loading && issueList.length > 0 && (
@@ -182,27 +211,77 @@ export default function IssuesPage() {
         </div>
       )}
 
-      <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b">
-          <p className="text-sm font-semibold">Senarai Isu</p>
-        </div>
-
-        {loading ? (
-          <div className="p-4 space-y-2">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-        ) : issueList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <AlertCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm font-medium">Tiada isu komuniti</p>
+      {view === "table" && (
+        <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b">
+            <p className="text-sm font-semibold">Senarai Isu</p>
           </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={filtered}
-            searchPlaceholder="Cari kampung atau jenis..."
-            onRowClick={(issue) => router.push(`/issues/${issue.id}`)}
-          />
-        )}
-      </div>
+
+          {loading ? (
+            <div className="p-4 space-y-2">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+          ) : issueList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <AlertCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
+              <p className="text-sm font-medium">Tiada isu komuniti</p>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filtered}
+              searchPlaceholder="Cari kampung atau jenis..."
+              onRowClick={(issue) => router.push(`/issues/${issue.id}`)}
+            />
+          )}
+        </div>
+      )}
+
+      {view === "map" && (
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <p className="text-sm font-semibold">Peta Isu</p>
+            <p className="text-xs text-muted-foreground">
+              {(issues as IssueSummary[]).filter(i => parseCoords(i.coords)).length} isu dengan koordinat
+            </p>
+          </div>
+          <MapMount className="h-[480px] w-full">
+            <Map center={PONTIAN} zoom={11} className="h-[480px] w-full">
+              <MapTileLayer />
+              <MapZoomControl />
+              <MapFullscreenControl />
+              {(issues as IssueSummary[]).map((issue) => {
+                const pos = parseCoords(issue.coords);
+                if (!pos) return null;
+                return (
+                  <MapMarker
+                    key={issue.id}
+                    position={pos}
+                    icon={
+                      <svg viewBox="0 0 24 24" className={`h-6 w-6 ${STATUS_COLOR[issue.status] ?? STATUS_COLOR.open}`}>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                      </svg>
+                    }
+                  >
+                    <MapPopup>
+                      <div className="rounded-lg border bg-card shadow-sm p-3 min-w-[200px]">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold text-sm">{issue.type ?? "Isu"}</p>
+                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                            issue.status === "open" ? "bg-destructive/10 text-destructive" :
+                            issue.status === "resolved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                            "bg-muted text-muted-foreground"
+                          }`}>{issue.status}</span>
+                        </div>
+                        {issue.kampung_name && <p className="text-xs text-muted-foreground mb-1">{issue.kampung_name}</p>}
+                        {issue.description && <p className="text-xs text-muted-foreground line-clamp-2">{issue.description}</p>}
+                      </div>
+                    </MapPopup>
+                  </MapMarker>
+                );
+              })}
+            </Map>
+          </MapMount>
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
