@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
+from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import LeaderSummary, LeaderDetail, LeaderCreate, LeaderUpdate
 
@@ -81,7 +82,7 @@ def get_leader(
 @router.post("/leaders", response_model=LeaderDetail, status_code=201)
 def create_leader(
     body: LeaderCreate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -94,6 +95,7 @@ def create_leader(
     if not result.data:
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
+    record_audit(sb, actor, "create", "leader", r["id"], {"kampung_id": r.get("kampung_id")})
     kampung = r.get("aclis_kampung") or {}
     mukim = kampung.get("aclis_mukim") or {}
     return LeaderDetail(**_row_to_summary(r).model_dump(), mukim_name=mukim.get("name"), evaluation_count=0)
@@ -103,7 +105,7 @@ def create_leader(
 def update_leader(
     leader_id: str,
     body: LeaderUpdate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -118,6 +120,7 @@ def update_leader(
     )
     if not result.data:
         raise HTTPException(404, "Leader not found")
+    record_audit(sb, actor, "update", "leader", leader_id, {"fields": list(payload.keys())})
     r = result.data[0]
     kampung = r.get("aclis_kampung") or {}
     mukim = kampung.get("aclis_mukim") or {}

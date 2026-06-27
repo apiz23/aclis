@@ -42,15 +42,16 @@ def test_token_without_aud_raises_401(monkeypatch):
         decode_token(token_no_aud)
     assert exc.value.status_code == 401
 
-def test_missing_app_metadata_defaults_to_ketua_kampung(monkeypatch):
+def test_missing_app_metadata_rejected(monkeypatch):
     from app import config
     monkeypatch.setattr(config.settings, "supabase_jwt_secret", SECRET)
     token = jwt.encode(
         {"sub": "u2", "email": "x@y.com", "aud": "authenticated"},
         SECRET, algorithm="HS256",
     )
-    user = decode_token(token)
-    assert user.role == "ketua_kampung"
+    with pytest.raises(HTTPException) as exc:
+        decode_token(token)
+    assert exc.value.status_code == 403
 
 def test_require_role_rejects_disallowed_role(monkeypatch):
     from app import config

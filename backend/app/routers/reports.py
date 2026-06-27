@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
+from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import ReportSummary, ReportDetail, ReportCreate, ReportUpdate, ReportSummaryAI
 
@@ -60,7 +61,7 @@ def get_report(
 @router.post("/reports", response_model=ReportDetail, status_code=201)
 def create_report(
     body: ReportCreate,
-    _: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(get_current_user),
     sb: Client = Depends(get_supabase),
 ):
     result = (
@@ -77,6 +78,7 @@ def create_report(
     if not result.data:
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
+    record_audit(sb, actor, "create", "report", r["id"], {"kampung_id": body.kampung_id})
     return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
 
 
@@ -84,7 +86,7 @@ def create_report(
 def update_report(
     report_id: str,
     body: ReportUpdate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -101,6 +103,7 @@ def update_report(
     )
     if not result.data:
         raise HTTPException(404, "Report not found")
+    record_audit(sb, actor, "update", "report", report_id, {"fields": list(payload.keys())})
     r = result.data[0]
     return ReportDetail(**_row_to_summary(r).model_dump(), content=r.get("content"))
 

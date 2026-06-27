@@ -34,7 +34,9 @@ def decode_token(token: str) -> CurrentUser:
         )
     except jwt.PyJWTError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
-    role = (payload.get("app_metadata") or {}).get("role", "ketua_kampung")
+    role = (payload.get("app_metadata") or {}).get("role")
+    if role not in ("admin_daerah", "ketua_kampung", "penghulu"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "No role assigned")
     return CurrentUser(id=payload["sub"], email=payload.get("email"), role=role)
 
 

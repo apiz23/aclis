@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
+from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import EvaluationSummary, EvaluationDetail, EvaluationCreate, EvaluationUpdate
 
@@ -63,7 +64,7 @@ _SELECT_DETAIL = "id, leader_id, period, total, ulasan, scores, aclis_leader(nam
 @router.post("/evaluations", response_model=EvaluationDetail, status_code=201)
 def create_evaluation(
     body: EvaluationCreate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     total = sum(body.scores.values()) if body.scores else 0
@@ -82,6 +83,7 @@ def create_evaluation(
     if not result.data:
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
+    record_audit(sb, actor, "create", "evaluation", r["id"], {"leader_id": body.leader_id})
     return EvaluationDetail(**_row_to_summary(r).model_dump(), scores=r.get("scores") or {})
 
 
@@ -89,7 +91,7 @@ def create_evaluation(
 def update_evaluation(
     eval_id: str,
     body: EvaluationUpdate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload: dict = {}
@@ -109,5 +111,6 @@ def update_evaluation(
     )
     if not result.data:
         raise HTTPException(404, "Evaluation not found")
+    record_audit(sb, actor, "update", "evaluation", eval_id, {"fields": list(payload.keys())})
     r = result.data[0]
     return EvaluationDetail(**_row_to_summary(r).model_dump(), scores=r.get("scores") or {})

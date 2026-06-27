@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
+from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import IssueSummary, IssueDetail, IssueCreate, IssueUpdate, RecategorizeResponse
 
@@ -75,7 +76,7 @@ def get_issue(
 def create_issue(
     body: IssueCreate,
     background_tasks: BackgroundTasks,
-    _: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(get_current_user),
     sb: Client = Depends(get_supabase),
 ):
     result = (
@@ -94,6 +95,7 @@ def create_issue(
     if not result.data:
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
+    record_audit(sb, actor, "create", "issue", r["id"], {"kampung_id": body.kampung_id})
     if body.description:
         background_tasks.add_task(_bg_categorize, r["id"], body.description, body.type, sb)
     return IssueDetail(**_row_to_summary(r).model_dump())
@@ -103,7 +105,7 @@ def create_issue(
 def recategorize_issue(
     issue_id: str,
     background_tasks: BackgroundTasks,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     rows = (
@@ -120,6 +122,7 @@ def recategorize_issue(
     if not description:
         raise HTTPException(400, "Issue has no description to categorize")
     background_tasks.add_task(_bg_categorize, issue_id, description, r.get("type"), sb)
+    record_audit(sb, actor, "recategorize", "issue", issue_id)
     return RecategorizeResponse(status="queued", issue_id=issue_id)
 
 
@@ -127,7 +130,7 @@ def recategorize_issue(
 def update_issue(
     issue_id: str,
     body: IssueUpdate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -142,5 +145,6 @@ def update_issue(
     )
     if not result.data:
         raise HTTPException(404, "Issue not found")
+    record_audit(sb, actor, "update", "issue", issue_id, {"fields": list(payload.keys())})
     r = result.data[0]
     return IssueDetail(**_row_to_summary(r).model_dump())

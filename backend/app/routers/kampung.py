@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
+from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpdate, MukimOption
 
@@ -64,7 +65,7 @@ def list_mukim(
 @router.post("/kampung", response_model=KampungDetail, status_code=201)
 def create_kampung(
     body: KampungCreate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -77,6 +78,7 @@ def create_kampung(
     if not result.data:
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
+    record_audit(sb, actor, "create", "kampung", r["id"])
     return KampungDetail(**_row_to_summary(r).model_dump(), resident_count=0)
 
 
@@ -84,7 +86,7 @@ def create_kampung(
 def update_kampung(
     kampung_id: str,
     body: KampungUpdate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -99,6 +101,7 @@ def update_kampung(
     )
     if not result.data:
         raise HTTPException(404, "Kampung not found")
+    record_audit(sb, actor, "update", "kampung", kampung_id, {"fields": list(payload.keys())})
     r = result.data[0]
     resident_count = (
         sb.table("aclis_resident")

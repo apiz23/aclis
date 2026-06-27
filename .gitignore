@@ -9,6 +9,9 @@
 /*.docx
 /*.doc
 /*.pdf
+extracted
+*.csv
+!*.example.csv
 
 # --- Python ---
 __pycache__/

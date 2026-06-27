@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_user_scope, UserScope, require_role, CurrentUser
+from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import ResidentSummary, ResidentCreate, ResidentUpdate
 
@@ -45,7 +46,7 @@ def list_residents(
 def create_resident(
     kampung_id: str,
     body: ResidentCreate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     result = (
@@ -63,14 +64,16 @@ def create_resident(
     )
     if not result.data:
         raise HTTPException(500, "Insert failed")
-    return _row_to_summary(result.data[0])
+    row = result.data[0]
+    record_audit(sb, actor, "create", "resident", row["id"], {"kampung_id": kampung_id})
+    return _row_to_summary(row)
 
 
 @router.patch("/residents/{resident_id}", response_model=ResidentSummary)
 def update_resident(
     resident_id: str,
     body: ResidentUpdate,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     payload = body.model_dump(exclude_unset=True)
@@ -85,13 +88,14 @@ def update_resident(
     )
     if not result.data:
         raise HTTPException(404, "Resident not found")
+    record_audit(sb, actor, "update", "resident", resident_id, {"fields": list(payload.keys())})
     return _row_to_summary(result.data[0])
 
 
 @router.delete("/residents/{resident_id}", status_code=204)
 def delete_resident(
     resident_id: str,
-    _: CurrentUser = Depends(require_role("admin_daerah")),
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
     result = (
@@ -103,3 +107,4 @@ def delete_resident(
     )
     if not result.data:
         raise HTTPException(404, "Resident not found")
+    record_audit(sb, actor, "delete", "resident", resident_id)
