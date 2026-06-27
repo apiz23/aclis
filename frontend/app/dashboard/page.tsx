@@ -2,7 +2,7 @@
 
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, MapPin, FileText, AlertCircle, Sparkles, TrendingUp } from "lucide-react";
+import { Users, MapPin, FileText, AlertCircle, Sparkles, TrendingUp, AlertTriangle } from "lucide-react";
 import {
   ChartContainer, ChartTooltip, ChartTooltipContent,
   type ChartConfig,
@@ -92,6 +92,9 @@ export default function DashboardPage() {
 
   const s = stats as { kampung_count?: number; leader_count?: number; pending_reports?: number; open_issues?: number } | null;
 
+  const lateCount = ((stats as { reports_by_status?: StatusCount[] } | null)?.reports_by_status ?? [])
+    .find(s => s.status === "late")?.count ?? 0;
+
   const STAT_CARDS = [
     { label: "Jumlah Kampung",   icon: MapPin,      value: s?.kampung_count ?? 0,    sub: "Dalam daerah Pontian" },
     { label: "Jumlah Pemimpin",  icon: Users,       value: s?.leader_count ?? 0,     sub: "Ketua Kampung & Penghulu" },
@@ -114,6 +117,19 @@ export default function DashboardPage() {
           </p>
         )}
       </div>
+
+      {!statsLoading && lateCount > 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <span className="font-semibold text-destructive">{lateCount} laporan lewat</span>
+            <span className="text-muted-foreground"> belum dihantar. </span>
+            <a href="/reports" className="text-destructive underline underline-offset-2 font-medium hover:opacity-80">
+              Semak laporan
+            </a>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {STAT_CARDS.map((card) => (
