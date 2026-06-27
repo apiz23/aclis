@@ -240,7 +240,7 @@ export default function IssuesPage() {
           <div className="px-5 py-4 border-b flex items-center justify-between">
             <p className="text-sm font-semibold">Peta Isu</p>
             <p className="text-xs text-muted-foreground">
-              {(issues as IssueSummary[]).filter(i => parseCoords(i.coords)).length} isu dengan koordinat
+              {(filtered as IssueSummary[]).filter(i => parseCoords(i.coords)).length} isu dengan koordinat
             </p>
           </div>
           <MapMount className="h-[480px] w-full">
@@ -248,7 +248,7 @@ export default function IssuesPage() {
               <MapTileLayer />
               <MapZoomControl />
               <MapFullscreenControl />
-              {(issues as IssueSummary[]).map((issue) => {
+              {(filtered as IssueSummary[]).map((issue) => {
                 const pos = parseCoords(issue.coords);
                 if (!pos) return null;
                 return (
