@@ -109,7 +109,7 @@ export default function KampungDetailPage() {
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: residents = [], isLoading: residentsLoading, refetch: refetchResidents } = useQuery<Resident[]>({
+  const { data: residents = [], isLoading: residentsLoading } = useQuery<Resident[]>({
     queryKey: ["residents", id],
     queryFn: () => apiGet(`/kampung/${id}/residents`),
   });
@@ -160,7 +160,7 @@ export default function KampungDetailPage() {
         toast.success("Penduduk berjaya ditambah.");
       }
       setResidentDialogOpen(false);
-      refetchResidents();
+      qc.invalidateQueries({ queryKey: ["residents", id] });
       qc.invalidateQueries({ queryKey: ["kampung", id] });
     } catch {
       toast.error("Gagal menyimpan. Cuba semula.");
@@ -173,7 +173,7 @@ export default function KampungDetailPage() {
     try {
       await apiDelete(`/residents/${residentId}`);
       toast.success("Rekod penduduk dipadam.");
-      refetchResidents();
+      qc.invalidateQueries({ queryKey: ["residents", id] });
       qc.invalidateQueries({ queryKey: ["kampung", id] });
     } catch {
       toast.error("Gagal memadam. Cuba semula.");
@@ -331,9 +331,9 @@ export default function KampungDetailPage() {
             Senarai Penduduk
             {!residentsLoading && (
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                ({(residents as Resident[]).length} rekod
+                ({residents.length} rekod
                 {(() => {
-                  const b40 = (residents as Resident[]).filter(r => r.b40_status).length;
+                  const b40 = residents.filter(r => r.b40_status).length;
                   return b40 > 0 ? `, ${b40} B40` : "";
                 })()})
               </span>
@@ -351,7 +351,7 @@ export default function KampungDetailPage() {
             <div className="p-4 space-y-2">
               {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
-          ) : (residents as Resident[]).length === 0 ? (
+          ) : residents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground">
               Tiada rekod penduduk.
             </div>
@@ -368,7 +368,7 @@ export default function KampungDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {(residents as Resident[]).map((r) => (
+                {residents.map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-2.5 font-medium">{r.name ?? "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.ic_no ?? "—"}</td>
@@ -384,7 +384,7 @@ export default function KampungDetailPage() {
                     {isAdmin && (
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-1 justify-end">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditResident(r)}>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditResident(r)} aria-label="Edit penduduk">
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
@@ -392,6 +392,7 @@ export default function KampungDetailPage() {
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             onClick={() => deleteResident(r.id)}
                             disabled={deletingId === r.id}
+                            aria-label="Padam penduduk"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
