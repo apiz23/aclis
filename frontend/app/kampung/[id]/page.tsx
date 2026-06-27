@@ -18,9 +18,9 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { MapMount } from "@/components/ui/map-mount";
 import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/components/ui/map";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiGet, apiPatch, apiPost, apiDelete } from "@/lib/api";
 import { QUERY_KEYS, useCurrentUser } from "@/lib/queries";
-import { ArrowLeft, MapPin, Pencil } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useMapEvents } from "react-leaflet";
 
 interface KampungDetail {
@@ -56,6 +56,25 @@ const editSchema = z.object({
 });
 type EditValues = z.infer<typeof editSchema>;
 
+interface Resident {
+  id: string;
+  kampung_id: string | null;
+  name: string | null;
+  ic_no: string | null;
+  phone: string | null;
+  b40_status: boolean;
+  address: string | null;
+}
+
+const residentSchema = z.object({
+  name:       z.string().min(1, "Nama diperlukan."),
+  ic_no:      z.string().optional(),
+  phone:      z.string().optional(),
+  b40_status: z.boolean(),
+  address:    z.string().optional(),
+});
+type ResidentValues = z.infer<typeof residentSchema>;
+
 function MapClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) {
@@ -85,6 +104,84 @@ export default function KampungDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [picking, setPicking] = useState(false);
+
+  const [residentDialogOpen, setResidentDialogOpen] = useState(false);
+  const [editingResident, setEditingResident] = useState<Resident | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { data: residents = [], isLoading: residentsLoading, refetch: refetchResidents } = useQuery<Resident[]>({
+    queryKey: ["residents", id],
+    queryFn: () => apiGet(`/kampung/${id}/residents`),
+  });
+
+  const residentForm = useForm<ResidentValues>({
+    resolver: zodResolver(residentSchema),
+    defaultValues: { name: "", ic_no: "", phone: "", b40_status: false, address: "" },
+  });
+
+  function openAddResident() {
+    setEditingResident(null);
+    residentForm.reset({ name: "", ic_no: "", phone: "", b40_status: false, address: "" });
+    setResidentDialogOpen(true);
+  }
+
+  function openEditResident(r: Resident) {
+    setEditingResident(r);
+    residentForm.reset({
+      name:       r.name ?? "",
+      ic_no:      r.ic_no ?? "",
+      phone:      r.phone ?? "",
+      b40_status: r.b40_status,
+      address:    r.address ?? "",
+    });
+    setResidentDialogOpen(true);
+  }
+
+  async function onResidentSubmit(values: ResidentValues) {
+    try {
+      if (editingResident) {
+        await apiPatch(`/residents/${editingResident.id}`, {
+          name:       values.name,
+          ic_no:      values.ic_no || null,
+          phone:      values.phone || null,
+          b40_status: values.b40_status,
+          address:    values.address || null,
+        });
+        toast.success("Maklumat penduduk dikemaskini.");
+      } else {
+        await apiPost(`/kampung/${id}/residents`, {
+          kampung_id: id,
+          name:       values.name,
+          ic_no:      values.ic_no || null,
+          phone:      values.phone || null,
+          b40_status: values.b40_status,
+          address:    values.address || null,
+        });
+        toast.success("Penduduk berjaya ditambah.");
+      }
+      setResidentDialogOpen(false);
+      refetchResidents();
+      qc.invalidateQueries({ queryKey: ["kampung", id] });
+    } catch {
+      toast.error("Gagal menyimpan. Cuba semula.");
+    }
+  }
+
+  async function deleteResident(residentId: string) {
+    if (!confirm("Padam rekod penduduk ini?")) return;
+    setDeletingId(residentId);
+    try {
+      await apiDelete(`/residents/${residentId}`);
+      toast.success("Rekod penduduk dipadam.");
+      refetchResidents();
+      qc.invalidateQueries({ queryKey: ["kampung", id] });
+    } catch {
+      toast.error("Gagal memadam. Cuba semula.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const { control, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
   });
@@ -226,6 +323,156 @@ export default function KampungDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Residents section */}
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="px-5 py-4 border-b flex items-center justify-between">
+          <p className="text-sm font-semibold">
+            Senarai Penduduk
+            {!residentsLoading && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                ({(residents as Resident[]).length} rekod
+                {(() => {
+                  const b40 = (residents as Resident[]).filter(r => r.b40_status).length;
+                  return b40 > 0 ? `, ${b40} B40` : "";
+                })()})
+              </span>
+            )}
+          </p>
+          {isAdmin && !isLoading && data && (
+            <Button size="sm" variant="outline" onClick={openAddResident}>
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+              Tambah Penduduk
+            </Button>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          {residentsLoading ? (
+            <div className="p-4 space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            </div>
+          ) : (residents as Resident[]).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground">
+              Tiada rekod penduduk.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/40 text-xs text-muted-foreground uppercase tracking-wide">
+                  <th className="px-4 py-2 text-left font-medium">Nama</th>
+                  <th className="px-4 py-2 text-left font-medium">No. IC</th>
+                  <th className="px-4 py-2 text-left font-medium">Telefon</th>
+                  <th className="px-4 py-2 text-left font-medium">Alamat</th>
+                  <th className="px-4 py-2 text-center font-medium">B40</th>
+                  {isAdmin && <th className="px-4 py-2" />}
+                </tr>
+              </thead>
+              <tbody>
+                {(residents as Resident[]).map((r) => (
+                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-2.5 font-medium">{r.name ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.ic_no ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{r.phone ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground max-w-[160px] truncate">{r.address ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      {r.b40_status ? (
+                        <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20">B40</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    {isAdmin && (
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-1 justify-end">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditResident(r)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon" variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => deleteResident(r.id)}
+                            disabled={deletingId === r.id}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Resident add/edit dialog */}
+      {isAdmin && (
+        <Dialog open={residentDialogOpen} onOpenChange={setResidentDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingResident ? "Kemaskini Penduduk" : "Tambah Penduduk"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={residentForm.handleSubmit(onResidentSubmit)} className="space-y-3 pt-1">
+
+              <Controller name="name" control={residentForm.control} render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Nama *</FieldLabel>
+                  <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )} />
+
+              <Controller name="ic_no" control={residentForm.control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>No. IC</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="900101-01-1234" />
+                </Field>
+              )} />
+
+              <Controller name="phone" control={residentForm.control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Telefon</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="0123456789" />
+                </Field>
+              )} />
+
+              <Controller name="address" control={residentForm.control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Alamat</FieldLabel>
+                  <Input {...field} id={field.name} />
+                </Field>
+              )} />
+
+              <Controller name="b40_status" control={residentForm.control} render={({ field }) => (
+                <Field>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="b40_status"
+                      checked={field.value}
+                      onChange={e => field.onChange(e.target.checked)}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <FieldLabel htmlFor="b40_status" className="!mb-0 cursor-pointer">Golongan B40</FieldLabel>
+                  </div>
+                </Field>
+              )} />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setResidentDialogOpen(false)}>Batal</Button>
+                <LoadingButton
+                  type="submit"
+                  loading={residentForm.formState.isSubmitting}
+                  loadingText="Menyimpan…"
+                >
+                  Simpan
+                </LoadingButton>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Edit dialog */}
       {isAdmin && (

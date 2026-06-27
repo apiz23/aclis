@@ -40,6 +40,15 @@ export async function apiPatch(path: string, body: unknown) {
   return res.json();
 }
 
+export async function apiDelete(path: string): Promise<void> {
+  const token = await getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+    method: "DELETE",
+    headers: buildAuthHeaders(token),
+  });
+  if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
+}
+
 export async function uploadLeaderPhoto(file: File): Promise<string> {
   const { supabase } = await import("@/lib/supabase");
   const ext  = file.name.split(".").pop() ?? "jpg";
