@@ -1,7 +1,7 @@
 # Laporan Kemajuan Sistem ACLIS — Pejabat Daerah Pontian
 **Sistem:** AI Community Leadership Intelligence System (ACLIS)
 **Tarikh:** 27 Jun 2026
-**Disediakan oleh:** Faiz Zakwan Bin Rejmi, UTHM
+**Disediakan oleh:** Hafizu
 
 ---
 
@@ -45,7 +45,7 @@ Sistem ACLIS telah siap dibangunkan sepenuhnya dan bersedia untuk sesi demonstra
 
 **6. Ringkasan Laporan oleh AI**
 - Sistem boleh jana ringkasan automatik bagi setiap laporan bulanan dalam 2–3 ayat
-- Membantu pegawai daerah semak laporan dengan lebih cepat tanpa perlu baca keseluruhan kandungan
+- Membantu pegawai daerah semak laporan dengan lebih cepat
 
 ---
 
@@ -94,27 +94,24 @@ Sistem ini mengendalikan data sensitif (IC, alamat, status B40). Langkah perlind
 | Pembangunan sistem | ✅ **Selesai** |
 | Pengujian teknikal (149 ujian unit) | ✅ **Selesai — semua lulus** |
 | Demonstrasi kepada klien | ⏳ Menunggu jadual |
-| Pengujian kebolehgunaan (dengan kakitangan sebenar) | ⏳ Perlu dijadualkan |
-| Penggunaan secara langsung (live deployment) | ⏳ Selepas pengujian kebolehgunaan |
+| Pengujian pengguna (dengan kakitangan sebenar) | ⏳ Perlu dijadualkan |
+| Penggunaan secara langsung (live deployment) | ⏳ Selepas pengujian pengguna |
 
 ---
 
 ## Langkah Seterusnya (Perlukan Kerjasama Pejabat Daerah)
 
 1. **Tetapkan tarikh demonstrasi** — sistem boleh ditunjukkan kepada pegawai yang berkaitan
-2. **Sesi pengujian kebolehgunaan** — kami perlukan 5–8 orang pengguna (pegawai daerah + beberapa Ketua Kampung) untuk cuba sistem selama ±1 jam dan beri maklum balas
-3. **Sediakan data sebenar untuk dimasukkan** — boleh mulakan dengan data kampung dan pemimpin dalam mukim Pontian sebagai data pilot
+2. **Sesi pengujian pengguna** — perlukan 5–8 orang kakitangan (pegawai daerah + beberapa Ketua Kampung) untuk cuba sistem selama ±1 jam dan beri maklum balas
+3. **Sediakan data untuk dimasukkan** — boleh mulakan dengan data kampung dan pemimpin dalam mukim Pontian sebagai data pilot
 
 ---
 
-## Akses Demo
+## Hubungi Pembangun
 
-Sistem boleh diakses untuk demonstrasi apabila diperlukan. Sila hubungi pelajar untuk mendapatkan pautan dan akaun demo.
-
-**Faiz Zakwan Bin Rejmi**
-CI240046 | UTHM Fakulti Sains Komputer dan Teknologi Maklumat
-Penyelia: Prof. Madya Dr. Muhaini Binti Othman
+**Hafizu**
+hafizu2302@gmail.com
 
 ---
 
-*Laporan ini disediakan bagi tujuan kemajuan projek PSM. Sebarang pertanyaan boleh dikemukakan terus kepada pelajar.*
+*Laporan ini disediakan bagi tujuan kemajuan projek. Sebarang pertanyaan boleh dikemukakan terus kepada pembangun.*

@@ -1,7 +1,6 @@
 # ACLIS — AI Community Leadership Intelligence System
 
-**Projek Sarjana Muda (PSM) | UTHM | CI240046 Faiz Zakwan Bin Rejmi**
-Supervisor: Prof. Madya Dr. Muhaini Binti Othman
+**Developed by Hafizu | hafizu2302@gmail.com**
 
 Web platform centralizing Ketua Kampung / Penghulu data for Pejabat Daerah Pontian, with role-based access control and light AI analytics.
 
@@ -180,15 +179,15 @@ AI falls back to `MockProvider` (returns `None`) if `AI_PROVIDER=mock` or JamAI 
 
 ---
 
-## PSM Completion Status
+## Project Status
 
-| PSM Phase | Status |
+| Phase | Status |
 |---|---|
-| Fasa 1: Analisis Keperluan | ✅ Done |
-| Fasa 2: Reka Bentuk Sistem | ✅ Done |
-| Fasa 3: Pembangunan Sistem | ✅ Done — all 6 modules complete, 149 tests passing |
-| Fasa 4: Pengujian Kebolehgunaan | ⏳ Pending — usability testing with real users required |
-| Fasa 5: Penilaian & Dokumentasi | ⏳ Pending — final PSM report |
+| Requirements & Planning | ✅ Done |
+| System Design | ✅ Done |
+| Development — all 6 modules | ✅ Done — 149 tests passing |
+| Usability Testing (real users) | ⏳ Pending |
+| Production Deployment | ⏳ Pending |
 
 ---
 
