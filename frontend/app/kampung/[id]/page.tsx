@@ -20,7 +20,8 @@ import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/compon
 import { LoadingButton } from "@/components/ui/loading-button";
 import { apiGet, apiPatch } from "@/lib/api";
 import { QUERY_KEYS, useCurrentUser } from "@/lib/queries";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil } from "lucide-react";
+import { useMapEvents } from "react-leaflet";
 
 interface KampungDetail {
   id: string;
@@ -55,6 +56,15 @@ const editSchema = z.object({
 });
 type EditValues = z.infer<typeof editSchema>;
 
+function MapClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onPick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 export default function KampungDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -74,7 +84,8 @@ export default function KampungDetailPage() {
   });
 
   const [editOpen, setEditOpen] = useState(false);
-  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<EditValues>({
+  const [picking, setPicking] = useState(false);
+  const { control, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
   });
 
@@ -196,12 +207,35 @@ export default function KampungDetailPage() {
               Tiada koordinat — tambah lat/lng untuk paparkan pin pada peta.
             </p>
           )}
+          {isAdmin && !isLoading && data && (
+            <div className="px-5 py-3 border-t">
+              {!picking && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPicking(true);
+                    openEdit();
+                  }}
+                >
+                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                  Tetapkan Lokasi
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Edit dialog */}
       {isAdmin && (
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <Dialog
+          open={editOpen}
+          onOpenChange={(open) => {
+            setEditOpen(open);
+            if (!open) setPicking(false);
+          }}
+        >
           <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Kemaskini Kampung</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
@@ -251,6 +285,56 @@ export default function KampungDetailPage() {
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )} />
+              </div>
+
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  if (!navigator.geolocation) return;
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      setValue("lat", pos.coords.latitude);
+                      setValue("lng", pos.coords.longitude);
+                    },
+                    () => toast.error("Gagal mendapat lokasi. Pastikan kebenaran lokasi diberikan.")
+                  );
+                }}
+              >
+                <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                Guna Lokasi Semasa
+              </Button>
+
+              {/* Map picker */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Atau klik pada peta untuk tetapkan koordinat</p>
+                <MapMount className="h-48 w-full rounded-md overflow-hidden border">
+                  <Map
+                    center={
+                      (watch("lat") && watch("lng"))
+                        ? [Number(watch("lat")), Number(watch("lng"))]
+                        : (hasCoords ? [data!.lat!, data!.lng!] : [1.4855, 103.3892])
+                    }
+                    zoom={hasCoords ? 14 : 11}
+                    className="h-48 w-full"
+                  >
+                    <MapTileLayer />
+                    <MapZoomControl />
+                    <MapClickHandler onPick={(lat, lng) => {
+                      setValue("lat", lat);
+                      setValue("lng", lng);
+                    }} />
+                    {(watch("lat") && watch("lng")) && (
+                      <MapMarker position={[Number(watch("lat")), Number(watch("lng"))]}>
+                        <MapPopup>
+                          <p className="text-sm font-semibold">{data?.name}</p>
+                        </MapPopup>
+                      </MapMarker>
+                    )}
+                  </Map>
+                </MapMount>
               </div>
 
               <Controller name="profile" control={control} render={({ field }) => (
