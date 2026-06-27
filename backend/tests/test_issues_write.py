@@ -36,6 +36,15 @@ def mock_sb():
     app.dependency_overrides.pop(db.get_supabase, None)
 
 
+def test_list_issues_includes_coords(mock_sb):
+    row = {**ISSUE_ROW, "coords": "1.4855,103.3892", "aclis_kampung": {"name": "Kg Test"}}
+    tbl = mock_sb.table.return_value
+    tbl.select.return_value.order.return_value.limit.return_value.execute.return_value.data = [row]
+    r = client.get("/issues", headers=auth())
+    assert r.status_code == 200
+    assert r.json()[0]["coords"] == "1.4855,103.3892"
+
+
 def test_create_issue_ok(mock_sb):
     mock_sb.table.return_value.insert.return_value.select.return_value.execute.return_value.data = [ISSUE_ROW]
     r = client.post("/issues", headers=auth(), json={
