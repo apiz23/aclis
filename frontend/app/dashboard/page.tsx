@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, MapPin, FileText, AlertCircle, Sparkles, TrendingUp, AlertTriangle } from "lucide-react";
@@ -124,9 +125,9 @@ export default function DashboardPage() {
           <div className="text-sm">
             <span className="font-semibold text-destructive">{lateCount} laporan lewat</span>
             <span className="text-muted-foreground"> belum dihantar. </span>
-            <a href="/reports" className="text-destructive underline underline-offset-2 font-medium hover:opacity-80">
+            <Link href="/reports" className="text-destructive underline underline-offset-2 font-medium hover:opacity-80">
               Semak laporan
-            </a>
+            </Link>
           </div>
         </div>
       )}

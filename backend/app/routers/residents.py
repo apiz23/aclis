@@ -73,7 +73,7 @@ def update_resident(
     _: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
-    payload = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
+    payload = body.model_dump(exclude_unset=True)
     if not payload:
         raise HTTPException(400, "No fields to update")
     result = (

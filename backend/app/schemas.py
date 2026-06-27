@@ -179,7 +179,7 @@ class ResidentSummary(BaseModel):
     address: str | None
 
 class ResidentCreate(BaseModel):
-    kampung_id: str
+    kampung_id: str | None = None  # ignored; kampung_id comes from URL path
     name: str
     ic_no: str | None = None
     phone: str | None = None
