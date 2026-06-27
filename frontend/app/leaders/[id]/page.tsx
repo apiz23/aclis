@@ -6,6 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/app-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +19,8 @@ import { apiGet, apiPatch, uploadLeaderPhoto } from "@/lib/api";
 import { useCurrentUser } from "@/lib/queries";
 import { ArrowLeft, ClipboardList, Pencil, ZoomIn } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { MapMount } from "@/components/ui/map-mount";
+import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/components/ui/map";
 
 interface LeaderDetail {
   id: string;
@@ -38,6 +41,8 @@ interface LeaderDetail {
 }
 
 interface KampungOption { id: string; name: string }
+
+interface KampungCoords { lat: number | null; lng: number | null; name: string }
 
 const TYPE_LABEL: Record<string, string> = {
   ketua_kampung: "Ketua Kampung",
@@ -85,6 +90,13 @@ export default function LeaderDetailPage() {
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
+  });
+
+  const { data: kampungCoords } = useQuery<KampungCoords>({
+    queryKey: ["kampung", data?.kampung_id],
+    queryFn: () => apiGet(`/kampung/${data!.kampung_id}`),
+    enabled: !!data?.kampung_id,
+    staleTime: 5 * 60_000,
   });
 
   function load() {
@@ -227,6 +239,28 @@ export default function LeaderDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Map card */}
+        {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null && (
+          <div className="rounded-lg border bg-card overflow-hidden md:w-72 shrink-0">
+            <div className="px-5 py-4 border-b">
+              <p className="text-sm font-semibold">Lokasi Kampung</p>
+            </div>
+            <MapMount className="h-56 w-full">
+              <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-56 w-full">
+                <MapTileLayer />
+                <MapZoomControl />
+                <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
+                  <MapPopup>
+                    <div className="rounded-lg border bg-card p-3">
+                      <p className="font-semibold text-sm">{kampungCoords.name}</p>
+                    </div>
+                  </MapPopup>
+                </MapMarker>
+              </Map>
+            </MapMount>
+          </div>
+        )}
       </div>
 
       {/* Photo dialog */}
