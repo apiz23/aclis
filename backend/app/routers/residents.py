@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_user_scope, UserScope, require_role, CurrentUser
 from app.db import get_supabase
@@ -73,7 +73,7 @@ def update_resident(
     _: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
 ):
-    payload = {k: v for k, v in body.model_dump().items() if v is not None}
+    payload = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
     if not payload:
         raise HTTPException(400, "No fields to update")
     result = (
@@ -98,6 +98,7 @@ def delete_resident(
         sb.table("aclis_resident")
         .delete()
         .eq("id", resident_id)
+        .select("id")
         .execute()
     )
     if not result.data:

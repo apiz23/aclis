@@ -86,13 +86,13 @@ def test_update_resident_400_empty(mock_sb):
 
 def test_delete_resident_ok(mock_sb):
     tbl = mock_sb.table.return_value
-    tbl.delete.return_value.eq.return_value.execute.return_value.data = [RESIDENT_ROW]
+    tbl.delete.return_value.eq.return_value.select.return_value.execute.return_value.data = [RESIDENT_ROW]
     r = client.delete("/residents/r1", headers=auth())
     assert r.status_code == 204
 
 def test_delete_resident_404(mock_sb):
     tbl = mock_sb.table.return_value
-    tbl.delete.return_value.eq.return_value.execute.return_value.data = []
+    tbl.delete.return_value.eq.return_value.select.return_value.execute.return_value.data = []
     r = client.delete("/residents/missing", headers=auth())
     assert r.status_code == 404
 
