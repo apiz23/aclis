@@ -168,3 +168,27 @@ class MukimOption(BaseModel):
 class RecategorizeResponse(BaseModel):
     status: str
     issue_id: str
+
+class ResidentSummary(BaseModel):
+    id: str
+    kampung_id: str | None
+    name: str | None
+    ic_no: str | None
+    phone: str | None
+    b40_status: bool
+    address: str | None
+
+class ResidentCreate(BaseModel):
+    kampung_id: str
+    name: str
+    ic_no: str | None = None
+    phone: str | None = None
+    b40_status: bool = False
+    address: str | None = None
+
+class ResidentUpdate(BaseModel):
+    name: str | None = None
+    ic_no: str | None = None
+    phone: str | None = None
+    b40_status: bool | None = None
+    address: str | None = None
