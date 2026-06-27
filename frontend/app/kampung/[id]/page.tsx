@@ -50,8 +50,8 @@ const editSchema = z.object({
   mukim_id:  z.string().optional(),
   b40_count: z.coerce.number().min(0).optional().or(z.literal("")),
   profile:   z.string().optional(),
-  lat:       z.coerce.number().min(-90).max(90).optional().or(z.literal("")),
-  lng:       z.coerce.number().min(-180).max(180).optional().or(z.literal("")),
+  lat:       z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().min(-90).max(90).optional()),
+  lng:       z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().min(-180).max(180).optional()),
 });
 type EditValues = z.infer<typeof editSchema>;
 
@@ -85,8 +85,8 @@ export default function KampungDetailPage() {
       mukim_id:  data.mukim_id ?? "",
       b40_count: data.b40_count,
       profile:   data.profile ?? "",
-      lat:       data.lat ?? "",
-      lng:       data.lng ?? "",
+      lat:       data.lat ?? undefined,
+      lng:       data.lng ?? undefined,
     });
     setEditOpen(true);
   }
