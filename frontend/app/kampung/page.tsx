@@ -42,12 +42,12 @@ const kampungSchema = z.object({
   mukim_id: z.string().optional(),
   b40_count: z.coerce.number().min(0, "Tidak boleh negatif.").optional(),
   profile: z.string().optional(),
-  lat: z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().min(-90).max(90).optional()),
-  lng: z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().min(-180).max(180).optional()),
+  lat: z.literal("").or(z.coerce.number().min(-90).max(90)).optional(),
+  lng: z.literal("").or(z.coerce.number().min(-180).max(180)).optional(),
 });
 type KampungFormValues = z.infer<typeof kampungSchema>;
 
-const EMPTY: KampungFormValues = { name: "", mukim_id: "", b40_count: undefined, profile: "", lat: undefined, lng: undefined };
+const EMPTY: KampungFormValues = { name: "", mukim_id: "", b40_count: undefined, profile: "", lat: "", lng: "" };
 
 const PONTIAN: [number, number] = [1.4855, 103.3892];
 
