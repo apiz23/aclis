@@ -8,7 +8,6 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/app-layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +52,12 @@ const TYPE_LABEL: Record<string, string> = {
   ketua_kampung:    "Ketua Kampung",
   penghulu:         "Penghulu",
   ketua_masyarakat: "Ketua Masyarakat",
+};
+
+const TYPE_BADGE: Record<string, string> = {
+  ketua_kampung:    "bg-primary/10 text-primary",
+  penghulu:         "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  ketua_masyarakat: "bg-muted text-muted-foreground",
 };
 
 function InfoField({ label, value }: { label: string; value: React.ReactNode }) {
@@ -189,18 +194,10 @@ export default function LeaderDetailPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => router.push("/leaders")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex-1">
-          {loading ? <Skeleton className="h-7 w-56" /> : (
-            <h1 className="font-heading text-2xl font-bold tracking-tight">{data?.name ?? "Pemimpin"}</h1>
-          )}
-          <p className="text-sm text-muted-foreground">
-            {loading ? "—" : (TYPE_LABEL[data?.type ?? ""] ?? data?.type ?? "—")}
-          </p>
-        </div>
         {!loading && data && isAdmin && (
           <Button size="sm" variant="outline" onClick={openEdit}>
             <Pencil className="h-3.5 w-3.5 mr-1.5" />
@@ -211,40 +208,102 @@ export default function LeaderDetailPage() {
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan data pemimpin.</p>}
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left sidebar: photo + eval */}
-        <div className="flex lg:flex-col items-center gap-4 lg:w-40 shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Left column: photo + identity + stats + map */}
+        <div className="lg:w-1/3 shrink-0 flex flex-col gap-4">
+
+          {/* Photo */}
           <button
             type="button"
-            className={`relative group ${data?.photo_url ? "cursor-pointer" : "cursor-default"}`}
+            className={`relative group w-full rounded-xl overflow-hidden aspect-[4/3] bg-muted ${data?.photo_url ? "cursor-pointer" : "cursor-default"}`}
             onClick={() => data?.photo_url && setPhotoOpen(true)}
             disabled={!data?.photo_url}
           >
             {loading ? (
-              <Skeleton className="h-28 w-28 rounded-xl" />
+              <Skeleton className="absolute inset-0 rounded-xl" />
+            ) : data?.photo_url ? (
+              <img src={data.photo_url} alt={data.name} className="w-full h-full object-cover" />
             ) : (
-              <Avatar className="h-28 w-28 rounded-xl">
-                {data?.photo_url && <AvatarImage src={data.photo_url} alt={data.name} className="object-cover" />}
-                <AvatarFallback className="rounded-xl text-2xl font-bold">{initials}</AvatarFallback>
-              </Avatar>
+              <span className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-muted-foreground/40">
+                {initials}
+              </span>
             )}
             {data?.photo_url && (
-              <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             )}
           </button>
 
-          <div className="rounded-lg border bg-card p-4 text-center w-full">
-            <div className="flex items-center justify-center gap-1.5 mb-1.5">
-              <ClipboardList className="h-3 w-3 text-muted-foreground" />
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Penilaian</p>
-            </div>
-            {loading
-              ? <Skeleton className="h-8 w-12 mx-auto" />
-              : <p className="font-heading text-3xl font-bold tabular-nums">{data?.evaluation_count ?? 0}</p>
-            }
+          {/* Identity block */}
+          <div className="rounded-lg border bg-card px-5 py-4 space-y-2">
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+            ) : (
+              <>
+                <h1 className="font-heading text-xl font-bold tracking-tight leading-snug">{data?.name ?? "Pemimpin"}</h1>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${TYPE_BADGE[data?.type ?? ""] ?? "bg-muted text-muted-foreground"}`}>
+                    {TYPE_LABEL[data?.type ?? ""] ?? data?.type ?? "—"}
+                  </span>
+                  {data?.parti_terkini && (
+                    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
+                      {data.parti_terkini}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
+
+          {/* Eval stat */}
+          <div className="rounded-lg border bg-card px-5 py-3 flex items-center gap-3">
+            <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Penilaian</p>
+              {loading
+                ? <Skeleton className="h-6 w-10 mt-0.5" />
+                : <p className="font-heading text-2xl font-bold tabular-nums">{data?.evaluation_count ?? 0}</p>
+              }
+            </div>
+          </div>
+
+          {/* Map */}
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="px-4 py-2.5 border-b flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-xs font-semibold">Lokasi Kampung</p>
+              {!loading && data?.kampung_name && (
+                <span className="ml-auto text-xs text-muted-foreground truncate">{data.kampung_name}</span>
+              )}
+            </div>
+            {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null ? (
+              <MapMount className="h-48 w-full">
+                <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-48 w-full">
+                  <MapTileLayer />
+                  <MapZoomControl />
+                  <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
+                    <MapPopup>
+                      <div className="rounded-lg border bg-card p-3">
+                        <p className="font-semibold text-sm">{kampungCoords.name}</p>
+                      </div>
+                    </MapPopup>
+                  </MapMarker>
+                </Map>
+              </MapMount>
+            ) : (
+              <div className="h-48 flex flex-col items-center justify-center gap-2 text-muted-foreground/40 bg-muted/20">
+                <MapPin className="h-8 w-8" />
+                <p className="text-xs font-medium">
+                  {loading ? "Memuatkan lokasi…" : "Tiada koordinat kampung"}
+                </p>
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* Right: two info cards stacked */}
@@ -300,39 +359,6 @@ export default function LeaderDetailPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Map — full width, improved height */}
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b flex items-center gap-2">
-          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-          <p className="text-sm font-semibold">Lokasi Kampung</p>
-          {!loading && data?.kampung_name && (
-            <span className="ml-auto text-xs text-muted-foreground">{data.kampung_name}</span>
-          )}
-        </div>
-        {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null ? (
-          <MapMount className="h-72 w-full">
-            <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-72 w-full">
-              <MapTileLayer />
-              <MapZoomControl />
-              <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
-                <MapPopup>
-                  <div className="rounded-lg border bg-card p-3">
-                    <p className="font-semibold text-sm">{kampungCoords.name}</p>
-                  </div>
-                </MapPopup>
-              </MapMarker>
-            </Map>
-          </MapMount>
-        ) : (
-          <div className="h-72 flex flex-col items-center justify-center gap-2.5 text-muted-foreground/40 bg-muted/20">
-            <MapPin className="h-10 w-10" />
-            <p className="text-xs font-medium">
-              {loading ? "Memuatkan lokasi…" : "Tiada koordinat kampung"}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Photo dialog */}
