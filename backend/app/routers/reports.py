@@ -94,13 +94,10 @@ def update_report(
         raise HTTPException(400, "No fields to update")
     if payload.get("status") == "submitted" and "submitted_at" not in payload:
         payload["submitted_at"] = datetime.now(timezone.utc).isoformat()
-    result = (
-        sb.table("aclis_monthly_report")
-        .update(payload)
-        .select(_SELECT_DETAIL)
-        .eq("id", report_id)
-        .execute()
-    )
+    upd = sb.table("aclis_monthly_report").update(payload).eq("id", report_id).execute()
+    if not upd.data:
+        raise HTTPException(404, "Report not found")
+    result = sb.table("aclis_monthly_report").select(_SELECT_DETAIL).eq("id", report_id).execute()
     if not result.data:
         raise HTTPException(404, "Report not found")
     record_audit(sb, actor, "update", "report", report_id, {"fields": list(payload.keys())})

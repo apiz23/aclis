@@ -132,17 +132,16 @@ def update_leader(
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
     if not payload:
         raise HTTPException(400, "No fields to update")
-    result = (
+    upd = sb.table("aclis_leader").update(payload).eq("id", leader_id).execute()
+    if not upd.data:
+        raise HTTPException(404, "Leader not found")
+    record_audit(sb, actor, "update", "leader", leader_id, {"fields": list(payload.keys())})
+    r = (
         sb.table("aclis_leader")
-        .update(payload)
         .select(_SELECT_DETAIL)
         .eq("id", leader_id)
         .execute()
-    )
-    if not result.data:
-        raise HTTPException(404, "Leader not found")
-    record_audit(sb, actor, "update", "leader", leader_id, {"fields": list(payload.keys())})
-    r = result.data[0]
+    ).data[0]
     kampung = r.get("aclis_kampung") or {}
     mukim = kampung.get("aclis_mukim") or {}
     eval_count = (

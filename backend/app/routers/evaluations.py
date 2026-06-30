@@ -102,13 +102,10 @@ def update_evaluation(
         payload["ulasan"] = body.ulasan
     if not payload:
         raise HTTPException(400, "No fields to update")
-    result = (
-        sb.table("aclis_evaluation")
-        .update(payload)
-        .select(_SELECT_DETAIL)
-        .eq("id", eval_id)
-        .execute()
-    )
+    upd = sb.table("aclis_evaluation").update(payload).eq("id", eval_id).execute()
+    if not upd.data:
+        raise HTTPException(404, "Evaluation not found")
+    result = sb.table("aclis_evaluation").select(_SELECT_DETAIL).eq("id", eval_id).execute()
     if not result.data:
         raise HTTPException(404, "Evaluation not found")
     record_audit(sb, actor, "update", "evaluation", eval_id, {"fields": list(payload.keys())})

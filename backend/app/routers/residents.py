@@ -79,13 +79,10 @@ def update_resident(
     payload = body.model_dump(exclude_unset=True)
     if not payload:
         raise HTTPException(400, "No fields to update")
-    result = (
-        sb.table("aclis_resident")
-        .update(payload)
-        .select(_SELECT)
-        .eq("id", resident_id)
-        .execute()
-    )
+    upd = sb.table("aclis_resident").update(payload).eq("id", resident_id).execute()
+    if not upd.data:
+        raise HTTPException(404, "Resident not found")
+    result = sb.table("aclis_resident").select(_SELECT).eq("id", resident_id).execute()
     if not result.data:
         raise HTTPException(404, "Resident not found")
     record_audit(sb, actor, "update", "resident", resident_id, {"fields": list(payload.keys())})

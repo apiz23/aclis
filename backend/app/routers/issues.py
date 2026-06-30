@@ -136,13 +136,10 @@ def update_issue(
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
     if not payload:
         raise HTTPException(400, "No fields to update")
-    result = (
-        sb.table("aclis_issue")
-        .update(payload)
-        .select(_SELECT_DETAIL)
-        .eq("id", issue_id)
-        .execute()
-    )
+    upd = sb.table("aclis_issue").update(payload).eq("id", issue_id).execute()
+    if not upd.data:
+        raise HTTPException(404, "Issue not found")
+    result = sb.table("aclis_issue").select(_SELECT_DETAIL).eq("id", issue_id).execute()
     if not result.data:
         raise HTTPException(404, "Issue not found")
     record_audit(sb, actor, "update", "issue", issue_id, {"fields": list(payload.keys())})

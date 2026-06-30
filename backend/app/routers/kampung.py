@@ -92,13 +92,10 @@ def update_kampung(
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
     if not payload:
         raise HTTPException(400, "No fields to update")
-    result = (
-        sb.table("aclis_kampung")
-        .update(payload)
-        .select(_SELECT)
-        .eq("id", kampung_id)
-        .execute()
-    )
+    upd = sb.table("aclis_kampung").update(payload).eq("id", kampung_id).execute()
+    if not upd.data:
+        raise HTTPException(404, "Kampung not found")
+    result = sb.table("aclis_kampung").select(_SELECT).eq("id", kampung_id).execute()
     if not result.data:
         raise HTTPException(404, "Kampung not found")
     record_audit(sb, actor, "update", "kampung", kampung_id, {"fields": list(payload.keys())})

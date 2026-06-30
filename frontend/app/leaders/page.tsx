@@ -373,9 +373,9 @@ export default function LeadersPage() {
                 </Field>
               )} />
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-                <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">
+              <DialogFooter className="sm:justify-end gap-2">
+                <Button type="button" variant="outline" className="min-w-20" onClick={() => setDialogOpen(false)}>Batal</Button>
+                <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…" className="min-w-24">
                   Simpan
                 </LoadingButton>
               </DialogFooter>
