@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPatch, uploadLeaderPhoto } from "@/lib/api";
 import { useCurrentUser } from "@/lib/queries";
-import { ArrowLeft, ClipboardList, ImageIcon, MapPin, Pencil, X, ZoomIn } from "lucide-react";
+import { ArrowLeft, ClipboardList, ImageIcon, MapPin, Maximize2, Pencil, X, ZoomIn } from "lucide-react";
 import {
   Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle,
   AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger,
@@ -116,6 +116,7 @@ export default function LeaderDetailPage() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [mapOpen, setMapOpen]     = useState(false);
   const [editOpen, setEditOpen]   = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUploadError, setPhotoUploadError] = useState(false);
@@ -277,7 +278,13 @@ export default function LeaderDetailPage() {
               <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-xs font-semibold">Lokasi Kampung</p>
               {!loading && data?.kampung_name && (
-                <span className="ml-auto text-xs text-muted-foreground truncate">{data.kampung_name}</span>
+                <span className="ml-2 text-xs text-muted-foreground truncate flex-1">{data.kampung_name}</span>
+              )}
+              {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null && (
+                <Button variant="ghost" size="icon-sm" className="shrink-0 ml-auto" onClick={() => setMapOpen(true)}>
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  <span className="sr-only">Buka peta penuh</span>
+                </Button>
               )}
             </div>
             {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null ? (
@@ -372,6 +379,33 @@ export default function LeaderDetailPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Map dialog */}
+      {kampungCoords?.lat != null && kampungCoords?.lng != null && (
+        <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+          <DialogContent className="sm:max-w-2xl p-0 overflow-hidden" showCloseButton>
+            <DialogHeader className="px-5 py-3 border-b">
+              <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                {data?.kampung_name ?? "Lokasi Kampung"}
+              </DialogTitle>
+            </DialogHeader>
+            <MapMount className="h-[60vh] w-full">
+              <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-[60vh] w-full">
+                <MapTileLayer />
+                <MapZoomControl />
+                <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
+                  <MapPopup>
+                    <div className="rounded-lg border bg-card p-3">
+                      <p className="font-semibold text-sm">{kampungCoords.name}</p>
+                    </div>
+                  </MapPopup>
+                </MapMarker>
+              </Map>
+            </MapMount>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
