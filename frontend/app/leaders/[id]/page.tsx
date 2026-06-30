@@ -13,11 +13,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPatch, uploadLeaderPhoto } from "@/lib/api";
 import { useCurrentUser } from "@/lib/queries";
-import { ArrowLeft, ClipboardList, Pencil, ZoomIn } from "lucide-react";
+import { ArrowLeft, ClipboardList, ImageIcon, MapPin, Pencil, X, ZoomIn } from "lucide-react";
+import {
+  Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle,
+  AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger,
+} from "@/components/ui/attachment";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { MapMount } from "@/components/ui/map-mount";
 import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/components/ui/map";
@@ -45,15 +50,37 @@ interface KampungOption { id: string; name: string }
 interface KampungCoords { lat: number | null; lng: number | null; name: string }
 
 const TYPE_LABEL: Record<string, string> = {
-  ketua_kampung: "Ketua Kampung",
-  penghulu:      "Penghulu",
+  ketua_kampung:    "Ketua Kampung",
+  penghulu:         "Penghulu",
+  ketua_masyarakat: "Ketua Masyarakat",
 };
 
 function InfoField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="py-3 border-b last:border-0">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
       <p className="text-sm">{value ?? "—"}</p>
+    </div>
+  );
+}
+
+function InfoRow({ items }: { items: { label: string; value: React.ReactNode }[] }) {
+  return (
+    <div className={`grid border-b last:border-0 gap-x-8 ${items.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+      {items.map(({ label, value }, i) => (
+        <div key={i} className="py-3">
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+          <p className="text-sm">{value ?? "—"}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="px-5 py-3 border-b bg-muted/30">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{title}</p>
     </div>
   );
 }
@@ -86,6 +113,7 @@ export default function LeaderDetailPage() {
   const [photoOpen, setPhotoOpen] = useState(false);
   const [editOpen, setEditOpen]   = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState(false);
   const [kampungs, setKampungs]   = useState<KampungOption[]>([]);
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<EditValues>({
@@ -108,6 +136,9 @@ export default function LeaderDetailPage() {
   }
 
   useEffect(() => { load(); }, [id]);
+  useEffect(() => {
+    if (error) { toast.error("Rekod tidak ditemui atau akses ditolak."); router.replace("/leaders"); }
+  }, [error]);
 
   function openEdit() {
     if (!data) return;
@@ -180,85 +211,126 @@ export default function LeaderDetailPage() {
 
       {error && <p className="text-sm text-destructive">Gagal memuatkan data pemimpin.</p>}
 
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Photo + eval count */}
-        <div className="flex flex-col items-center gap-4 md:w-48 shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left sidebar: photo + eval */}
+        <div className="flex lg:flex-col items-center gap-4 lg:w-40 shrink-0">
           <button
             type="button"
             className={`relative group ${data?.photo_url ? "cursor-pointer" : "cursor-default"}`}
             onClick={() => data?.photo_url && setPhotoOpen(true)}
             disabled={!data?.photo_url}
           >
-            <Avatar className="h-28 w-28 rounded-xl">
-              {data?.photo_url && <AvatarImage src={data.photo_url} alt={data.name} className="object-cover" />}
-              <AvatarFallback className="rounded-xl text-2xl font-bold">
-                {loading ? "?" : initials}
-              </AvatarFallback>
-            </Avatar>
+            {loading ? (
+              <Skeleton className="h-28 w-28 rounded-xl" />
+            ) : (
+              <Avatar className="h-28 w-28 rounded-xl">
+                {data?.photo_url && <AvatarImage src={data.photo_url} alt={data.name} className="object-cover" />}
+                <AvatarFallback className="rounded-xl text-2xl font-bold">{initials}</AvatarFallback>
+              </Avatar>
+            )}
             {data?.photo_url && (
               <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             )}
           </button>
+
           <div className="rounded-lg border bg-card p-4 text-center w-full">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Penilaian</p>
+            <div className="flex items-center justify-center gap-1.5 mb-1.5">
+              <ClipboardList className="h-3 w-3 text-muted-foreground" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Penilaian</p>
             </div>
-            {loading ? <Skeleton className="h-8 w-12 mx-auto" /> : (
-              <p className="font-heading text-2xl font-bold tabular-nums">{data?.evaluation_count ?? 0}</p>
-            )}
+            {loading
+              ? <Skeleton className="h-8 w-12 mx-auto" />
+              : <p className="font-heading text-3xl font-bold tabular-nums">{data?.evaluation_count ?? 0}</p>
+            }
           </div>
         </div>
 
-        {/* Detail fields */}
-        <div className="flex-1 rounded-lg border bg-card overflow-hidden">
-          <div className="px-5 py-4 border-b">
-            <p className="text-sm font-semibold">Maklumat Pemimpin</p>
+        {/* Right: two info cards stacked */}
+        <div className="flex-1 flex flex-col gap-4 stagger-children">
+          {/* Card 1: Personal & Role */}
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <SectionHeader title="Maklumat Peribadi" />
+            <div className="px-5">
+              {loading ? (
+                <div className="py-4 space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : (
+                <>
+                  <InfoField label="Nama Penuh" value={data?.name} />
+                  <InfoRow items={[
+                    { label: "No. IC", value: data?.ic_no ? <span className="font-mono text-[13px]">{data.ic_no}</span> : null },
+                    { label: "Jawatan", value: TYPE_LABEL[data?.type ?? ""] ?? data?.type },
+                  ]} />
+                  <InfoRow items={[
+                    { label: "Tarikh Dilantik", value: data?.tarikh_lantikan },
+                    { label: "No. Telefon", value: data?.phone },
+                  ]} />
+                  <InfoField label="Alamat" value={data?.address} />
+                </>
+              )}
+            </div>
           </div>
-          <div className="px-5">
-            {loading ? (
-              <div className="py-4 space-y-3">
-                {Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-              </div>
-            ) : (
-              <>
-                <InfoField label="Nama Penuh"        value={data?.name} />
-                <InfoField label="No. IC"            value={data?.ic_no} />
-                <InfoField label="Jawatan"           value={TYPE_LABEL[data?.type ?? ""] ?? data?.type} />
-                <InfoField label="Kampung"           value={data?.kampung_name} />
-                <InfoField label="Mukim"             value={data?.mukim_name} />
-                <InfoField label="Tarikh Dilantik"   value={data?.tarikh_lantikan} />
-                <InfoField label="Parti Lantikan"    value={data?.parti_lantikan} />
-                <InfoField label="Parti Semasa"      value={data?.parti_terkini} />
-                <InfoField label="No. Telefon"       value={data?.phone} />
-                <InfoField label="Alamat"            value={data?.address} />
-                <InfoField label="Kampung Rangkaian" value={data?.kampung_rangkaian} />
-              </>
-            )}
+
+          {/* Card 2: Kampung & Politik */}
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <SectionHeader title="Kampung &amp; Politik" />
+            <div className="px-5">
+              {loading ? (
+                <div className="py-4 space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : (
+                <>
+                  <InfoRow items={[
+                    { label: "Kampung", value: data?.kampung_name },
+                    { label: "Mukim",   value: data?.mukim_name },
+                  ]} />
+                  <InfoRow items={[
+                    { label: "Parti Lantikan", value: data?.parti_lantikan },
+                    { label: "Parti Semasa",   value: data?.parti_terkini },
+                  ]} />
+                  {data?.kampung_rangkaian && (
+                    <InfoField label="Kampung Rangkaian" value={data.kampung_rangkaian} />
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Map card */}
-        {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null && (
-          <div className="rounded-lg border bg-card overflow-hidden md:w-72 shrink-0">
-            <div className="px-5 py-4 border-b">
-              <p className="text-sm font-semibold">Lokasi Kampung</p>
-            </div>
-            <MapMount className="h-56 w-full">
-              <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-56 w-full">
-                <MapTileLayer />
-                <MapZoomControl />
-                <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
-                  <MapPopup>
-                    <div className="rounded-lg border bg-card p-3">
-                      <p className="font-semibold text-sm">{kampungCoords.name}</p>
-                    </div>
-                  </MapPopup>
-                </MapMarker>
-              </Map>
-            </MapMount>
+      {/* Map — full width, improved height */}
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b flex items-center gap-2">
+          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          <p className="text-sm font-semibold">Lokasi Kampung</p>
+          {!loading && data?.kampung_name && (
+            <span className="ml-auto text-xs text-muted-foreground">{data.kampung_name}</span>
+          )}
+        </div>
+        {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null ? (
+          <MapMount className="h-72 w-full">
+            <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-72 w-full">
+              <MapTileLayer />
+              <MapZoomControl />
+              <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
+                <MapPopup>
+                  <div className="rounded-lg border bg-card p-3">
+                    <p className="font-semibold text-sm">{kampungCoords.name}</p>
+                  </div>
+                </MapPopup>
+              </MapMarker>
+            </Map>
+          </MapMount>
+        ) : (
+          <div className="h-72 flex flex-col items-center justify-center gap-2.5 text-muted-foreground/40 bg-muted/20">
+            <MapPin className="h-10 w-10" />
+            <p className="text-xs font-medium">
+              {loading ? "Memuatkan lokasi…" : "Tiada koordinat kampung"}
+            </p>
           </div>
         )}
       </div>
@@ -313,7 +385,9 @@ export default function LeaderDetailPage() {
                     <SelectValue placeholder="Pilih kampung..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                    <ScrollArea className="h-60">
+                      {kampungs.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                    </ScrollArea>
                   </SelectContent>
                 </Select>
               </Field>
@@ -373,46 +447,74 @@ export default function LeaderDetailPage() {
             <Controller name="photo_url" control={control} render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Foto</FieldLabel>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors">
-                      {photoUploading ? "Memuat naik…" : "Pilih fail foto"}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      disabled={photoUploading}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setPhotoUploading(true);
-                        try {
-                          const url = await uploadLeaderPhoto(file);
-                          field.onChange(url);
-                          toast.success("Foto berjaya dimuat naik.");
-                        } catch {
-                          toast.error("Gagal memuat naik foto.");
-                        } finally {
-                          setPhotoUploading(false);
-                        }
-                      }}
-                    />
-                  </label>
+                <input
+                  id="leader-photo-edit-input"
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={photoUploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setPhotoUploading(true);
+                    setPhotoUploadError(false);
+                    try {
+                      const url = await uploadLeaderPhoto(file);
+                      field.onChange(url);
+                      toast.success("Foto berjaya dimuat naik.");
+                    } catch {
+                      setPhotoUploadError(true);
+                      toast.error("Gagal memuat naik foto.");
+                    } finally {
+                      setPhotoUploading(false);
+                    }
+                  }}
+                />
+                <Attachment
+                  state={
+                    photoUploading ? "uploading"
+                    : photoUploadError ? "error"
+                    : field.value ? "done"
+                    : "idle"
+                  }
+                  className="w-full"
+                >
+                  <AttachmentMedia variant={field.value ? "image" : "icon"}>
+                    {field.value
+                      ? <img src={field.value} alt="Foto pemimpin" />
+                      : <ImageIcon />
+                    }
+                  </AttachmentMedia>
+                  <AttachmentContent>
+                    <AttachmentTitle>
+                      {photoUploading ? "Memuat naik…"
+                        : photoUploadError ? "Muat naik gagal"
+                        : field.value ? "Foto sedia"
+                        : "Pilih fail foto"}
+                    </AttachmentTitle>
+                    <AttachmentDescription>
+                      {photoUploadError
+                        ? "Cuba semula"
+                        : field.value
+                        ? "JPG · PNG · WEBP"
+                        : "Klik untuk pilih gambar"}
+                    </AttachmentDescription>
+                  </AttachmentContent>
                   {field.value && (
-                    <div className="flex items-center gap-2">
-                      <img src={field.value} alt="preview" className="h-10 w-10 rounded-full object-cover border" />
-                      <span className="text-xs text-muted-foreground truncate max-w-[180px]">{field.value}</span>
-                      <button
+                    <AttachmentActions>
+                      <AttachmentAction
                         type="button"
-                        onClick={() => field.onChange("")}
-                        className="text-xs text-destructive hover:underline shrink-0"
+                        aria-label="Padam foto"
+                        onClick={() => { field.onChange(""); setPhotoUploadError(false); }}
                       >
-                        Padam
-                      </button>
-                    </div>
+                        <X />
+                      </AttachmentAction>
+                    </AttachmentActions>
                   )}
-                </div>
+                  <AttachmentTrigger asChild>
+                    <label htmlFor="leader-photo-edit-input" className="cursor-pointer" aria-label="Pilih foto pemimpin" />
+                  </AttachmentTrigger>
+                </Attachment>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )} />
