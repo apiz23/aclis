@@ -14,10 +14,15 @@ import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPost } from "@/lib/api";
-import { Users, Plus } from "lucide-react";
+import { Users, Plus, ImageIcon, X } from "lucide-react";
+import {
+  Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle,
+  AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger,
+} from "@/components/ui/attachment";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useCurrentUser, useLeaders, QUERY_KEYS } from "@/lib/queries";
@@ -68,14 +73,6 @@ const EMPTY: LeaderFormValues = {
 };
 
 const columns: ColumnDef<LeaderSummary>[] = [
-  {
-    id: "no",
-    header: () => <div className="text-center">No.</div>,
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
-    ),
-  },
   {
     id: "avatar",
     header: "",
@@ -142,6 +139,7 @@ export default function LeadersPage() {
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState(false);
   const isAdmin = me?.role === "admin_daerah";
 
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<LeaderFormValues>({
@@ -155,23 +153,30 @@ export default function LeadersPage() {
   }
 
   async function onSubmit(values: LeaderFormValues) {
+    const promise = apiPost("/leaders", {
+      name:            values.name,
+      type:            values.type,
+      ic_no:           values.ic_no || null,
+      kampung_id:      values.kampung_id || null,
+      tarikh_lantikan: values.tarikh_lantikan || null,
+      parti_lantikan:  values.parti_lantikan || null,
+      parti_terkini:   values.parti_terkini || null,
+      photo_url:       values.photo_url || null,
+    });
+
+    toast.promise(promise, {
+      loading: "Menyimpan pemimpin...",
+      success: "Pemimpin berjaya ditambah.",
+      error: "Gagal menambah pemimpin. Cuba semula.",
+    });
+
     try {
-      await apiPost("/leaders", {
-        name:            values.name,
-        type:            values.type,
-        ic_no:           values.ic_no || null,
-        kampung_id:      values.kampung_id || null,
-        tarikh_lantikan: values.tarikh_lantikan || null,
-        parti_lantikan:  values.parti_lantikan || null,
-        parti_terkini:   values.parti_terkini || null,
-        photo_url:       values.photo_url || null,
-      });
+      await promise;
       setDialogOpen(false);
       reset(EMPTY);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.leaders });
-      toast.success("Pemimpin berjaya ditambah.");
     } catch {
-      toast.error("Gagal menambah pemimpin. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
@@ -256,9 +261,11 @@ export default function LeadersPage() {
                       <SelectValue placeholder="Pilih kampung..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(kampungs as KampungOption[]).map((k) => (
-                        <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
-                      ))}
+                      <ScrollArea className="h-60">
+                        {(kampungs as KampungOption[]).map((k) => (
+                          <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                        ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -293,47 +300,75 @@ export default function LeadersPage() {
               <Controller name="photo_url" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Foto</FieldLabel>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <div className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors">
-                        {photoUploading ? "Memuat naik…" : "Pilih fail foto"}
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        disabled={photoUploading}
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setPhotoUploading(true);
-                          try {
-                            const { uploadLeaderPhoto } = await import("@/lib/api");
-                            const url = await uploadLeaderPhoto(file);
-                            field.onChange(url);
-                            toast.success("Foto berjaya dimuat naik.");
-                          } catch {
-                            toast.error("Gagal memuat naik foto.");
-                          } finally {
-                            setPhotoUploading(false);
-                          }
-                        }}
-                      />
-                    </label>
+                  <input
+                    id="leader-photo-input"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={photoUploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setPhotoUploading(true);
+                      setPhotoUploadError(false);
+                      try {
+                        const { uploadLeaderPhoto } = await import("@/lib/api");
+                        const url = await uploadLeaderPhoto(file);
+                        field.onChange(url);
+                        toast.success("Foto berjaya dimuat naik.");
+                      } catch {
+                        setPhotoUploadError(true);
+                        toast.error("Gagal memuat naik foto.");
+                      } finally {
+                        setPhotoUploading(false);
+                      }
+                    }}
+                  />
+                  <Attachment
+                    state={
+                      photoUploading ? "uploading"
+                      : photoUploadError ? "error"
+                      : field.value ? "done"
+                      : "idle"
+                    }
+                    className="w-full"
+                  >
+                    <AttachmentMedia variant={field.value ? "image" : "icon"}>
+                      {field.value
+                        ? <img src={field.value} alt="Foto pemimpin" />
+                        : <ImageIcon />
+                      }
+                    </AttachmentMedia>
+                    <AttachmentContent>
+                      <AttachmentTitle>
+                        {photoUploading ? "Memuat naik…"
+                          : photoUploadError ? "Muat naik gagal"
+                          : field.value ? "Foto sedia"
+                          : "Pilih fail foto"}
+                      </AttachmentTitle>
+                      <AttachmentDescription>
+                        {photoUploadError
+                          ? "Cuba semula"
+                          : field.value
+                          ? "JPG · PNG · WEBP"
+                          : "Klik untuk pilih gambar"}
+                      </AttachmentDescription>
+                    </AttachmentContent>
                     {field.value && (
-                      <div className="flex items-center gap-2">
-                        <img src={field.value} alt="preview" className="h-10 w-10 rounded-full object-cover border" />
-                        <span className="text-xs text-muted-foreground truncate max-w-[180px]">{field.value}</span>
-                        <button
+                      <AttachmentActions>
+                        <AttachmentAction
                           type="button"
-                          onClick={() => field.onChange("")}
-                          className="text-xs text-destructive hover:underline shrink-0"
+                          aria-label="Padam foto"
+                          onClick={() => { field.onChange(""); setPhotoUploadError(false); }}
                         >
-                          Padam
-                        </button>
-                      </div>
+                          <X />
+                        </AttachmentAction>
+                      </AttachmentActions>
                     )}
-                  </div>
+                    <AttachmentTrigger asChild>
+                      <label htmlFor="leader-photo-input" className="cursor-pointer" aria-label="Pilih foto pemimpin" />
+                    </AttachmentTrigger>
+                  </Attachment>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )} />

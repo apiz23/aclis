@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { MapMount } from "@/components/ui/map-mount";
@@ -52,14 +53,6 @@ const EMPTY: KampungFormValues = { name: "", mukim_id: "", b40_count: undefined,
 const PONTIAN: [number, number] = [1.4855, 103.3892];
 
 const columns: ColumnDef<KampungSummary>[] = [
-  {
-    id: "no",
-    header: () => <div className="text-center">No.</div>,
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
-    ),
-  },
   {
     accessorKey: "name",
     header: ({ column }) => <SortableHeader column={column} title="Nama Kampung" />,
@@ -124,21 +117,28 @@ export default function KampungPage() {
   }
 
   async function onSubmit(values: KampungFormValues) {
+    const promise = apiPost("/kampung", {
+      name: values.name,
+      mukim_id: values.mukim_id || null,
+      b40_count: values.b40_count ?? null,
+      profile: values.profile || null,
+      lat: values.lat === "" || values.lat === undefined ? null : Number(values.lat),
+      lng: values.lng === "" || values.lng === undefined ? null : Number(values.lng),
+    });
+
+    toast.promise(promise, {
+      loading: "Menyimpan kampung...",
+      success: "Kampung berjaya ditambah.",
+      error: "Gagal menambah kampung. Cuba semula.",
+    });
+
     try {
-      await apiPost("/kampung", {
-        name: values.name,
-        mukim_id: values.mukim_id || null,
-        b40_count: values.b40_count ?? null,
-        profile: values.profile || null,
-        lat: values.lat === "" || values.lat === undefined ? null : Number(values.lat),
-        lng: values.lng === "" || values.lng === undefined ? null : Number(values.lng),
-      });
+      await promise;
       setDialogOpen(false);
       reset(EMPTY);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kampung });
-      toast.success("Kampung berjaya ditambah.");
     } catch {
-      toast.error("Gagal menambah kampung. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
@@ -161,6 +161,7 @@ export default function KampungPage() {
               variant={view === "table" ? "default" : "ghost"}
               className="rounded-none px-3"
               onClick={() => setView("table")}
+              aria-label="Paparan jadual"
             >
               <TableIcon className="h-4 w-4" />
             </Button>
@@ -169,6 +170,7 @@ export default function KampungPage() {
               variant={view === "map" ? "default" : "ghost"}
               className="rounded-none px-3"
               onClick={() => setView("map")}
+              aria-label="Paparan peta"
             >
               <MapIcon className="h-4 w-4" />
             </Button>
@@ -265,9 +267,11 @@ export default function KampungPage() {
                       <SelectValue placeholder="Pilih mukim..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(mukims as MukimOption[]).map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                      ))}
+                      <ScrollArea className="h-60">
+                        {(mukims as MukimOption[]).map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

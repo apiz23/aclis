@@ -115,19 +115,26 @@ export default function EvaluationsPage() {
 
   async function onSubmit(values: EvalFormValues) {
     const scores = Object.fromEntries(SCORE_KEYS.map((k) => [k, Number(values[k])]));
+    const promise = apiPost("/evaluations", {
+      leader_id: values.leader_id,
+      period: values.period,
+      scores,
+      ulasan: values.ulasan || null,
+    });
+
+    toast.promise(promise, {
+      loading: "Menyimpan penilaian...",
+      success: "Penilaian berjaya disimpan.",
+      error: "Gagal menyimpan penilaian. Cuba semula.",
+    });
+
     try {
-      await apiPost("/evaluations", {
-        leader_id: values.leader_id,
-        period: values.period,
-        scores,
-        ulasan: values.ulasan || null,
-      });
+      await promise;
       setDialogOpen(false);
       reset(DEFAULT_VALS);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluations });
-      toast.success("Penilaian berjaya disimpan.");
     } catch {
-      toast.error("Gagal menyimpan penilaian. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
@@ -137,14 +144,6 @@ export default function EvaluationsPage() {
     : null;
 
   const columns = useMemo((): ColumnDef<EvaluationSummary>[] => [
-    {
-      id: "no",
-      header: () => <div className="text-center">No.</div>,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
-      ),
-    },
     {
       accessorKey: "leader_name",
       header: ({ column }) => <SortableHeader column={column} title="Pemimpin" />,

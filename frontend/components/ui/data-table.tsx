@@ -14,10 +14,7 @@ import {
   useReactTable,
   Column,
 } from "@tanstack/react-table"
-import {
-  ArrowDown, ArrowUp, ArrowUpDown,
-  ChevronDown, ChevronLeft, ChevronRight,
-} from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -28,6 +25,10 @@ import {
   Table, TableBody, TableCell,
   TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
+import {
+  Pagination, PaginationContent, PaginationEllipsis,
+  PaginationItem, PaginationLink, PaginationNext, PaginationPrevious,
+} from "@/components/ui/pagination"
 
 // ─── Reusable sortable column header ─────────────────────────────────────────
 export function SortableHeader({
@@ -59,6 +60,19 @@ export function SortableHeader({
   )
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function getPageNumbers(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i)
+  const pages: (number | "ellipsis")[] = [0]
+  const lo = Math.max(1, current - 1)
+  const hi = Math.min(total - 2, current + 1)
+  if (lo > 1) pages.push("ellipsis")
+  for (let i = lo; i <= hi; i++) pages.push(i)
+  if (hi < total - 2) pages.push("ellipsis")
+  pages.push(total - 1)
+  return pages
+}
+
 // ─── DataTable ────────────────────────────────────────────────────────────────
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -67,6 +81,7 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void
   getRowClassName?: (row: TData) => string
   pageSize?: number
+  showRowNumbers?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -76,6 +91,7 @@ export function DataTable<TData, TValue>({
   onRowClick,
   getRowClassName,
   pageSize = 10,
+  showRowNumbers = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting]               = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters]   = React.useState<ColumnFiltersState>([])
@@ -97,9 +113,9 @@ export function DataTable<TData, TValue>({
     initialState: { pagination: { pageSize } },
   })
 
-  const pageCount  = table.getPageCount()
-  const pageIndex  = table.getState().pagination.pageIndex
-  const totalShown = table.getFilteredRowModel().rows.length
+  const pageCount   = table.getPageCount()
+  const { pageIndex, pageSize: currentPageSize } = table.getState().pagination
+  const totalShown  = table.getFilteredRowModel().rows.length
 
   return (
     <div>
@@ -150,6 +166,9 @@ export function DataTable<TData, TValue>({
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
             <TableRow key={hg.id}>
+              {showRowNumbers && (
+                <TableHead className="w-10 text-center text-xs">No.</TableHead>
+              )}
               {hg.headers.map((header) => (
                 <TableHead key={header.id}>
                   {header.isPlaceholder
@@ -162,7 +181,7 @@ export function DataTable<TData, TValue>({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
+            table.getRowModel().rows.map((row, i) => (
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
@@ -172,6 +191,13 @@ export function DataTable<TData, TValue>({
                 ].filter(Boolean).join(" ")}
                 onClick={() => onRowClick?.(row.original)}
               >
+                {showRowNumbers && (
+                  <TableCell>
+                    <div className="text-center tabular-nums text-xs text-muted-foreground">
+                      {pageIndex * currentPageSize + i + 1}
+                    </div>
+                  </TableCell>
+                )}
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -182,7 +208,7 @@ export function DataTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell
-                colSpan={columns.length}
+                colSpan={columns.length + (showRowNumbers ? 1 : 0)}
                 className="h-24 text-center text-sm text-muted-foreground"
               >
                 Tiada rekod.
@@ -195,24 +221,48 @@ export function DataTable<TData, TValue>({
 
       {/* ── Pagination ──────────────────────────────────────────────────── */}
       {pageCount > 1 && (
-        <div className="px-4 py-2.5 border-t flex items-center justify-between text-xs text-muted-foreground">
-          <span>Halaman {pageIndex + 1} daripada {pageCount}</span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline" size="icon" className="h-7 w-7"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="outline" size="icon" className="h-7 w-7"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+        <div className="border-t px-4 py-3">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  text="Sebelum"
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); table.previousPage() }}
+                  aria-disabled={!table.getCanPreviousPage()}
+                  className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+
+              {getPageNumbers(pageIndex, pageCount).map((page, i) =>
+                page === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      isActive={page === pageIndex}
+                      onClick={(e) => { e.preventDefault(); table.setPageIndex(page) }}
+                    >
+                      {page + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  text="Seterusnya"
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); table.nextPage() }}
+                  aria-disabled={!table.getCanNextPage()}
+                  className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

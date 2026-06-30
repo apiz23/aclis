@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
@@ -70,14 +71,6 @@ function AICategoryBadge({ category }: { category: string | null }) {
 }
 
 const columns: ColumnDef<IssueSummary>[] = [
-  {
-    id: "no",
-    header: () => <div className="text-center">No.</div>,
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
-    ),
-  },
   {
     accessorKey: "kampung_name",
     header: ({ column }) => <SortableHeader column={column} title="Kampung" />,
@@ -144,19 +137,26 @@ export default function IssuesPage() {
   }
 
   async function onSubmit(values: IssueFormValues) {
+    const promise = apiPost("/issues", {
+      kampung_id: values.kampung_id,
+      type: values.type || null,
+      location: values.location || null,
+      description: values.description || null,
+    });
+
+    toast.promise(promise, {
+      loading: "Menghantar isu...",
+      success: "Isu berjaya dilaporkan.",
+      error: "Gagal merekod isu. Cuba semula.",
+    });
+
     try {
-      await apiPost("/issues", {
-        kampung_id: values.kampung_id,
-        type: values.type || null,
-        location: values.location || null,
-        description: values.description || null,
-      });
+      await promise;
       setDialogOpen(false);
       reset();
       qc.invalidateQueries({ queryKey: QUERY_KEYS.issues });
-      toast.success("Isu berjaya dilaporkan.");
     } catch {
-      toast.error("Gagal merekod isu. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
@@ -177,10 +177,10 @@ export default function IssuesPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border overflow-hidden">
-            <Button size="sm" variant={view === "table" ? "default" : "ghost"} className="rounded-none px-3" onClick={() => setView("table")}>
+            <Button size="sm" variant={view === "table" ? "default" : "ghost"} className="rounded-none px-3" onClick={() => setView("table")} aria-label="Paparan jadual">
               <TableIcon className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant={view === "map" ? "default" : "ghost"} className="rounded-none px-3" onClick={() => setView("map")}>
+            <Button size="sm" variant={view === "map" ? "default" : "ghost"} className="rounded-none px-3" onClick={() => setView("map")} aria-label="Paparan peta">
               <MapIcon className="h-4 w-4" />
             </Button>
           </div>
@@ -265,11 +265,9 @@ export default function IssuesPage() {
                       <div className="rounded-lg border bg-card shadow-sm p-3 min-w-[200px]">
                         <div className="flex items-center justify-between mb-1">
                           <p className="font-semibold text-sm">{issue.type ?? "Isu"}</p>
-                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                            issue.status === "open" ? "bg-destructive/10 text-destructive" :
-                            issue.status === "resolved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                            "bg-muted text-muted-foreground"
-                          }`}>{issue.status}</span>
+                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${STATUS_CONFIG[issue.status as IssueStatus]?.cls ?? "bg-muted text-muted-foreground"}`}>
+                            {STATUS_CONFIG[issue.status as IssueStatus]?.label ?? issue.status}
+                          </span>
                         </div>
                         {issue.kampung_name && <p className="text-xs text-muted-foreground mb-1">{issue.kampung_name}</p>}
                         {issue.description && <p className="text-xs text-muted-foreground line-clamp-2">{issue.description}</p>}
@@ -299,7 +297,9 @@ export default function IssuesPage() {
                       <SelectValue placeholder="Pilih kampung..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(kampungs as KampungOption[]).map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      <ScrollArea className="h-60">
+                        {(kampungs as KampungOption[]).map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

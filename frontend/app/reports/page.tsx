@@ -11,6 +11,7 @@ import { AppLayout } from "@/components/app-layout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -64,14 +65,6 @@ type ReportFormValues = z.infer<typeof reportSchema>;
 
 const columns: ColumnDef<ReportSummary>[] = [
   {
-    id: "no",
-    header: () => <div className="text-center">No.</div>,
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="text-center tabular-nums text-xs text-muted-foreground">{row.index + 1}</div>
-    ),
-  },
-  {
     accessorKey: "kampung_name",
     header: ({ column }) => <SortableHeader column={column} title="Kampung" />,
     cell: ({ row }) => <span className="font-medium">{row.original.kampung_name ?? "—"}</span>,
@@ -118,18 +111,25 @@ export default function ReportsPage() {
   }
 
   async function onSubmit(values: ReportFormValues) {
+    const promise = apiPost("/reports", {
+      kampung_id: values.kampung_id,
+      period: values.period,
+      content: values.content || null,
+    });
+
+    toast.promise(promise, {
+      loading: "Menyimpan laporan...",
+      success: "Laporan berjaya disimpan sebagai draf.",
+      error: "Gagal mencipta laporan. Cuba semula.",
+    });
+
     try {
-      await apiPost("/reports", {
-        kampung_id: values.kampung_id,
-        period: values.period,
-        content: values.content || null,
-      });
+      await promise;
       setDialogOpen(false);
       reset();
       qc.invalidateQueries({ queryKey: QUERY_KEYS.reports });
-      toast.success("Laporan berjaya disimpan sebagai draf.");
     } catch {
-      toast.error("Gagal mencipta laporan. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
@@ -202,7 +202,9 @@ export default function ReportsPage() {
                       <SelectValue placeholder="Pilih kampung..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(kampungs as KampungOption[]).map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      <ScrollArea className="h-60">
+                        {(kampungs as KampungOption[]).map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -221,7 +223,9 @@ export default function ReportsPage() {
                       <SelectValue placeholder="Pilih bulan..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {buildPeriodOptions().map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      <ScrollArea className="h-60">
+                        {buildPeriodOptions().map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

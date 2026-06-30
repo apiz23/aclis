@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Attachment, AttachmentMedia, AttachmentContent,
+  AttachmentTitle, AttachmentDescription,
+} from "@/components/ui/attachment";
 import { apiGet } from "@/lib/api";
 import { UserCircle } from "lucide-react";
 
@@ -51,21 +54,31 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6">
-        {/* Avatar block */}
-        <div className="flex flex-col items-center gap-3 sm:w-40 shrink-0">
-          <Avatar className="h-24 w-24 rounded-xl">
-            <AvatarFallback className="rounded-xl text-2xl font-bold bg-primary/10 text-primary">
-              {loading ? <UserCircle className="h-10 w-10 opacity-40" /> : initials}
-            </AvatarFallback>
-          </Avatar>
-          {loading ? (
-            <Skeleton className="h-5 w-28" />
-          ) : (
-            <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary">
-              {ROLE_LABEL[me?.role ?? ""] ?? me?.role ?? "—"}
-            </span>
-          )}
-        </div>
+        {/* Identity card */}
+        <Attachment
+          orientation="vertical"
+          state={loading ? "processing" : "done"}
+          className="shrink-0 sm:w-40"
+        >
+          <AttachmentMedia variant="icon" className="h-20 w-full rounded-lg bg-primary/10 text-primary">
+            {loading
+              ? <UserCircle className="h-10 w-10 opacity-40" />
+              : <span className="text-2xl font-bold">{initials}</span>
+            }
+          </AttachmentMedia>
+          <AttachmentContent>
+            {loading ? (
+              <Skeleton className="h-4 w-24" />
+            ) : (
+              <>
+                <AttachmentTitle className="text-xs">{me?.email}</AttachmentTitle>
+                <AttachmentDescription>
+                  {ROLE_LABEL[me?.role ?? ""] ?? me?.role ?? "—"}
+                </AttachmentDescription>
+              </>
+            )}
+          </AttachmentContent>
+        </Attachment>
 
         {/* Info */}
         <div className="flex-1 rounded-lg border bg-card overflow-hidden">
