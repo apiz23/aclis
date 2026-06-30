@@ -272,44 +272,25 @@ export default function LeaderDetailPage() {
             </div>
           </div>
 
-          {/* Map */}
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <div className="px-4 py-2.5 border-b flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs font-semibold">Lokasi Kampung</p>
-              {!loading && data?.kampung_name && (
-                <span className="ml-2 text-xs text-muted-foreground truncate flex-1">{data.kampung_name}</span>
-              )}
-              {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null && (
-                <Button variant="ghost" size="icon-sm" className="shrink-0 ml-auto" onClick={() => setMapOpen(true)}>
-                  <Maximize2 className="h-3.5 w-3.5" />
-                  <span className="sr-only">Buka peta penuh</span>
-                </Button>
-              )}
-            </div>
-            {!loading && kampungCoords?.lat != null && kampungCoords?.lng != null ? (
-              <MapMount className="h-48 w-full">
-                <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-48 w-full">
-                  <MapTileLayer />
-                  <MapZoomControl />
-                  <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
-                    <MapPopup>
-                      <div className="rounded-lg border bg-card p-3">
-                        <p className="font-semibold text-sm">{kampungCoords.name}</p>
-                      </div>
-                    </MapPopup>
-                  </MapMarker>
-                </Map>
-              </MapMount>
+          {/* Map button */}
+          {!loading && (
+            kampungCoords?.lat != null && kampungCoords?.lng != null ? (
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => setMapOpen(true)}
+              >
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="flex-1 text-left">{data?.kampung_name ?? "Lihat Peta"}</span>
+                <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
             ) : (
-              <div className="h-48 flex flex-col items-center justify-center gap-2 text-muted-foreground/40 bg-muted/20">
-                <MapPin className="h-8 w-8" />
-                <p className="text-xs font-medium">
-                  {loading ? "Memuatkan lokasi…" : "Tiada koordinat kampung"}
-                </p>
-              </div>
-            )}
-          </div>
+              <Button variant="outline" className="w-full justify-start gap-2" disabled>
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Tiada koordinat kampung</span>
+              </Button>
+            )
+          )}
 
         </div>
 
