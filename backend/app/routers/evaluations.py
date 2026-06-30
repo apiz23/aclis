@@ -105,8 +105,8 @@ def update_evaluation(
     result = (
         sb.table("aclis_evaluation")
         .update(payload)
-        .eq("id", eval_id)
         .select(_SELECT_DETAIL)
+        .eq("id", eval_id)
         .execute()
     )
     if not result.data:

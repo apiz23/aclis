@@ -95,8 +95,8 @@ def update_kampung(
     result = (
         sb.table("aclis_kampung")
         .update(payload)
-        .eq("id", kampung_id)
         .select(_SELECT)
+        .eq("id", kampung_id)
         .execute()
     )
     if not result.data:

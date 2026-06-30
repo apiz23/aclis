@@ -97,8 +97,8 @@ def update_report(
     result = (
         sb.table("aclis_monthly_report")
         .update(payload)
-        .eq("id", report_id)
         .select(_SELECT_DETAIL)
+        .eq("id", report_id)
         .execute()
     )
     if not result.data:

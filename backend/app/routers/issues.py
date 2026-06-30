@@ -139,8 +139,8 @@ def update_issue(
     result = (
         sb.table("aclis_issue")
         .update(payload)
-        .eq("id", issue_id)
         .select(_SELECT_DETAIL)
+        .eq("id", issue_id)
         .execute()
     )
     if not result.data:

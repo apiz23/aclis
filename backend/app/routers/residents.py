@@ -82,8 +82,8 @@ def update_resident(
     result = (
         sb.table("aclis_resident")
         .update(payload)
-        .eq("id", resident_id)
         .select(_SELECT)
+        .eq("id", resident_id)
         .execute()
     )
     if not result.data:

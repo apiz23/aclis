@@ -23,18 +23,39 @@ def _row_to_summary(r: dict) -> LeaderSummary:
     )
 
 
+def _dedup_by_ic(rows: list[dict]) -> list[dict]:
+    """Keep one record per IC number, preferring the one with the most data."""
+    def score(r: dict) -> int:
+        return sum(1 for f in ("photo_url", "phone", "address") if r.get(f))
+
+    seen: dict[str, dict] = {}
+    no_ic: list[dict] = []
+    for r in rows:
+        ic = r.get("ic_no")
+        if not ic:
+            no_ic.append(r)
+            continue
+        if ic not in seen or score(r) > score(seen[ic]):
+            seen[ic] = r
+
+    merged = list(seen.values()) + no_ic
+    merged.sort(key=lambda r: r["name"])
+    return merged
+
+
 @router.get("/leaders", response_model=list[LeaderSummary])
 def list_leaders(
     scope: UserScope = Depends(get_user_scope),
     sb: Client = Depends(get_supabase),
 ):
     q = sb.table("aclis_leader") \
-        .select("id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, aclis_kampung(name)")
+        .select("id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address, aclis_kampung(name)")
     if not scope.is_admin:
         if not scope.allowed_kampung_ids:
             return []
         q = q.in_("kampung_id", scope.allowed_kampung_ids)
-    rows = q.order("name").limit(500).execute().data or []
+    rows = q.order("name").limit(1000).execute().data or []
+    rows = _dedup_by_ic(rows)
     return [_row_to_summary(r) for r in rows]
 
 
@@ -114,8 +135,8 @@ def update_leader(
     result = (
         sb.table("aclis_leader")
         .update(payload)
-        .eq("id", leader_id)
         .select(_SELECT_DETAIL)
+        .eq("id", leader_id)
         .execute()
     )
     if not result.data:
