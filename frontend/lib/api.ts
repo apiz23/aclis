@@ -54,9 +54,9 @@ export async function uploadLeaderPhoto(file: File): Promise<string> {
   const ext  = file.name.split(".").pop() ?? "jpg";
   const path = `pending/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
-    .from("leader-photos")
+    .from("aclis-leader-photos")
     .upload(path, file, { upsert: true, contentType: file.type });
   if (error) throw new Error(error.message);
-  const { data } = supabase.storage.from("leader-photos").getPublicUrl(path);
+  const { data } = supabase.storage.from("aclis-leader-photos").getPublicUrl(path);
   return data.publicUrl;
 }
