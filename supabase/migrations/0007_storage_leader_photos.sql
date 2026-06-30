@@ -12,6 +12,12 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Drop old policies (idempotent — safe to re-run)
+drop policy if exists "Authenticated users can upload leader photos" on storage.objects;
+drop policy if exists "Authenticated users can update leader photos" on storage.objects;
+drop policy if exists "Admins can delete leader photos" on storage.objects;
+drop policy if exists "Public can read leader photos" on storage.objects;
+
 -- Allow any authenticated user to upload
 create policy "Authenticated users can upload leader photos"
   on storage.objects for insert
