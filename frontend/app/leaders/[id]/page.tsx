@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiGet, apiPatch, uploadLeaderPhoto } from "@/lib/api";
 import { useCurrentUser } from "@/lib/queries";
-import { ArrowLeft, ClipboardList, ImageIcon, MapPin, Maximize2, Pencil, X, ZoomIn } from "lucide-react";
+import { ArrowLeft, ClipboardList, ImageIcon, MapPin, Pencil, X, ZoomIn } from "lucide-react";
 import {
   Attachment, AttachmentMedia, AttachmentContent, AttachmentTitle,
   AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger,
@@ -199,11 +199,21 @@ export default function LeaderDetailPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/leaders")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        {!loading && data && isAdmin && (
-          <Button size="sm" variant="outline" onClick={openEdit}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" />
-            Kemaskini
-          </Button>
+        {!loading && data && (
+          <div className="flex items-center gap-1.5">
+            {kampungCoords?.lat != null && kampungCoords?.lng != null && (
+              <Button variant="ghost" size="icon" onClick={() => setMapOpen(true)}>
+                <MapPin className="h-4 w-4" />
+                <span className="sr-only">Lihat peta</span>
+              </Button>
+            )}
+            {isAdmin && (
+              <Button size="sm" variant="outline" onClick={openEdit}>
+                <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                Kemaskini
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -271,26 +281,6 @@ export default function LeaderDetailPage() {
               }
             </div>
           </div>
-
-          {/* Map button */}
-          {!loading && (
-            kampungCoords?.lat != null && kampungCoords?.lng != null ? (
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() => setMapOpen(true)}
-              >
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="flex-1 text-left">{data?.kampung_name ?? "Lihat Peta"}</span>
-                <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            ) : (
-              <Button variant="outline" className="w-full justify-start gap-2" disabled>
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Tiada koordinat kampung</span>
-              </Button>
-            )
-          )}
 
         </div>
 
