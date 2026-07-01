@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Laporan Kemajuan Teknikal — ACLIS — 30 Jun 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0a0a0a;
+    --gray-900: #1a1a1a;
+    --gray-700: #3a3a3a;
+    --gray-500: #6b6b6b;
+    --gray-300: #c8c8c8;
+    --gray-100: #f4f4f4;
+    --gray-50:  #fafafa;
+    --white:    #ffffff;
+    --accent:   #1a1a5e;
+  }
+
+  html { font-size: 10pt; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    color: var(--black);
+    background: var(--white);
+    line-height: 1.6;
+    padding: 0;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--black);
+    color: var(--white);
+    padding: 60px 72px;
+    page-break-after: always;
+  }
+  .cover-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: auto;
+  }
+  .cover-logo {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    opacity: 0.85;
+  }
+  .cover-org {
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+  .cover-body { padding: 80px 0 60px; }
+  .cover-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-bottom: 20px;
+  }
+  .cover-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 52pt;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .cover-rule {
+    width: 48px; height: 2px;
+    background: rgba(255,255,255,0.25);
+    margin: 24px 0;
+  }
+  .cover-subtitle {
+    font-size: 11pt;
+    opacity: 0.55;
+    max-width: 42ch;
+    line-height: 1.6;
+  }
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 0 48px;
+    padding-top: 48px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .cover-meta-item label {
+    display: block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.35;
+    margin-bottom: 4px;
+  }
+  .cover-meta-item span {
+    font-size: 9.5pt;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  /* ── CONTENT PAGES ── */
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 72px 64px;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: avoid; }
+
+  /* Page header */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-300);
+    margin-bottom: 40px;
+  }
+  .page-header-brand {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+  .page-header-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    color: var(--gray-500);
+  }
+
+  /* Section headings */
+  h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 20pt;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9pt;
+    font-weight: 500;
+    color: var(--gray-500);
+    margin-bottom: 8px;
+    display: block;
+  }
+  h2 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 13pt;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-top: 32px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--gray-300);
+  }
+  h3 {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-top: 20px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  p {
+    font-size: 9.5pt;
+    color: var(--gray-700);
+    margin-bottom: 12px;
+    line-height: 1.65;
+  }
+
+  /* Lead paragraph */
+  .lead {
+    font-size: 10.5pt;
+    color: var(--gray-900);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin: 16px 0 24px;
+  }
+  thead th {
+    background: var(--black);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 8pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+    vertical-align: top;
+  }
+  tbody td:first-child { color: var(--gray-900); font-weight: 600; }
+
+  /* Status badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .badge-done    { background: #e8f5e9; color: #1b5e20; }
+  .badge-pending { background: #fff8e1; color: #7c5c00; }
+  .badge-risk    { background: #fde8e8; color: #7f1d1d; }
+  .badge-medium  { background: #fff3e0; color: #7c3d00; }
+  .badge-low     { background: #f4f4f4; color: #4a4a4a; }
+
+  /* Phase bar */
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    margin: 20px 0;
+  }
+  .phase-item {
+    padding: 10px 8px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    text-align: center;
+  }
+  .phase-item.done {
+    background: var(--black);
+    border-color: var(--black);
+    color: var(--white);
+  }
+  .phase-item.pending {
+    background: var(--gray-50);
+    color: var(--gray-500);
+  }
+  .phase-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14pt;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .phase-label { font-size: 7pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* Architecture block */
+  .arch-block {
+    background: var(--gray-900);
+    color: #d4d4d4;
+    border-radius: 6px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    line-height: 1.8;
+    margin: 16px 0;
+  }
+  .arch-comment { color: #6b7280; }
+
+  /* Callout box */
+  .callout {
+    background: var(--gray-100);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 9pt;
+    color: var(--gray-700);
+  }
+  .callout strong { color: var(--black); }
+
+  /* Stats row */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .stat-box {
+    background: var(--black);
+    color: var(--white);
+    border-radius: 6px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 26pt;
+    font-weight: 700;
+    display: block;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-label {
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  /* Timeline */
+  .timeline { margin: 16px 0; }
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 16px;
+    margin-bottom: 10px;
+    font-size: 9pt;
+    align-items: start;
+  }
+  .timeline-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    color: var(--gray-500);
+    padding-top: 2px;
+  }
+  .timeline-content { color: var(--gray-700); }
+  .timeline-content strong { color: var(--black); }
+
+  /* Footer */
+  .page-footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray-300);
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: var(--gray-500);
+  }
+
+  /* Print */
+  @media print {
+    html { font-size: 10pt; }
+    .cover { min-height: 100vh; }
+    .page { page-break-after: always; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     COVER
+════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../frontend/public/icons/android-chrome-192x192.png" alt="ACLIS" onerror="this.style.display='none'" />
+    <span class="cover-org">Pejabat Daerah &amp; Tanah Pontian &nbsp;·&nbsp; Johor Darul Ta'zim</span>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-label">Laporan Kemajuan Teknikal</div>
+    <div class="cover-title">ACLIS</div>
+    <div class="cover-rule"></div>
+    <div class="cover-subtitle">
+      AI Community Leadership Intelligence System —<br>
+      Sistem Pengurusan Pemimpin &amp; Komuniti Daerah Pontian
+    </div>
+  </div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <label>Pembangun</label>
+      <span>Hafizu</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>Tarikh Laporan</label>
+      <span>30 Jun 2026</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>Fasa Semasa</label>
+      <span>Pembangunan → Pengujian</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 1 — RINGKASAN EKSEKUTIF
+════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-brand">ACLIS — Laporan Kemajuan</div>
+    <div class="page-header-meta">30 Jun 2026 &nbsp;/&nbsp; SULIT</div>
+  </div>
+
+  <span class="section-number">§ 01</span>
+  <h1>Ringkasan Eksekutif</h1>
+
+  <p class="lead">
+    Pembangunan sistem ACLIS telah berjaya diselesaikan sepenuhnya dari segi fungsi.
+    Kesemua 6 modul teras telah dibangunkan, diuji secara unit, dan berfungsi dengan baik.
+    Sistem kini berada dalam fasa pengemasan UI/UX sebelum peralihan ke pengujian pengguna sebenar (Julai 2026).
+  </p>
+
+  <div class="stat-row">
+    <div class="stat-box">
+      <span class="stat-num">6</span>
+      <span class="stat-label">Modul Teras</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">149</span>
+      <span class="stat-label">Ujian Unit Lulus</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">3</span>
+      <span class="stat-label">Peranan Pengguna</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">0</span>
+      <span class="stat-label">Ujian Gagal</span>
+    </div>
+  </div>
+
+  <h2>Status Fasa Pembangunan</h2>
+
+  <div class="phase-grid">
+    <div class="phase-item done">
+      <span class="phase-num">1</span>
+      <span class="phase-label">Analisis &amp; Perancangan</span>
+    </div>
+    <div class="phase-item done">
+      <span class="phase-num">2</span>
+      <span class="phase-label">Reka Bentuk Sistem</span>
+    </div>
+    <div class="phase-item done">
+      <span class="phase-num">3</span>
+      <span class="phase-label">Pembangunan</span>
+    </div>
+    <div class="phase-item pending">
+      <span class="phase-num">4</span>
+      <span class="phase-label">Pengujian Pengguna</span>
+    </div>
+    <div class="phase-item pending">
+      <span class="phase-num">5</span>
+      <span class="phase-label">Deployment</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fasa</th>
+        <th>Huraian</th>
+        <th>Status</th>
+        <th>Tempoh</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Analisis Keperluan &amp; Perancangan Sistem</td>
+        <td><span class="badge badge-done">✓ Selesai</span></td>
+        <td>Jun 2026</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Reka Bentuk Seni Bina, Skema DB &amp; UI</td>
+        <td><span class="badge badge-done">✓ Selesai</span></td>
+        <td>Jun 2026</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Pembangunan Semua Modul + Pengujian Unit</td>
+        <td><span class="badge badge-done">✓ Selesai</span></td>
+        <td>Jun 2026</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Pengujian Pengguna (SUS Usability Testing)</td>
+        <td><span class="badge badge-pending">⏳ Belum Bermula</span></td>
+        <td>Jul–Ogos 2026</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Deployment ke Production &amp; Penyelenggaraan</td>
+        <td><span class="badge badge-pending">⏳ Belum Bermula</span></td>
+        <td>Sep 2026</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Hafizu · hafizu2302@gmail.com</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 2 — PENCAPAIAN MODUL
+════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-brand">ACLIS — Laporan Kemajuan</div>
+    <div class="page-header-meta">30 Jun 2026 &nbsp;/&nbsp; SULIT</div>
+  </div>
+
+  <span class="section-number">§ 02</span>
+  <h1>Pencapaian Modul</h1>
+
+  <h2>2.1 Modul Teras</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Modul</th>
+        <th>Fungsi Utama</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Profil Kampung</td>
+        <td>CRUD kampung, koordinat GPS, peta interaktif Leaflet, profil mukim</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Data Penduduk &amp; B40</td>
+        <td>Rekod penduduk berstruktur, penanda B40, senarai, tambah/edit/padam</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Laporan Bulanan</td>
+        <td>Penyerahan laporan digital, aliran draft → submitted, ringkasan AI (JamAI)</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Isu Komuniti</td>
+        <td>Log isu, kategorisasi AI, pandangan peta dengan penanda status, pengurusan status</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Papan Pemuka</td>
+        <td>Statistik langsung, carta bar status isu/laporan, amaran laporan lewat, analitik AI</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Sokongan AI (JamAI Base)</td>
+        <td>Ringkasan laporan bulanan, kategorisasi isu automatik, insight tren komuniti</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2.2 Ciri Tambahan (Di Luar Skop Asal)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Ciri</th>
+        <th>Justifikasi</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pengurusan Pemimpin (CRUD + foto)</td>
+        <td>Keperluan operasi sebenar klien — data pemimpin belum ada sistem digital</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>Sistem Penilaian Pemimpin</td>
+        <td>Sokongan kepada proses penilaian tahunan sedia ada di Pejabat Daerah</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>Kawalan Akses RBAC (3 peranan)</td>
+        <td>Keselamatan data — admin_daerah, penghulu, ketua_kampung dengan skop berbeza</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>Pandangan Peta Isu (Leaflet)</td>
+        <td>Visualisasi geospatial — membantu admin kenal pasti kluster isu komuniti</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>Log Audit Mutasi</td>
+        <td>Akauntabiliti PDPA 2010 — rekod siapa tukar apa dan bila</td>
+        <td><span class="badge badge-done">✓ Siap</span></td>
+      </tr>
+      <tr>
+        <td>Antara Muka Berjenama (UI/UX)</td>
+        <td>Reka bentuk profesional monokrom dengan tipografi editorial Libre Baskerville + Nunito</td>
+        <td><span class="badge badge-done">✓ Selesai (Jun 2026)</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Nota Kemajuan Terkini (30 Jun 2026):</strong> Dalam tempoh laporan ini, kerja-kerja pengemasan antara muka telah diselesaikan — termasuk reka bentuk semula halaman log masuk, penggantian tema warna kepada sistem monokrom OKLCH, dan pengoptimuman komponen sidebar dengan ikon berjenama. Kesemua borang kini menggunakan corak <code>toast.promise</code> untuk maklum balas pengguna yang konsisten.
+  </div>
+
+  <div class="page-footer">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Hafizu · hafizu2302@gmail.com</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 3 — SENI BINA TEKNIKAL
+════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-brand">ACLIS — Laporan Kemajuan</div>
+    <div class="page-header-meta">30 Jun 2026 &nbsp;/&nbsp; SULIT</div>
+  </div>
+
+  <span class="section-number">§ 03</span>
+  <h1>Seni Bina Teknikal</h1>
+
+  <div class="arch-block">
+<span class="arch-comment">── Lapisan Pengguna ──────────────────────────────────────────</span>
+Pelayar Web (Desktop / Laptop)
+  │
+  ▼
+<span class="arch-comment">── Lapisan Frontend ──────────────────────────────────────────</span>
+Next.js 15  (TypeScript · React 19 · Tailwind CSS 4 · shadcn/ui)
+  ├── TanStack Query — caching + sinkronisasi data
+  ├── React Hook Form + Zod — pengesahan borang
+  ├── Leaflet.js — peta interaktif (isu &amp; kampung)
+  └── Sonner — notifikasi toast
+  │  REST API (JSON · JWT Bearer token)
+  ▼
+<span class="arch-comment">── Lapisan Backend ───────────────────────────────────────────</span>
+FastAPI  (Python 3.12 · Pydantic v2 · PyJWT HS256)
+  ├── Pengesahan JWT + semak peranan setiap permintaan
+  ├── Scope resolver — penapis data mengikut peranan
+  ├── TTL cache (60s) — kurangkan pertanyaan DB
+  ├── Log audit — semua operasi tulis dicatat
+  └── Integrasi JamAI Base — AI ringkasan &amp; kategori
+  │
+  ▼
+<span class="arch-comment">── Lapisan Data ──────────────────────────────────────────────</span>
+Supabase (PostgreSQL · GoTrue Auth · Storage)
+  ├── Row-Level Security — semua jadual dilindungi
+  ├── 149 ujian unit — pytest + unittest.mock
+  └── Storan gambar pemimpin (S3-compatible bucket)
+  </div>
+
+  <h2>3.1 Stack Teknologi</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Lapisan</th>
+        <th>Teknologi</th>
+        <th>Justifikasi Pemilihan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Frontend</td>
+        <td>Next.js 15 + TypeScript</td>
+        <td>SSR/SSG untuk SEO, TypeScript untuk keselamatan jenis, ekosistem React matang</td>
+      </tr>
+      <tr>
+        <td>Komponen UI</td>
+        <td>shadcn/ui + Tailwind CSS 4</td>
+        <td>Komponen boleh disesuaikan penuh, tiada kebergantungan vendor, senang branding</td>
+      </tr>
+      <tr>
+        <td>Backend</td>
+        <td>FastAPI + Python 3.12</td>
+        <td>Dokumentasi API automatik, pengesahan Pydantic, prestasi tinggi, mudah diuji</td>
+      </tr>
+      <tr>
+        <td>Database + Auth</td>
+        <td>Supabase (PostgreSQL)</td>
+        <td>Auth siap guna, RLS bersepadu, storan fail; jimat masa infrastruktur</td>
+      </tr>
+      <tr>
+        <td>AI</td>
+        <td>JamAI Base</td>
+        <td>Platform AI Malaysia-hosted; sesuai untuk konteks pentadbiran awam tempatan</td>
+      </tr>
+      <tr>
+        <td>Peta</td>
+        <td>Leaflet.js + OpenStreetMap</td>
+        <td>Sumber terbuka, tiada kos API, sokongan koordinat GPS untuk isu dan kampung</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3.2 Model Keselamatan</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Kawalan</th>
+        <th>Pelaksanaan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pengesahan</td>
+        <td>Supabase JWT (HS256, audience "authenticated") — setiap permintaan API disahkan</td>
+      </tr>
+      <tr>
+        <td>Autoriti Peranan</td>
+        <td>Token tanpa peranan sah → 403 Forbidden (prinsip least privilege)</td>
+      </tr>
+      <tr>
+        <td>Pengasingan Data</td>
+        <td>Scope resolver per-request — data ditapis mengikut kampung/mukim pengguna</td>
+      </tr>
+      <tr>
+        <td>Lapisan DB</td>
+        <td>Row-Level Security aktif pada semua jadual Supabase</td>
+      </tr>
+      <tr>
+        <td>Pengepala HTTP</td>
+        <td>X-Content-Type-Options, X-Frame-Options, HSTS, Referrer-Policy</td>
+      </tr>
+      <tr>
+        <td>Log Audit</td>
+        <td><code>aclis_audit_log</code> — aktor, entiti, medan ditukar, cap masa UTC</td>
+      </tr>
+      <tr>
+        <td>Perlindungan PII</td>
+        <td>Fail CSV tidak dikemit dalam git; No. KP tidak dicatat dalam log audit</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Hafizu · hafizu2302@gmail.com</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 4 — PENGUJIAN & KUALITI
+════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-brand">ACLIS — Laporan Kemajuan</div>
+    <div class="page-header-meta">30 Jun 2026 &nbsp;/&nbsp; SULIT</div>
+  </div>
+
+  <span class="section-number">§ 04</span>
+  <h1>Pengujian &amp; Kawalan Kualiti</h1>
+
+  <h2>4.1 Ujian Unit (Selesai)</h2>
+
+  <div class="stat-row">
+    <div class="stat-box">
+      <span class="stat-num">149</span>
+      <span class="stat-label">Ujian Lulus</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">0</span>
+      <span class="stat-label">Ujian Gagal</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">100%</span>
+      <span class="stat-label">Endpoint Diliputi</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">pytest</span>
+      <span class="stat-label">Alat Pengujian</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Modul Diuji</th>
+        <th>Skop Ujian</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pengesahan (Auth)</td>
+        <td>Pengesahan JWT, semak audience, peranan, cache TTL scope</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Kawalan Akses (Scoping)</td>
+        <td>Penapis data mengikut peranan — admin, penghulu, ketua_kampung</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Kampung API</td>
+        <td>CRUD kampung, koordinat GPS, paginasi, 403/404</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Pemimpin API</td>
+        <td>CRUD pemimpin, muat naik foto, pautan kampung, kawalan peranan</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Laporan API</td>
+        <td>Cipta, kemaskini, penghantaran, auto-set submitted_at, ringkasan AI</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Isu API</td>
+        <td>Log isu, tukar status, rekategorisasi AI, pandangan koordinat</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Statistik API</td>
+        <td>Kiraan kampung/pemimpin/isu/laporan, breakdown status, AI insights</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+      <tr>
+        <td>Penilaian API</td>
+        <td>CRUD penilaian, kawalan akses admin sahaja</td>
+        <td><span class="badge badge-done">✓ Lulus</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4.2 Pengujian Pengguna (Belum Bermula)</h2>
+
+  <p>Metodologi yang dicadangkan: <strong>System Usability Scale (SUS)</strong> — soal selidik piawai 10 soalan dengan skala Likert 1–5.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Senario Pengujian</th>
+        <th>Peranan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Mendaftar masuk dan melayari papan pemuka</td>
+        <td>Semua peranan</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Tambah kampung baharu dengan koordinat GPS menggunakan peta</td>
+        <td>Admin Daerah</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Hantar laporan bulanan untuk kampung</td>
+        <td>Ketua Kampung</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Rekod isu komuniti baharu dengan lokasi</td>
+        <td>Ketua Kampung</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Semak senarai kampung dan status laporan dalam mukim</td>
+        <td>Penghulu</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Sasaran SUS:</strong> Skor ≥ 70 (Baik) daripada 5–8 peserta. Peserta sasaran: kakitangan Pejabat Daerah Pontian, Ketua Kampung terpilih, dan Penghulu.
+  </div>
+
+  <div class="page-footer">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Hafizu · hafizu2302@gmail.com</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 5 — ISU, RISIKO & RANCANGAN
+════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-brand">ACLIS — Laporan Kemajuan</div>
+    <div class="page-header-meta">30 Jun 2026 &nbsp;/&nbsp; SULIT</div>
+  </div>
+
+  <span class="section-number">§ 05</span>
+  <h1>Isu, Risiko &amp; Rancangan</h1>
+
+  <h2>5.1 Isu &amp; Risiko Semasa</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Isu</th>
+        <th>Tahap</th>
+        <th>Tindakan Diperlukan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>3 migrasi DB belum diaplikasi ke Supabase production (0004, 0005, 0006)</td>
+        <td><span class="badge badge-medium">Sederhana</span></td>
+        <td>Perlu dilaksanakan sebelum demo kepada klien</td>
+      </tr>
+      <tr>
+        <td>Sejarah git mengandungi CSV data PII lama (sebelum dibuang)</td>
+        <td><span class="badge badge-low">Rendah</span></td>
+        <td>Scrub menggunakan <code>git filter-repo</code> sebelum repo dijadikan awam</td>
+      </tr>
+      <tr>
+        <td>Pengujian Row-Level Security belum dijalankan pada Supabase sebenar</td>
+        <td><span class="badge badge-medium">Sederhana</span></td>
+        <td>Dirancang selepas sesi pengujian pengguna selesai</td>
+      </tr>
+      <tr>
+        <td>Integrasi JamAI Base bergantung pada token API luaran</td>
+        <td><span class="badge badge-low">Rendah</span></td>
+        <td>Sistem berfungsi tanpa AI; paparan "Tiada data" jika token tidak dikonfigurasikan</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5.2 Rancangan Tindakan Seterusnya</h2>
+
+  <div class="timeline">
+    <div class="timeline-row">
+      <div class="timeline-date">Segera<br>(Jun–Jul 2026)</div>
+      <div class="timeline-content">
+        <strong>Aplikasi migrasi DB 0004–0006</strong> ke Supabase production.<br>
+        Persediaan persekitaran demo untuk sesi klien.
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-date">Julai 2026</div>
+      <div class="timeline-content">
+        <strong>Demo kepada klien</strong> (Pejabat Daerah Pontian).<br>
+        Sesi walkthrough semua modul dengan pentadbir dan Ketua Kampung terpilih.
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-date">Jul–Ogos 2026</div>
+      <div class="timeline-content">
+        <strong>Pengujian Pengguna (SUS)</strong> — 5–8 peserta dari pelbagai peranan.<br>
+        Rekod maklum balas, kenal pasti isu kebolehgunaan.
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-date">Ogos 2026</div>
+      <div class="timeline-content">
+        <strong>Penambahbaikan</strong> berdasarkan dapatan pengujian pengguna.<br>
+        Pelarasan UI, pembetulan pepijat, pengoptimuman prestasi.
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-date">September 2026</div>
+      <div class="timeline-content">
+        <strong>Deployment ke persekitaran production</strong>.<br>
+        Latihan pengguna dan serah milik sistem kepada klien.
+      </div>
+    </div>
+  </div>
+
+  <h2>5.3 Pencapaian Utama Sejak Laporan Terdahulu</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Tarikh</th>
+        <th>Pencapaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Jun 2026</td>
+        <td>Ciri peta Leaflet untuk isu komuniti dan kampung (koordinat GPS, klik untuk letak pin)</td>
+      </tr>
+      <tr>
+        <td>Jun 2026</td>
+        <td>Pengurusan penduduk lengkap (CRUD) dalam halaman detail kampung</td>
+      </tr>
+      <tr>
+        <td>Jun 2026</td>
+        <td>Amaran laporan lewat pada papan pemuka admin</td>
+      </tr>
+      <tr>
+        <td>Jun 2026</td>
+        <td>Penguatan keselamatan — RLS, pengepala HTTP, log audit, pembuangan fail PII</td>
+      </tr>
+      <tr>
+        <td>Jun 2026</td>
+        <td>Reka bentuk semula UI — tema monokrom, tipografi editorial, halaman log masuk baharu</td>
+      </tr>
+      <tr>
+        <td>Jun 2026</td>
+        <td>Penambahbaikan UX — <code>toast.promise</code> semua borang, sidebar responsif, mod gelap betul</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Hafizu · hafizu2302@gmail.com</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 6 — PENUTUP
+════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-brand">ACLIS — Laporan Kemajuan</div>
+    <div class="page-header-meta">30 Jun 2026 &nbsp;/&nbsp; SULIT</div>
+  </div>
+
+  <span class="section-number">§ 06</span>
+  <h1>Penutup</h1>
+
+  <p class="lead">
+    Sistem ACLIS telah menunjukkan kemajuan yang konsisten dan menepati skop asal projek.
+    Kesemua modul teras telah berfungsi dan diuji. Tumpuan kini beralih kepada
+    memastikan sistem mesra pengguna sebelum diserahkan kepada kakitangan Pejabat Daerah Pontian.
+  </p>
+
+  <p>
+    Pembangunan sistem ini menggabungkan amalan kejuruteraan perisian moden — pengujian unit
+    komprehensif, keselamatan berlapis, dan seni bina yang boleh diselenggarakan —
+    dengan keperluan khusus konteks pentadbiran awam Malaysia. Integrasi AI melalui
+    JamAI Base menambah nilai kepada proses sedia ada tanpa menggantikan pertimbangan manusia.
+  </p>
+
+  <p>
+    Langkah kritikal seterusnya ialah sesi pengujian pengguna sebenar dengan kakitangan Pejabat
+    Daerah Pontian bagi memastikan sistem benar-benar membantu aliran kerja harian mereka,
+    bukan sekadar memenuhi keperluan teknikal semata-mata.
+  </p>
+
+  <div class="callout">
+    <strong>Permintaan Kepada Penyelia:</strong> Maklum balas khusus diperlukan berkaitan
+    (1) metodologi pengujian SUS yang dicadangkan, (2) keperluan dokumentasi tambahan untuk
+    laporan PSM, dan (3) garis panduan bagi sesi demo kepada klien pada Julai 2026.
+  </div>
+
+  <br />
+
+  <table>
+    <thead>
+      <tr>
+        <th colspan="2">Maklumat Laporan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Sistem</td>
+        <td>AI Community Leadership Intelligence System (ACLIS)</td>
+      </tr>
+      <tr>
+        <td>Pembangun</td>
+        <td>Hafizu · hafizu2302@gmail.com</td>
+      </tr>
+      <tr>
+        <td>Klien</td>
+        <td>Pejabat Daerah &amp; Tanah Pontian, Johor</td>
+      </tr>
+      <tr>
+        <td>Tarikh Laporan</td>
+        <td>30 Jun 2026</td>
+      </tr>
+      <tr>
+        <td>Repositori</td>
+        <td>Peribadi — diserahkan atas permintaan penyelia</td>
+      </tr>
+      <tr>
+        <td>Versi Sistem</td>
+        <td>v1.0 (pre-production)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br /><br />
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 32px;">
+    <div>
+      <div style="border-top: 1px solid #0a0a0a; padding-top: 12px; margin-top: 48px;">
+        <p style="font-size:8.5pt; color:#3a3a3a; margin:0;"><strong>Hafizu</strong></p>
+        <p style="font-size:8pt; color:#6b6b6b; margin:4px 0 0;">Pembangun Sistem &amp; Pelajar PSM</p>
+      </div>
+    </div>
+    <div>
+      <div style="border-top: 1px solid #0a0a0a; padding-top: 12px; margin-top: 48px;">
+        <p style="font-size:8.5pt; color:#3a3a3a; margin:0;"><strong>Penyelia</strong></p>
+        <p style="font-size:8pt; color:#6b6b6b; margin:4px 0 0;">Tandatangan &amp; Tarikh</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer" style="margin-top:60px;">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Laporan ini adalah SULIT — untuk kegunaan dalaman sahaja</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/app-layout";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiGet } from "@/lib/api";
+import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,9 @@ export default function EvaluationDetailPage() {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
+  useEffect(() => {
+    if (error) { toast.error("Rekod tidak ditemui atau akses ditolak."); router.replace("/evaluations"); }
+  }, [error]);
 
   const pct = data?.total != null ? (data.total / MAX_SCORE) * 100 : 0;
 

@@ -18,18 +18,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <div className="[--header-height:calc(theme(spacing.14))]">
-      <SidebarProvider className="flex flex-col">
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
         <SiteHeader />
-        <div className="flex flex-1">
-          <AppSidebar />
-          <SidebarInset>
-            <div key={pathname} className="flex flex-1 flex-col gap-6 p-6 page-enter">
-              {children}
-            </div>
-          </SidebarInset>
+        <div key={pathname} className="flex flex-1 flex-col gap-6 p-6 page-enter">
+          {children}
         </div>
-      </SidebarProvider>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

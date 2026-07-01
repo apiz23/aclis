@@ -92,27 +92,44 @@ export default function ReportDetailPage() {
       .finally(() => setSummaryLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+  useEffect(() => {
+    if (error) { toast.error("Rekod tidak ditemui atau akses ditolak."); router.replace("/reports"); }
+  }, [error]);
 
   async function onEditSubmit(values: EditValues) {
+    const promise = apiPatch(`/reports/${id}`, { content: values.content });
+
+    toast.promise(promise, {
+      loading: "Menyimpan kandungan...",
+      success: "Kandungan berjaya disimpan.",
+      error: "Gagal menyimpan. Cuba semula.",
+    });
+
     try {
-      const updated: ReportDetail = await apiPatch(`/reports/${id}`, { content: values.content });
+      const updated: ReportDetail = await promise;
       setData(updated);
       setEditOpen(false);
-      toast.success("Kandungan berjaya disimpan.");
     } catch {
-      toast.error("Gagal menyimpan. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
   async function handleSubmitReport() {
     if (!confirm("Hantar laporan ini? Status akan bertukar kepada Dihantar.")) return;
     setSubmitting(true);
+    const promise = apiPatch(`/reports/${id}`, { status: "submitted" });
+
+    toast.promise(promise, {
+      loading: "Menghantar laporan...",
+      success: "Laporan berjaya dihantar.",
+      error: "Gagal menghantar laporan.",
+    });
+
     try {
-      const updated: ReportDetail = await apiPatch(`/reports/${id}`, { status: "submitted" });
+      const updated: ReportDetail = await promise;
       setData(updated);
-      toast.success("Laporan berjaya dihantar.");
     } catch {
-      toast.error("Gagal menghantar laporan.");
+      // handled by toast.promise
     } finally {
       setSubmitting(false);
     }

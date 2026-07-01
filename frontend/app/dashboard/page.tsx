@@ -37,17 +37,19 @@ function StatCard({ label, icon: Icon, value, sub, loading }: {
   label: string; icon: React.ElementType; value: number; sub: string; loading: boolean;
 }) {
   return (
-    <div className="border bg-card p-5 rounded-lg flex flex-col gap-2.5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-          <Icon className="h-4 w-4 text-primary" aria-hidden />
-        </div>
+    <div className="border bg-card px-5 py-5 rounded-lg flex flex-col gap-3">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
+        {loading ? <Skeleton className="h-3.5 w-3.5 rounded-sm" /> : <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />}
+        {loading ? <Skeleton className="h-3 w-28" /> : (
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em]">{label}</p>
+        )}
       </div>
-      {loading ? <Skeleton className="h-10 w-20" /> : (
-        <p className="font-heading text-[42px] leading-none font-bold tabular-nums tracking-tight">{value}</p>
+      {loading ? <Skeleton className="h-11 w-16" /> : (
+        <p className="font-heading text-[44px] leading-none font-bold tabular-nums">{value}</p>
       )}
-      <p className="text-xs text-muted-foreground">{sub}</p>
+      {loading ? <Skeleton className="h-3 w-36" /> : (
+        <p className="text-xs text-muted-foreground">{sub}</p>
+      )}
     </div>
   );
 }
@@ -132,13 +134,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger-children">
         {STAT_CARDS.map((card) => (
           <StatCard key={card.label} {...card} loading={loading} />
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 stagger-children">
         <ChartCard title="Status Isu Komuniti" loading={statsLoading}>
           {issueData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-10">Tiada data isu.</p>
@@ -172,7 +174,7 @@ export default function DashboardPage() {
         </ChartCard>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 stagger-children">
         <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />

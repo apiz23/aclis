@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { MapMount } from "@/components/ui/map-mount";
@@ -95,6 +96,9 @@ export default function KampungDetailPage() {
     queryKey: ["kampung", id],
     queryFn: () => apiGet(`/kampung/${id}`),
   });
+  useEffect(() => {
+    if (error) { toast.error("Rekod tidak ditemui atau akses ditolak."); router.push("/kampung"); }
+  }, [error]);
 
   const { data: mukims = [] } = useQuery<MukimOption[]>({
     queryKey: ["mukims"],
@@ -138,18 +142,16 @@ export default function KampungDetailPage() {
   }
 
   async function onResidentSubmit(values: ResidentValues) {
-    try {
-      if (editingResident) {
-        await apiPatch(`/residents/${editingResident.id}`, {
+    const successMsg = editingResident ? "Maklumat penduduk dikemaskini." : "Penduduk berjaya ditambah.";
+    const promise = editingResident
+      ? apiPatch(`/residents/${editingResident.id}`, {
           name:       values.name,
           ic_no:      values.ic_no || null,
           phone:      values.phone || null,
           b40_status: values.b40_status,
           address:    values.address || null,
-        });
-        toast.success("Maklumat penduduk dikemaskini.");
-      } else {
-        await apiPost(`/kampung/${id}/residents`, {
+        })
+      : apiPost(`/kampung/${id}/residents`, {
           kampung_id: id,
           name:       values.name,
           ic_no:      values.ic_no || null,
@@ -157,22 +159,36 @@ export default function KampungDetailPage() {
           b40_status: values.b40_status,
           address:    values.address || null,
         });
-        toast.success("Penduduk berjaya ditambah.");
-      }
+
+    toast.promise(promise, {
+      loading: "Menyimpan...",
+      success: successMsg,
+      error: "Gagal menyimpan. Cuba semula.",
+    });
+
+    try {
+      await promise;
       setResidentDialogOpen(false);
       qc.invalidateQueries({ queryKey: ["residents", id] });
       qc.invalidateQueries({ queryKey: ["kampung", id] });
     } catch {
-      toast.error("Gagal menyimpan. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
   async function deleteResident(residentId: string) {
     if (!confirm("Padam rekod penduduk ini?")) return;
     setDeletingId(residentId);
+    const promise = apiDelete(`/residents/${residentId}`);
+
+    toast.promise(promise, {
+      loading: "Memadamkan rekod...",
+      success: "Rekod penduduk dipadam.",
+      error: "Gagal memadam. Cuba semula.",
+    });
+
     try {
-      await apiDelete(`/residents/${residentId}`);
-      toast.success("Rekod penduduk dipadam.");
+      await promise;
       qc.invalidateQueries({ queryKey: ["residents", id] });
       qc.invalidateQueries({ queryKey: ["kampung", id] });
     } catch {
@@ -201,21 +217,28 @@ export default function KampungDetailPage() {
 
   async function onSubmit(values: EditValues) {
     const toNum = (v: unknown) => (v === "" || v === undefined) ? null : Number(v);
+    const promise = apiPatch(`/kampung/${id}`, {
+      name:      values.name,
+      mukim_id:  values.mukim_id || null,
+      b40_count: toNum(values.b40_count),
+      profile:   values.profile || null,
+      lat:       toNum(values.lat),
+      lng:       toNum(values.lng),
+    });
+
+    toast.promise(promise, {
+      loading: "Mengemaskini maklumat...",
+      success: "Maklumat kampung dikemaskini.",
+      error: "Gagal kemaskini. Cuba semula.",
+    });
+
     try {
-      await apiPatch(`/kampung/${id}`, {
-        name:      values.name,
-        mukim_id:  values.mukim_id || null,
-        b40_count: toNum(values.b40_count),
-        profile:   values.profile || null,
-        lat:       toNum(values.lat),
-        lng:       toNum(values.lng),
-      });
+      await promise;
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ["kampung", id] });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kampung });
-      toast.success("Maklumat kampung dikemaskini.");
     } catch {
-      toast.error("Gagal kemaskini. Cuba semula.");
+      // handled by toast.promise
     }
   }
 
@@ -502,9 +525,11 @@ export default function KampungDetailPage() {
                   <Select value={field.value ?? ""} onValueChange={field.onChange} name={field.name}>
                     <SelectTrigger id={field.name}><SelectValue placeholder="Pilih mukim..." /></SelectTrigger>
                     <SelectContent>
-                      {(mukims as MukimOption[]).map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                      ))}
+                      <ScrollArea className="h-60">
+                        {(mukims as MukimOption[]).map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                 </Field>

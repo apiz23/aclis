@@ -72,14 +72,25 @@ export default function IssueDetailPage() {
       setIsAdmin(role === "admin_daerah");
     });
   }, [id]);
+  useEffect(() => {
+    if (error) { toast.error("Rekod tidak ditemui atau akses ditolak."); router.replace("/issues"); }
+  }, [error]);
 
   async function handleStatusChange(next: string) {
     setUpdating(true);
+    const promise = apiPatch(`/issues/${id}`, { status: next });
+
+    toast.promise(promise, {
+      loading: "Mengemaskini status...",
+      success: "Status berjaya dikemaskini.",
+      error: "Gagal kemaskini status.",
+    });
+
     try {
-      const updated: IssueDetail = await apiPatch(`/issues/${id}`, { status: next });
+      const updated: IssueDetail = await promise;
       setData(updated);
     } catch {
-      toast.error("Gagal kemaskini status.");
+      // handled by toast.promise
     } finally {
       setUpdating(false);
     }
@@ -87,11 +98,18 @@ export default function IssueDetailPage() {
 
   async function handleRecategorize() {
     setRecategorizing(true);
+    const promise = apiPost(`/issues/${id}/recategorize`, {});
+
+    toast.promise(promise, {
+      loading: "Menghantar ke AI...",
+      success: "Permintaan kategori AI dihantar. Sila muat semula sebentar.",
+      error: "Gagal menghantar permintaan kategori AI.",
+    });
+
     try {
-      await apiPost(`/issues/${id}/recategorize`, {});
-      toast.success("Permintaan kategori AI dihantar. Sila muat semula sebentar.");
+      await promise;
     } catch {
-      toast.error("Gagal menghantar permintaan kategori AI.");
+      // handled by toast.promise
     } finally {
       setRecategorizing(false);
     }

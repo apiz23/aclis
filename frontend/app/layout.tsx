@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Barlow_Semi_Condensed, IBM_Plex_Mono } from "next/font/google";
+import { Nunito, Libre_Baskerville, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,19 +7,19 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const barlowSemiCondensed = Barlow_Semi_Condensed({
-  subsets: ["latin"],
-  variable: "--font-display",
   weight: ["400", "500", "600", "700"],
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const libreBaskerville = Libre_Baskerville({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
@@ -54,9 +54,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "h-full antialiased",
-        plusJakartaSans.variable,
-        barlowSemiCondensed.variable,
-        ibmPlexMono.variable,
+        nunito.variable,
+        libreBaskerville.variable,
+        jetbrainsMono.variable,
         "font-sans"
       )}
     >

@@ -26,19 +26,23 @@ import {
   ClipboardList,
   UserCircle,
 } from "lucide-react"
+import { useCurrentUser } from "@/lib/queries"
 
 const NAV = [
-  { label: "Papan Pemuka",    href: "/dashboard",   icon: LayoutDashboard },
-  { label: "Profil Kampung",  href: "/kampung",     icon: MapPin },
-  { label: "Pemimpin",        href: "/leaders",     icon: Users },
-  { label: "Laporan Bulanan", href: "/reports",     icon: FileText },
-  { label: "Isu Komuniti",    href: "/issues",      icon: AlertCircle },
-  { label: "Penilaian",       href: "/evaluations", icon: ClipboardList },
-  { label: "Profil Saya",     href: "/profile",     icon: UserCircle },
+  { label: "Papan Pemuka",    href: "/dashboard",   icon: LayoutDashboard, roles: ["admin_daerah", "penghulu", "ketua_kampung"] },
+  { label: "Profil Kampung",  href: "/kampung",     icon: MapPin,           roles: ["admin_daerah", "penghulu", "ketua_kampung"] },
+  { label: "Pemimpin",        href: "/leaders",     icon: Users,            roles: ["admin_daerah", "penghulu", "ketua_kampung"] },
+  { label: "Laporan Bulanan", href: "/reports",     icon: FileText,         roles: ["admin_daerah", "penghulu", "ketua_kampung"] },
+  { label: "Isu Komuniti",    href: "/issues",      icon: AlertCircle,      roles: ["admin_daerah", "penghulu", "ketua_kampung"] },
+  { label: "Penilaian",       href: "/evaluations", icon: ClipboardList,    roles: ["admin_daerah"] },
+  { label: "Profil Saya",     href: "/profile",     icon: UserCircle,       roles: ["admin_daerah", "penghulu", "ketua_kampung"] },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { data: me, isLoading: meLoading } = useCurrentUser()
+  const role = me?.role ?? null
+  const visibleNav = meLoading ? [] : (role ? NAV.filter(item => item.roles.includes(role)) : [])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -47,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                <div className="shrink-0 size-8 rounded-lg overflow-hidden">
                   <Image
                     src="/icons/android-chrome-192x192.png"
                     alt="ACLIS"
@@ -71,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV.map(({ label, href, icon: Icon }) => (
+              {visibleNav.map(({ label, href, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     asChild
