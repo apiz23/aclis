@@ -66,7 +66,6 @@ import {
     Undo2Icon,
     WaypointsIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import React, {
     Suspense,
     createContext,
@@ -246,13 +245,9 @@ function MapTileLayer({
     name = "Default",
     url,
     attribution,
-    darkUrl,
-    darkAttribution,
     ...props
 }: Partial<TileLayerProps> & {
     name?: string
-    darkUrl?: string
-    darkAttribution?: string
     ref?: Ref<TileLayer>
 }) {
     const map = useMap()
@@ -263,19 +258,11 @@ function MapTileLayer({
     const context = useContext(MapLayersContext)
     const DEFAULT_URL =
         "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-    const DEFAULT_DARK_URL =
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
 
-    const { resolvedTheme } = useTheme()
-    const resolvedUrl =
-        resolvedTheme === "dark"
-            ? (darkUrl ?? url ?? DEFAULT_DARK_URL)
-            : (url ?? DEFAULT_URL)
+    const resolvedUrl = url ?? DEFAULT_URL
     const resolvedAttribution =
-        resolvedTheme === "dark" && darkAttribution
-            ? darkAttribution
-            : (attribution ??
-              '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>')
+        attribution ??
+        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
     useEffect(() => {
         if (context) {
@@ -285,7 +272,7 @@ function MapTileLayer({
                 attribution: resolvedAttribution,
             })
         }
-    }, [context, name, url, attribution])
+    }, [context, name, resolvedUrl, resolvedAttribution])
 
     if (context && context.selectedTileLayer !== name) {
         return null

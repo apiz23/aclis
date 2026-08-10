@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ACLIS — Pejabat Daerah Pontian",
+    name: "ACLIS | Pejabat Daerah Pontian",
     short_name: "ACLIS",
     description: "Sistem AI Pengurusan Data Ketua Kampung & Penghulu",
-    start_url: "/dashboard",
+    start_url: "/papan-pemuka",
     display: "standalone",
     background_color: "#eae4d8",
     theme_color: "#4d4640",

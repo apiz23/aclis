@@ -65,14 +65,15 @@ def test_create_evaluation_403_non_admin(mock_sb):
 
 def test_update_evaluation_ok(mock_sb):
     updated = {**EVAL_ROW, "ulasan": "Sangat Baik"}
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [updated]
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [updated]
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [updated]
     r = client.patch("/evaluations/e1", headers=auth(), json={"ulasan": "Sangat Baik"})
     assert r.status_code == 200
     assert r.json()["ulasan"] == "Sangat Baik"
 
 
 def test_update_evaluation_404(mock_sb):
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = []
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = []
     r = client.patch("/evaluations/missing", headers=auth(), json={"ulasan": "X"})
     assert r.status_code == 404
 

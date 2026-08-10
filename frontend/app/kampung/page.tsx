@@ -10,15 +10,14 @@ import { toast } from "sonner";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable, SortableHeader } from "@/components/ui/data-table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { MapMount } from "@/components/ui/map-mount";
-import { Map, MapTileLayer, MapMarkerClusterGroup, MapMarker, MapPopup, MapZoomControl, MapFullscreenControl } from "@/components/ui/map";
+import { KampungMap } from "@/components/kampung-map";
 import { apiGet, apiPost } from "@/lib/api";
 import { MapPin, Plus, TableIcon, MapIcon } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -49,8 +48,6 @@ const kampungSchema = z.object({
 type KampungFormValues = z.infer<typeof kampungSchema>;
 
 const EMPTY: KampungFormValues = { name: "", mukim_id: "", b40_count: undefined, profile: "", lat: "", lng: "" };
-
-const PONTIAN: [number, number] = [1.4855, 103.3892];
 
 const columns: ColumnDef<KampungSummary>[] = [
   {
@@ -142,14 +139,11 @@ export default function KampungPage() {
     }
   }
 
-  const mappable = (kampungs as KampungSummary[]).filter(k => k.lat != null && k.lng != null);
-  const missing = (kampungs as KampungSummary[]).length - mappable.length;
-
   return (
     <AppLayout>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
-          <h1 className="font-heading text-2xl font-bold tracking-tight">Profil Kampung</h1>
+          <h1 className="heading-page">Profil Kampung</h1>
           <p className="text-sm text-muted-foreground">
             Senarai kampung di bawah Pejabat Daerah Pontian
           </p>
@@ -210,46 +204,19 @@ export default function KampungPage() {
         </div>
       ) : (
         <div className="rounded-lg border bg-card overflow-hidden">
-          <div className="px-5 py-4 border-b flex items-center justify-between">
+          <div className="px-5 py-4 border-b">
             <p className="text-sm font-semibold">Peta Kampung</p>
-            {missing > 0 && (
-              <p className="text-xs text-muted-foreground">{missing} kampung tiada koordinat</p>
-            )}
           </div>
-          <MapMount className="h-[480px] w-full">
-            <Map center={PONTIAN} zoom={11} className="h-[480px] w-full">
-              <MapTileLayer />
-              <MapZoomControl />
-              <MapFullscreenControl />
-              <MapMarkerClusterGroup>
-                {mappable.map((k) => (
-                  <MapMarker key={k.id} position={[k.lat!, k.lng!]}>
-                    <MapPopup>
-                      <div className="rounded-lg border bg-card shadow-sm p-3 min-w-[180px]">
-                        <p className="font-semibold text-sm mb-0.5">{k.name}</p>
-                        {k.mukim_name && <p className="text-xs text-muted-foreground mb-2">{k.mukim_name}</p>}
-                        <p className="text-xs text-muted-foreground mb-2">B40: {k.b40_count}</p>
-                        <button
-                          className="text-xs font-medium text-primary hover:underline"
-                          onClick={() => router.push(`/kampung/${k.id}`)}
-                        >
-                          Lihat Butiran →
-                        </button>
-                      </div>
-                    </MapPopup>
-                  </MapMarker>
-                ))}
-              </MapMarkerClusterGroup>
-            </Map>
-          </MapMount>
+          <KampungMap height={480} showFilterHint />
         </div>
       )}
 
       {isAdmin && (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Tambah Kampung</DialogTitle></DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+        <Sheet open={dialogOpen} onOpenChange={setDialogOpen}>
+          <SheetContent className="sm:max-w-md flex flex-col gap-0">
+            <SheetHeader className="shrink-0"><SheetTitle>Tambah Kampung</SheetTitle></SheetHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4">
 
               <Controller name="name" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -311,13 +278,14 @@ export default function KampungPage() {
                 </Field>
               )} />
 
-              <DialogFooter>
+            </div>
+              <SheetFooter className="shrink-0 border-t px-4 py-4">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
                 <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">Simpan</LoadingButton>
-              </DialogFooter>
+              </SheetFooter>
             </form>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       )}
     </AppLayout>
   );

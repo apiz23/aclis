@@ -9,12 +9,18 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table, TableBody, TableCell,
+  TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { MapMount } from "@/components/ui/map-mount";
 import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/components/ui/map";
@@ -253,7 +259,7 @@ export default function KampungDetailPage() {
         </Button>
         <div className="flex-1">
           {isLoading ? <Skeleton className="h-7 w-48" /> : (
-            <h1 className="font-heading text-2xl font-bold tracking-tight">{data?.name ?? "Kampung"}</h1>
+            <h1 className="heading-page">{data?.name ?? "Kampung"}</h1>
           )}
           <p className="text-sm text-muted-foreground">{data?.mukim_name ?? "—"}</p>
         </div>
@@ -269,11 +275,11 @@ export default function KampungDetailPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Info card */}
-        <div className="rounded-lg border bg-card overflow-hidden">
+        <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
           <div className="px-5 py-4 border-b">
             <p className="text-sm font-semibold">Maklumat Kampung</p>
           </div>
-          <div className="px-5">
+          <CardContent className="px-5">
             {isLoading ? (
               <div className="py-4 space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -294,11 +300,11 @@ export default function KampungDetailPage() {
                 />
               </>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Map card */}
-        <div className="rounded-lg border bg-card overflow-hidden">
+        <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
           <div className="px-5 py-4 border-b">
             <p className="text-sm font-semibold">Lokasi</p>
           </div>
@@ -312,10 +318,10 @@ export default function KampungDetailPage() {
                 {hasCoords && (
                   <MapMarker position={[data!.lat!, data!.lng!]}>
                     <MapPopup>
-                      <div className="rounded-lg border bg-card p-3 min-w-[140px]">
+                      <Card className="ring-0 shadow-none p-3 min-w-[140px]">
                         <p className="font-semibold text-sm">{data?.name}</p>
                         {data?.mukim_name && <p className="text-xs text-muted-foreground">{data.mukim_name}</p>}
-                      </div>
+                      </Card>
                     </MapPopup>
                   </MapMarker>
                 )}
@@ -344,11 +350,11 @@ export default function KampungDetailPage() {
               )}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Residents section */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
         <div className="px-5 py-4 border-b flex items-center justify-between">
           <p className="text-sm font-semibold">
             Senarai Penduduk
@@ -379,33 +385,33 @@ export default function KampungDetailPage() {
               Tiada rekod penduduk.
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-xs text-muted-foreground uppercase tracking-wide">
-                  <th className="px-4 py-2 text-left font-medium">Nama</th>
-                  <th className="px-4 py-2 text-left font-medium">No. IC</th>
-                  <th className="px-4 py-2 text-left font-medium">Telefon</th>
-                  <th className="px-4 py-2 text-left font-medium">Alamat</th>
-                  <th className="px-4 py-2 text-center font-medium">B40</th>
-                  {isAdmin && <th className="px-4 py-2" />}
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="w-[200px]">Nama</TableHead>
+                  <TableHead>No. IC</TableHead>
+                  <TableHead>Telefon</TableHead>
+                  <TableHead>Alamat</TableHead>
+                  <TableHead className="text-center">B40</TableHead>
+                  {isAdmin && <TableHead className="w-[72px]" />}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {residents.map((r) => (
-                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-2.5 font-medium">{r.name ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.ic_no ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{r.phone ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground max-w-[160px] truncate">{r.address ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-center">
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">{r.name ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground tabular-nums">{r.ic_no ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.phone ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground max-w-[160px] truncate">{r.address ?? "—"}</TableCell>
+                    <TableCell className="text-center">
                       {r.b40_status ? (
-                        <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20">B40</span>
+                        <Badge variant="warning">B40</Badge>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
-                    </td>
+                    </TableCell>
                     {isAdmin && (
-                      <td className="px-4 py-2.5">
+                      <TableCell>
                         <div className="flex items-center gap-1 justify-end">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditResident(r)} aria-label="Edit penduduk">
                             <Pencil className="h-3.5 w-3.5" />
@@ -420,24 +426,25 @@ export default function KampungDetailPage() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                      </td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
-      </div>
+      </Card>
 
       {/* Resident add/edit dialog */}
       {isAdmin && (
-        <Dialog open={residentDialogOpen} onOpenChange={setResidentDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingResident ? "Kemaskini Penduduk" : "Tambah Penduduk"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={residentForm.handleSubmit(onResidentSubmit)} className="space-y-3 pt-1">
+        <Sheet open={residentDialogOpen} onOpenChange={setResidentDialogOpen}>
+          <SheetContent className="sm:max-w-md flex flex-col gap-0">
+            <SheetHeader className="shrink-0">
+              <SheetTitle>{editingResident ? "Kemaskini Penduduk" : "Tambah Penduduk"}</SheetTitle>
+            </SheetHeader>
+            <form onSubmit={residentForm.handleSubmit(onResidentSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3">
 
               <Controller name="name" control={residentForm.control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -483,7 +490,8 @@ export default function KampungDetailPage() {
                 </Field>
               )} />
 
-              <DialogFooter>
+            </div>
+              <SheetFooter className="shrink-0 border-t px-4 py-4">
                 <Button type="button" variant="outline" onClick={() => setResidentDialogOpen(false)}>Batal</Button>
                 <LoadingButton
                   type="submit"
@@ -492,24 +500,25 @@ export default function KampungDetailPage() {
                 >
                   Simpan
                 </LoadingButton>
-              </DialogFooter>
+              </SheetFooter>
             </form>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       )}
 
       {/* Edit dialog */}
       {isAdmin && (
-        <Dialog
+        <Sheet
           open={editOpen}
           onOpenChange={(open) => {
             setEditOpen(open);
             if (!open) setPicking(false);
           }}
         >
-          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Kemaskini Kampung</DialogTitle></DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
+          <SheetContent className="sm:max-w-md flex flex-col gap-0">
+            <SheetHeader className="shrink-0"><SheetTitle>Kemaskini Kampung</SheetTitle></SheetHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3">
 
               <Controller name="name" control={control} render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -617,13 +626,14 @@ export default function KampungDetailPage() {
                 </Field>
               )} />
 
-              <DialogFooter>
+            </div>
+              <SheetFooter className="shrink-0 border-t px-4 py-4">
                 <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Batal</Button>
                 <LoadingButton type="submit" loading={isSubmitting} loadingText="Menyimpan…">Simpan</LoadingButton>
-              </DialogFooter>
+              </SheetFooter>
             </form>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       )}
     </AppLayout>
   );

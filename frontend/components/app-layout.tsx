@@ -13,7 +13,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.replace("/login");
+      if (!data.session) router.replace("/log-masuk");
     });
   }, [router]);
 

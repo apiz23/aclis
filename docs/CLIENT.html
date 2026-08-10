@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACLIS — AI Community Leadership Intelligence System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0C2340;
+      --navy-light: #163a5f;
+      --gold: #C4922A;
+      --gold-light: #d4a94a;
+      --gold-bg: #fdf6ec;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --radius: 6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Figtree', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--gray-900);
+      background: var(--gray-50);
+    }
+
+    .header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.3rem;
+    }
+
+    .header .accent { color: var(--gold); }
+
+    .header p {
+      font-size: 1.05rem;
+      opacity: 0.85;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy);
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.75rem;
+      border-radius: 3px;
+      margin-bottom: 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    section {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--gold);
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    p { margin-bottom: 0.75rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.92rem;
+    }
+
+    thead th {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--white);
+      background: var(--navy);
+      padding: 0.65rem 1rem;
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--gray-200);
+      vertical-align: top;
+    }
+
+    tbody tr:hover { background: var(--gray-50); }
+
+    tbody td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      width: 40px;
+      text-align: center;
+    }
+
+    .role-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      background: var(--navy);
+      color: var(--gold-light);
+      padding: 0.1rem 0.5rem;
+      border-radius: 3px;
+      margin-left: 0.3rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0.75rem 0;
+    }
+
+    ul li {
+      position: relative;
+      padding: 0.4rem 0 0.4rem 1.5rem;
+    }
+
+    ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.85rem;
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+      border-radius: 2px;
+      transform: rotate(45deg);
+    }
+
+    .color-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+      border: 1px solid var(--gray-300);
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+      background: var(--gray-100);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      color: var(--navy);
+    }
+
+    pre {
+      background: var(--navy);
+      color: #e2e8f0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      margin: 0.75rem 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .comment { color: #6b7280; }
+    .keyword { color: #93c5fd; }
+    .string { color: #86efac; }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--gold);
+      color: var(--navy);
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      margin: 1.25rem 0;
+    }
+
+    .step-content { flex: 1; }
+
+    .link-table td:first-child {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600;
+      color: var(--navy);
+      width: auto;
+      text-align: left;
+    }
+
+    .link-table td:last-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .faq-q {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600;
+      color: var(--navy);
+      margin-top: 1.25rem;
+    }
+
+    .faq-a {
+      margin-left: 0;
+      padding-left: 0;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--gray-500);
+      font-size: 0.85rem;
+    }
+
+    .footer strong { color: var(--navy); }
+
+    @media print {
+      body { background: white; }
+      .container { padding: 1rem 0; }
+      section { break-inside: avoid; border: none; box-shadow: none; }
+    }
+
+    @media (max-width: 640px) {
+      .header h1 { font-size: 1.8rem; }
+      section { padding: 1.25rem; }
+      table { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">Dokumen Klien</div>
+    <h1><span class="accent">ACLIS</span> — AI Community Leadership Intelligence System</h1>
+    <p>Sistem Pengurusan Kepimpinan Kampung untuk Pejabat Daerah Pontian, Johor</p>
+  </div>
+
+  <div class="container">
+
+    <!-- Ringkasan Projek -->
+    <section>
+      <h2>Ringkasan Projek</h2>
+      <p>ACLIS ialah platform web yang memudahkan pengurusan data kepimpinan kampung bagi Pejabat Daerah Pontian. Sistem ini menggantikan kerja manual menggunakan hamparan tebaran (spreadsheet) kepada satu platform web yang terpusat, selamat, dan mudah digunakan.</p>
+
+      <h3>Siapa yang Menggunakan Sistem Ini?</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:35%">Peranan</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Pentadbir Daerah</strong> <span class="role-badge">admin_daerah</span></td>
+            <td>Akses penuh kepada semua data dan kampung daerah</td>
+          </tr>
+          <tr>
+            <td><strong>Ketua Kampung</strong> <span class="role-badge">ketua_kampung</span></td>
+            <td>Mengurus data kampung sendiri; menghantar laporan; melaporkan isu</td>
+          </tr>
+          <tr>
+            <td><strong>Penghulu</strong> <span class="role-badge">penghulu</span></td>
+            <td>Melihat data kampung dalam mukim sendiri</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Modul Utama -->
+    <section>
+      <h2>Modul Utama</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Modul</th>
+            <th>Penerangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Papan Pemuka</strong></td>
+            <td>Paparan statistik visual dengan carta dan amaran laporan lewat</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Profil Kampung</strong></td>
+            <td>Pengurusan maklumat kampung termasuk koordinat GPS, jumlah penduduk B40, dan profil asas</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Data Penduduk &amp; B40</strong></td>
+            <td>Senarai penduduk mengikut kampung dengan penandaan status B40</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Pemimpin</strong></td>
+            <td>Profil Ketua Kampung / Penghulu dengan muat naik foto dan skor penilaian</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>Laporan Bulanan</strong></td>
+            <td>Penyerahan dan pengurusan laporan bulanan dengan penandaan status (draf / dihantar / lewat)</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>Isu Komuniti</strong></td>
+            <td>Pelaporan isu komuniti dengan pengelasan automatik menggunakan AI</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>Penilaian Prestasi</strong></td>
+            <td>Skor penilaian ketua kampung dengan ulasan dan analitik</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>Direktori</strong></td>
+            <td>Carian pantas profil pemimpin dan kampung</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>Borang Laporan</strong></td>
+            <td>Borang laporan bulanan berasingan (Seksyen A–D)</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><strong>Pengumuman</strong></td>
+            <td>Papan pengumuman daerah</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><strong>Peta</strong></td>
+            <td>Paparan peta untuk isu komuniti dan pemilihan koordinat GPS</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><strong>Audit Jejak</strong></td>
+            <td>Log lengkap untuk setiap perubahan data (pematuhan PDPA)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Ciri-ciri Utama -->
+    <section>
+      <h2>Ciri-ciri Utama</h2>
+      <ul>
+        <li><strong>Bahasa Melayu</strong> — Seluruh antaramuka dalam Bahasa Melayu</li>
+        <li><strong>Kawalan Akses Berperanan</strong> — Tiga peranan dengan tahap akses berbeza</li>
+        <li><strong>AI Terbina dalam</strong> — Pengelasan automatik isu komuniti dan ringkasan laporan</li>
+        <li><strong>Jejak Audit</strong> — Setiap perubahan direkod untuk pematuhan PDPA</li>
+        <li><strong>Mudah Alih</strong> — Direka untuk penggunaan desktop/laptop di pejabat kerajaan</li>
+        <li><strong>Peta Interaktif</strong> — Paparan lokasi isu komuniti pada peta</li>
+      </ul>
+    </section>
+
+    <!-- Reka Bentuk -->
+    <section>
+      <h2>Reka Bentuk</h2>
+      <p>Sistem ini menggunakan identiti rasmi Pejabat Daerah Pontian:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Elemen</th>
+            <th>Nilai</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Warna Utama</strong></td>
+            <td><span class="color-swatch" style="background:#0C2340;"></span> Navi (<code>#0C2340</code>)</td>
+          </tr>
+          <tr>
+            <td><strong>Warna Aksen</strong></td>
+            <td><span class="color-swatch" style="background:#C4922A;"></span> Emas (<code>#C4922A</code>)</td>
+          </tr>
+          <tr>
+            <td><strong>Font Tajuk</strong></td>
+            <td>Barlow Semi Condensed</td>
+          </tr>
+          <tr>
+            <td><strong>Font Badan</strong></td>
+            <td>Figtree</td>
+          </tr>
+          <tr>
+            <td><strong>Font Kod</strong></td>
+            <td>JetBrains Mono</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Reka bentuk mengutamakan data — jadual dan nombor merupakan elemen UI utama, bukan kad hiasan.</p>
+    </section>
+
+    <!-- Persediaan Sistem -->
+    <section>
+      <h2>Persediaan Sistem</h2>
+
+      <h3>Keperluan Sistem</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Komponen</th>
+            <th>Keperluan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Python</td><td>3.12 atau lebih tinggi</td></tr>
+          <tr><td>Node.js</td><td>20 atau lebih tinggi</td></tr>
+          <tr><td>pnpm</td><td>Pakej pengurus (disyorkan)</td></tr>
+          <tr><td>Supabase</td><td>Akaun percuma sudah memadai</td></tr>
+          <tr><td>Groq API</td><td>Pilihan — untuk ciri AI</td></tr>
+        </tbody>
+      </table>
+
+      <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-content">
+          <h3>Klon Repositori</h3>
+          <pre><code>git clone &lt;repository-url&gt;
+cd aclis</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-content">
+          <h3>Persediaan Pangkalan Data (Supabase)</h3>
+          <ol style="padding-left:1.25rem; margin:0.5rem 0;">
+            <li>Pergi ke <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a> → projek anda</li>
+            <li>Buka <strong>SQL Editor</strong></li>
+            <li>Jalankan setiap migrasi secara berurutan:</li>
+          </ol>
+          <pre><code>supabase/migrations/0001_init.sql
+supabase/migrations/0002_rls_policies.sql
+supabase/migrations/0003_leader_extra_fields.sql
+supabase/migrations/0004_resident_structured.sql
+supabase/migrations/0005_audit_log.sql
+supabase/migrations/0006_auth_role_least_privilege.sql
+supabase/migrations/0007_storage_leader_photos.sql
+supabase/migrations/0008_storage_ownership_rls_fixes.sql
+supabase/migrations/0009_scope_leader_read.sql</code></pre>
+          <ol start="4" style="padding-left:1.25rem; margin:0.5rem 0;">
+            <li>Jalankan fail benih untuk data awal:</li>
+          </ol>
+          <pre><code>supabase/seeds/00_dev_admin_user.sql
+supabase/seeds/01_sample_data.sql</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-content">
+          <h3>Persediaan Backend</h3>
+          <pre><code>cd backend
+
+<span class="comment"># Cipta persekitaran maya</span>
+py -3.12 -m venv .venv
+.venv/Scripts/activate          <span class="comment"># Windows</span>
+<span class="comment"># source .venv/bin/activate     # macOS/Linux</span>
+
+<span class="comment"># Pasang kebergantungan</span>
+pip install -e .
+pip install pytest
+
+<span class="comment"># Cipta fail .env</span>
+cp .env.example .env</code></pre>
+          <p>编辑 fail <code>.env</code> dengan kelayakan Supabase anda:</p>
+          <pre><code>SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_JWT_SECRET=rahsia-jwt-anda
+SUPABASE_SERVICE_ROLE_KEY=kunci-service-role-anda
+CORS_ORIGINS=http://localhost:3000
+<span class="comment"># mock = tanpa AI | groq = dengan AI</span>
+AI_PROVIDER=mock
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.3-70b-versatile</code></pre>
+          <p>Mula pelayan backend:</p>
+          <pre><code>python -m uvicorn app.main:app --reload</code></pre>
+          <p>Backend berjalan di <code>http://localhost:8000</code>. Dokumentasi API di <code>http://localhost:8000/docs</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-number">4</span>
+        <div class="step-content">
+          <h3>Persediaan Frontend</h3>
+          <pre><code>cd frontend
+
+<span class="comment"># Pasang kebergantungan</span>
+pnpm install
+
+<span class="comment"># Cipta fail .env.local</span>
+cp .env.local.example .env.local</code></pre>
+          <p>编辑 fail <code>.env.local</code>:</p>
+          <pre><code>NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=kunci-anon-anda
+NEXT_PUBLIC_API_URL=http://localhost:8000</code></pre>
+          <p>Mula pelayan frontend:</p>
+          <pre><code>pnpm run dev</code></pre>
+          <p>Frontend berjalan di <code>http://localhost:3000</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-number">5</span>
+        <div class="step-content">
+          <h3>Cipta Pengguna Admin</h3>
+          <p>Selepas persediaan pangkalan data, cipta pengguna admin pertama:</p>
+          <ol style="padding-left:1.25rem; margin:0.5rem 0;">
+            <li>Pergi ke Supabase Dashboard → Authentication → Users</li>
+            <li>Tambah pengguna baru dengan e-mel/kata laluan</li>
+            <li>Jalankan SQL ini untuk menugaskan peranan admin:</li>
+          </ol>
+          <pre><code><span class="keyword">UPDATE</span> auth.users
+<span class="keyword">SET</span> raw_app_meta_data = raw_app_meta_data || <span class="string">'{"role": "admin_daerah"}'</span>::jsonb
+<span class="keyword">WHERE</span> id = <span class="string">'uuid-pengguna-di-sini'</span>;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pautan Modul -->
+    <section>
+      <h2>Pautan Modul</h2>
+      <table class="link-table">
+        <thead>
+          <tr>
+            <th>Modul</th>
+            <th>Laluan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Papan Pemuka</td><td>/papan-pemuka</td></tr>
+          <tr><td>Kampung</td><td>/kampung</td></tr>
+          <tr><td>Pemimpin</td><td>/pemimpin</td></tr>
+          <tr><td>Laporan</td><td>/laporan</td></tr>
+          <tr><td>Isu Komuniti</td><td>/isu</td></tr>
+          <tr><td>Penilaian</td><td>/penilaian</td></tr>
+          <tr><td>Direktori</td><td>/direktori</td></tr>
+          <tr><td>Borang</td><td>/borang</td></tr>
+          <tr><td>Pengumuman</td><td>/pengumuman</td></tr>
+          <tr><td>Audit</td><td>/audit</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Soalan Lazim -->
+    <section>
+      <h2>Soalan Lazim</h2>
+
+      <p class="faq-q">Adakah sistem ini selamat?</p>
+      <p class="faq-a">Ya. ACLIS menggunakan:</p>
+      <ul>
+        <li>Pengesahan JWT pada setiap permintaan</li>
+        <li>Dasar Keselamatan Peringkat Baris (RLS) pada semua jadual pangkalan data</li>
+        <li>Jejak audit lengkap untuk setiap perubahan data</li>
+        <li>Pematuhan PDPA untuk data peribadi</li>
+      </ul>
+
+      <p class="faq-q">Bolehkah saya menggunakan sistem ini tanpa AI?</p>
+      <p class="faq-a">Ya. Tetapkan <code>AI_PROVIDER=mock</code> dalam fail <code>.env</code> backend. Ciri AI (pengelasan isu dan ringkasan laporan) akan menggunakan data contoh.</p>
+
+      <p class="faq-q">Peranti apakah yang disokong?</p>
+      <p class="faq-a">Sistem ini direka untuk penggunaan desktop/laptop di pejabat kerajaan. Penggunaan pada telefon pintar mungkin terhad.</p>
+
+      <p class="faq-q">Bagaimana untuk menambah pengguna baru?</p>
+      <p class="faq-a">Tambah pengguna di Supabase Dashboard → Authentication → Users, kemudian tetapkan peranan dalam <code>raw_app_meta_data</code> mengikut SQL yang diberikan.</p>
+    </section>
+
+  </div>
+
+  <div class="footer">
+    <p><strong>Pembangun:</strong> Muhammad Hafizuddin Bin Abdul Hamid (DI230052)</p>
+    <p style="margin-top:0.5rem; font-style:italic; color:var(--gray-500);">Dokumen ini disediakan untuk rujukan klien.</p>
+  </div>
+
+</body>
+</html>

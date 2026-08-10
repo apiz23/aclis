@@ -12,7 +12,7 @@ dependencies = [
   "pandas>=2.2",
   "supabase>=2.4",
   "python-dateutil>=2.9",
-  "jamaibase>=1.0.5",
+  "groq>=0.18",
   "pycountry>=24",
   "cachetools>=5.3",
 ]

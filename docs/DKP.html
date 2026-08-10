@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DKP — Dokumentasi Knowledge Platform ACLIS</title>
+<style>
+  :root {
+    --background: #f7fafc;
+    --foreground: #17222e;
+    --card: #ffffff;
+    --border: #e3e9ee;
+    --primary: #123a5f;
+    --primary-foreground: #f4f9fc;
+    --muted: #f0f4f7;
+    --muted-foreground: #5a6b7a;
+    --accent: #e6d8a8;
+    --accent-foreground: #6b5115;
+    --gold: #c4922a;
+    --teal: #1f6f78;
+    --success: #2e7d4f;
+    --success-bg: #e8f4ec;
+    --warning: #b37800;
+    --warning-bg: #fbf3e0;
+    --destructive: #b0343c;
+    --destructive-bg: #fbe9ea;
+    --sidebar: #101f33;
+    --sidebar-foreground: #eef4fa;
+    --radius: 6px;
+    --font-display: 'Barlow Semi Condensed', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-sans: 'Figtree', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Main ===== */
+  .main { max-width: 900px; margin: 0 auto; padding: 0 32px 80px; }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    margin: 0 0 44px;
+    page-break-inside: avoid;
+  }
+  .toc h2 { margin: 0 0 12px; font-size: 20px; }
+  .toc ol { columns: 2; column-gap: 40px; margin: 0; list-style: none; counter-reset: toc; }
+  .toc li { margin-bottom: 5px; break-inside: avoid; }
+  .toc a {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13.5px;
+  }
+  .toc a:hover { text-decoration: underline; }
+  .toc li::before {
+    counter-increment: toc;
+    content: counter(toc, decimal-leading-zero) "  ";
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .hero {
+    padding: 56px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .hero .kicker {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: 44px; font-weight: 600; line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .hero p.tagline {
+    font-size: 17px; color: var(--muted-foreground);
+    max-width: 720px;
+  }
+  .hero .meta {
+    display: flex; flex-wrap: wrap; gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .hero .meta b { color: var(--foreground); font-weight: 600; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 26px; font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 56px 0 8px;
+    padding-top: 8px;
+  }
+  h2 .num {
+    color: var(--gold);
+    font-family: var(--font-mono);
+    font-size: 14px; font-weight: 500;
+    margin-right: 10px;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 600;
+    margin: 28px 0 10px;
+  }
+  h4 {
+    font-size: 14.5px; font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--primary);
+  }
+
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { margin-bottom: 4px; }
+
+  .lead {
+    font-size: 16px;
+    color: #33475b;
+    margin-bottom: 16px;
+  }
+
+  /* ===== Cards & grids ===== */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .card .c-label {
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted-foreground);
+    display: block; margin-bottom: 6px;
+  }
+  .card .c-val {
+    font-family: var(--font-display);
+    font-size: 26px; font-weight: 600;
+    color: var(--primary);
+  }
+  .card .c-sub { font-size: 12.5px; color: var(--muted-foreground); margin-top: 2px; }
+
+  /* ===== Tables ===== */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    margin: 14px 0 24px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted-foreground);
+    background: var(--muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f6f9fb; }
+  code, .mono { font-family: var(--font-mono); font-size: 0.9em; background: var(--muted); padding: 1px 5px; border-radius: 4px; }
+  table code { background: var(--muted); }
+
+  /* ===== Badges ===== */
+  .badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .b-green { background: var(--success-bg); color: var(--success); }
+  .b-gold { background: var(--warning-bg); color: var(--warning); }
+  .b-red { background: var(--destructive-bg); color: var(--destructive); }
+  .b-blue { background: #e4eef7; color: var(--primary); }
+  .b-gray { background: var(--muted); color: var(--muted-foreground); }
+
+  /* ===== Callouts ===== */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  .callout.warn { border-left-color: var(--warning); background: var(--warning-bg); }
+  .callout.info { border-left-color: var(--teal); background: #e9f3f4; }
+  .callout.danger { border-left-color: var(--destructive); background: var(--destructive-bg); }
+  .callout b.t { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+
+  /* ===== Code blocks ===== */
+  pre {
+    background: #0f1c2b;
+    color: #d7e2ee;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin: 14px 0 24px;
+  }
+  pre .cm { color: #7d94ab; }
+  pre .pk { color: #e3b84a; }
+
+  /* ===== Architecture diagram ===== */
+  .arch {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 16px 0 24px;
+    text-align: center;
+  }
+  .arch-node {
+    display: inline-block;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-family: var(--font-display);
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    margin: 4px 6px;
+  }
+  .arch-node.gold { background: var(--gold); color: #101f33; }
+  .arch-node.dark { background: var(--sidebar); color: var(--sidebar-foreground); }
+  .arch-node.teal { background: var(--teal); color: #fff; }
+  .arch-label { font-size: 11px; color: var(--muted-foreground); margin-top: 3px; }
+  .arch-arrow { font-family: var(--font-mono); color: var(--muted-foreground); font-size: 18px; letter-spacing: 2px; }
+
+  /* ===== Stack bars ===== */
+  .stack-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+  .stack-chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .stack-chip b { color: var(--primary); font-weight: 600; }
+
+  /* ===== Divider ===== */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+  /* ===== Footer ===== */
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted-foreground);
+  }
+
+  /* ===== Status dots ===== */
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .dot.g { background: var(--success); }
+  .dot.y { background: var(--warning); }
+  .dot.r { background: var(--destructive); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 900px) {
+    .hero h1 { font-size: 32px; }
+    .cards { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  }
+  @media print {
+    .arch-node { background: #ddd !important; color: #000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= MAIN ================= -->
+<main class="main">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="kicker">Dokumentasi Knowledge Platform</div>
+    <h1>ACLIS — AI Community Leadership Intelligence System</h1>
+    <p class="tagline">Platform web pengurusan data kepimpinan kampung untuk Pejabat Daerah Pontian, Johor. Menggantikan hamparan spreadsheet manual dengan sistem terpusat, selamat, dan dibantu AI.</p>
+    <div class="meta">
+      <span><b>Sistem:</b> ACLIS</span>
+      <span><b>Jenis:</b> PSM / Projek Tahun Akhir</span>
+      <span><b>Universiti:</b> UTHM — FSKTM</span>
+      <span><b>Kajian kes:</b> Pejabat Daerah Pontian, Johor</span>
+      <span><b>Pembangun:</b> Muhammad Hafizuddin Bin Abdul Hamid (DI230052)</span>
+      <span><b>Status:</b> <span class="badge b-green">Pembangunan siap · bersedia pengujian pengguna</span></span>
+    </div>
+  </header>
+
+  <div class="callout info">
+    <b class="t">Dokumen kendiri</b>
+    Dokumen ini ialah satu fail HTML kendiri — semua maklumat ada dalam fail ini sahaja, tanpa pautan keluar ke fail atau laman lain. Ia merupakan indeks pengetahuan menyeluruh sistem ACLIS: seni bina, skema data, modul, API, keselamatan, reka bentuk, status projek dan banyak lagi.
+  </div>
+
+  <!-- ===== TOC ===== -->
+  <div class="toc">
+    <h2>Isi Kandungan</h2>
+    <ol>
+      <li><a href="#ringkasan">Ringkasan Projek</a></li>
+      <li><a href="#senibina">Seni Bina</a></li>
+      <li><a href="#stack">Tech Stack</a></li>
+      <li><a href="#struktur">Struktur Folder</a></li>
+      <li><a href="#data">Model Data &amp; Skema</a></li>
+      <li><a href="#modul">Modul &amp; Halaman</a></li>
+      <li><a href="#api">API Endpoints</a></li>
+      <li><a href="#rbc">Kawalan Akses (RBAC)</a></li>
+      <li><a href="#ai">Lapisan AI</a></li>
+      <li><a href="#design">Reka Bentuk</a></li>
+      <li><a href="#keselamatan">Keselamatan</a></li>
+      <li><a href="#import">Import Data</a></li>
+      <li><a href="#pengujian">Pengujian</a></li>
+      <li><a href="#status">Status &amp; Roadmap</a></li>
+      <li><a href="#risiko">Isu &amp; Risiko</a></li>
+      <li><a href="#kontak">Hubungi</a></li>
+    </ol>
+  </div>
+
+  <!-- ============ 1. RINGKASAN ============ -->
+  <section id="ringkasan">
+    <h2><span class="num">01</span>Ringkasan Projek</h2>
+    <p class="lead">ACLIS menukar pengurusan manual data kepimpinan kampung — yang sebelum ini tersebar dalam pelbagai spreadsheet — kepada satu platform web terpusat.</p>
+
+    <div class="cards">
+      <div class="card"><span class="c-label">Kampung diliputi</span><div class="c-val">14</div><div class="c-sub">dalam daerah Pontian (data sampel)</div></div>
+      <div class="card"><span class="c-label">Modul teras</span><div class="c-val">6</div><div class="c-sub">+ 5 ciri tambahan</div></div>
+      <div class="card"><span class="c-label">Peranan pengguna</span><div class="c-val">3</div><div class="c-sub">Admin Daerah · Ketua Kampung · Penghulu</div></div>
+      <div class="card"><span class="c-label">Ujian automatik</span><div class="c-val">149</div><div class="c-sub">semua lulus (pytest)</div></div>
+      <div class="card"><span class="c-label">Ciri AI</span><div class="c-val">3</div><div class="c-sub">ringkasan · kategori isu · insight trend</div></div>
+      <div class="card"><span class="c-label">Fasa semasa</span><div class="c-val">4</div><div class="c-sub">pembangunan siap → pengujian pengguna</div></div>
+    </div>
+
+    <h3>Objektif (memetakan kertas cadangan)</h3>
+    <ol>
+      <li>Mereka bentuk seni bina sistem berorientasi objek daripada keperluan fungsi / bukan fungsi.</li>
+      <li>Membina platform web yang memusatkan data kampung, memperkemas pelaporan, dengan papan pemuka pemantauan berbantukan AI.</li>
+      <li>Menilai fungsi, kebolehgunaan dan keberkesanan (pengujian kebolehgunaan + SUS).</li>
+    </ol>
+
+    <h3>Bagaimana Ia Berfungsi (senario utama)</h3>
+    <ul>
+      <li><b>Admin Daerah</b> merekod kampung, penduduk &amp; B40, pemimpin, dan penilaian prestasi; menyemak laporan dan isu seluruh daerah.</li>
+      <li><b>Ketua Kampung</b> menghantar laporan bulanan dan melog isu untuk kampungnya sendiri sahaja.</li>
+      <li><b>Penghulu</b> menyemak (read-only) data kampung dalam mukimnya.</li>
+      <li><b>AI</b> meringkaskan laporan panjang, mengategorikan isu, dan menyerlahkan trend — semua data dilindungi (PII direntas sebelum keluar ke cloud).</li>
+    </ul>
+  </section>
+
+  <!-- ============ 2. SENI BINA ============ -->
+  <section id="senibina">
+    <h2><span class="num">02</span>Seni Bina</h2>
+    <p class="lead">Pemisahan tiga lapisan yang bersih: frontend, backend, dan infrastruktur terurus — memberi cerita "seni bina sistem berorientasi objek" yang kukuh untuk tesis.</p>
+
+    <div class="arch">
+      <div class="arch-node">Next.js 16<span class="arch-label">Frontend · Port 3000</span></div>
+      <div class="arch-arrow">← JWT →</div>
+      <div class="arch-node teal">FastAPI<span class="arch-label">Backend · Port 8000</span></div>
+      <div class="arch-arrow">← SDK/HTTP →</div>
+      <div class="arch-node gold">Groq / AI<span class="arch-label">Lapisan AI · AIProvider</span></div>
+      <div class="arch-node dark">Supabase<span class="arch-label">Postgres · Auth · Storage</span></div>
+    </div>
+
+    <table>
+      <thead><tr><th>Lapisan</th><th>Tanggungjawab</th></tr></thead>
+      <tbody>
+        <tr><td><code>Next.js</code></td><td>Muka depan, borang, papan pemuka; memegang sesi Supabase; memanggil FastAPI dengan JWT.</td></tr>
+        <tr><td><code>FastAPI</code></td><td>Semua logik perniagaan, pengesahan, pengesahan data, akses DB, orkestrasi AI; mengesahkan JWT Supabase; menguatkuasakan kawalan akses peranan.</td></tr>
+        <tr><td><code>Supabase</code></td><td>Sumber tunggal kebenaran untuk data, identiti, dan fail foto.</td></tr>
+        <tr><td><code>AIProvider</code></td><td>Satu antara muka Python; pembekal dipilih mengikut konfigurasi (<code>AI_PROVIDER</code>).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Justifikasi Stack (untuk laporan/tesis)</h3>
+    <ul>
+      <li><b>Next.js + FastAPI berasingan</b> — pemisahan 3-tier yang bersih → seni bina sistem berorientasi objek yang jelas untuk rajah use-case/ERD.</li>
+      <li><b>Python backend</b> — membuka ruang untuk model tempatan (Ollama) tanpa pertukaran bahasa.</li>
+      <li><b>Supabase</b> — menyelesaikan auth silang-lapisan (satu JWT disahkan oleh kedua-dua Next.js dan FastAPI) + storan foto + Postgres dalam satu kotak percuma.</li>
+      <li><b>Kebolehtukaran AI</b> — semua panggilan AI melalui <code>AIProvider</code>: <code>GroqProvider</code> (kini), <code>OllamaProvider</code> (tempatan), <code>ClaudeProvider</code> (masa depan).</li>
+    </ul>
+  </section>
+
+  <!-- ============ 3. TECH STACK ============ -->
+  <section id="stack">
+    <h2><span class="num">03</span>Tech Stack</h2>
+
+    <h3>Frontend</h3>
+    <div class="stack-row">
+      <span class="stack-chip"><b>Next.js</b> 16.2.9</span>
+      <span class="stack-chip"><b>React</b> 19.2.4</span>
+      <span class="stack-chip"><b>TypeScript</b> 5</span>
+      <span class="stack-chip"><b>shadcn/ui</b> 4.11 (Radix-Vega)</span>
+      <span class="stack-chip"><b>Tailwind CSS</b> v4</span>
+      <span class="stack-chip"><b>TanStack Query</b> v5</span>
+      <span class="stack-chip"><b>TanStack Table</b> v8</span>
+      <span class="stack-chip"><b>React Hook Form</b> + Zod</span>
+      <span class="stack-chip"><b>Leaflet</b> 1.9 + react-leaflet 5</span>
+      <span class="stack-chip"><b>Recharts</b> 3.8</span>
+      <span class="stack-chip"><b>lucide-react</b> icons</span>
+    </div>
+
+    <h3>Backend</h3>
+    <div class="stack-row">
+      <span class="stack-chip"><b>FastAPI</b> 0.115+</span>
+      <span class="stack-chip"><b>Python</b> 3.12</span>
+      <span class="stack-chip"><b>PyJWT</b> (HS256)</span>
+      <span class="stack-chip"><b>Pydantic v2</b></span>
+      <span class="stack-chip"><b>supabase-py</b> 2.4</span>
+      <span class="stack-chip"><b>pandas + openpyxl</b></span>
+      <span class="stack-chip"><b>httpx</b></span>
+      <span class="stack-chip"><b>cachetools</b> (TTL cache)</span>
+      <span class="stack-chip"><b>groq</b> 0.18</span>
+    </div>
+
+    <h3>Infrastruktur</h3>
+    <div class="stack-row">
+      <span class="stack-chip"><b>Supabase</b> Postgres + GoTrue Auth + Storage</span>
+      <span class="stack-chip"><b>Vercel</b> (frontend, percuma)</span>
+      <span class="stack-chip"><b>Render / Railway</b> (backend, tier percuma)</span>
+      <span class="stack-chip"><b>Groq API</b> <code>llama-3.3-70b-versatile</code></span>
+    </div>
+  </section>
+
+  <!-- ============ 4. STRUKTUR ============ -->
+  <section id="struktur">
+    <h2><span class="num">04</span>Struktur Folder</h2>
+<pre><span class="cm"># Susunan selepas penyusunan semula (10 Ogos 2026)</span>
+aclis/
+├── <span class="pk">backend/</span>                  <span class="cm"># FastAPI Python backend</span>
+│   ├── app/
+│   │   ├── main.py            <span class="cm"># Entry, CORS, security headers</span>
+│   │   ├── auth.py            <span class="cm"># JWT decode, role check, scope resolver (TTL cache)</span>
+│   │   ├── audit.py           <span class="cm"># Audit log helper</span>
+│   │   ├── db.py              <span class="cm"># Supabase client (service-role)</span>
+│   │   ├── ai.py              <span class="cm"># Groq / Mock AI provider</span>
+│   │   ├── config.py          <span class="cm"># Env settings (pydantic-settings)</span>
+│   │   ├── schemas.py         <span class="cm"># Pydantic request/response models</span>
+│   │   └── routers/           <span class="cm"># me, stats, kampung, leaders, residents, reports, issues, evaluations, audit</span>
+│   ├── tests/                 <span class="cm"># 149 ujian (MagicMock, tanpa DB sebenar)</span>
+│   ├── scripts/               <span class="cm"># Import data / utiliti</span>
+│   └── pyproject.toml
+│
+├── <span class="pk">frontend/</span>                  <span class="cm"># Next.js React frontend</span>
+│   ├── app/                   <span class="cm"># log-masuk, papan-pemuka, kampung, pemimpin, laporan, isu, penilaian, audit, direktori, borang, pengumuman, profil</span>
+│   ├── components/            <span class="cm"># app-layout, app-sidebar, kampung-map, ui/*</span>
+│   ├── lib/                   <span class="cm"># api.ts, queries.ts, supabase.ts, types.ts</span>
+│   └── package.json
+│
+├── <span class="pk">supabase/</span>                  <span class="cm"># SQL</span>
+│   ├── migrations/            <span class="cm"># 0001–0010 (jalankan ikut urutan)</span>
+│   └── seeds/                 <span class="cm"># data awal</span>
+│
+├── <span class="pk">docs/</span>                     <span class="cm"># Dokumentasi (lihat §07)</span>
+├── <span class="pk">data/</span>
+│   ├── raw/                   <span class="cm"># xlsx/docx/pdf/zip sumber — TIDAK di-commit (PII)</span>
+│   └── leaders_pontian.csv
+├── <span class="pk">extracted/</span>                <span class="cm"># data/photos diekstrak daripada xlsx</span>
+└── README.md
+</pre>
+  </section>
+
+  <!-- ============ 5. DATA ============ -->
+  <section id="data">
+    <h2><span class="num">05</span>Model Data &amp; Skema</h2>
+    <p class="lead">9 jadual dalam skema <code>aclis_*</code> — semuanya didayakan Row-Level Security (RLS). Skema sumber: <code>supabase/migrations/0010_aclis_full_schema.sql</code>.</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Jadual</th><th>Penerangan</th><th>Kekunci / Medan utama</th></tr></thead>
+      <tbody>
+        <tr><td><code>aclis_mukim</code></td><td>Sub-daerah (parlimen, DUN)</td><td>id, name (unique), parlimen, dun</td></tr>
+        <tr><td><code>aclis_kampung</code></td><td>Kampung</td><td>id, name, mukim_id FK, profile, b40_count, lat, lng</td></tr>
+        <tr><td><code>aclis_leader</code></td><td>Pemimpin (KK / Penghulu / Ketua Masyarakat)</td><td>id, name, ic_no, type, kampung_id FK, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address</td></tr>
+        <tr><td><code>aclis_resident</code></td><td>Penduduk berstruktur</td><td>id, kampung_id FK, data (jsonb), name, ic_no, phone, b40_status, address</td></tr>
+        <tr><td><code>aclis_monthly_report</code></td><td>Laporan bulanan</td><td>id, kampung_id FK, period, content, status (draft/submitted/late), submitted_at</td></tr>
+        <tr><td><code>aclis_issue</code></td><td>Isu komuniti</td><td>id, kampung_id FK, type, location, coords, description, ai_category, status (open/in_progress/resolved/closed)</td></tr>
+        <tr><td><code>aclis_evaluation</code></td><td>Penilaian prestasi pemimpin</td><td>id, leader_id FK, period, scores (jsonb), total, ulasan</td></tr>
+        <tr><td><code>aclis_app_user</code></td><td>Akaun pengguna</td><td>id, role (admin_daerah/ketua_kampung/penghulu), email, leader_id FK</td></tr>
+        <tr><td><code>aclis_audit_log</code></td><td>Jejak audit (PDPA)</td><td>id, actor_id, actor_email, actor_role, action, entity, entity_id, details, created_at</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout info">
+      <b class="t">Hubungan Utama</b>
+      <code>mukim 1—N kampung</code> · <code>kampung 1—N leader</code> · <code>kampung 1—N resident</code> · <code>kampung 1—N monthly_report</code> · <code>kampung 1—N issue</code> · <code>leader 1—N evaluation</code> · <code>leader 1—1 app_user</code>
+    </div>
+
+    <h3>Nilai terhad (CHECK constraints)</h3>
+    <ul>
+      <li><code>leader.type</code> → <code>ketua_kampung | penghulu | ketua_masyarakat</code></li>
+      <li><code>monthly_report.status</code> → <code>draft | submitted | late</code></li>
+      <li><code>issue.status</code> → <code>open | in_progress | resolved | closed</code></li>
+      <li><code>app_user.role</code> → <code>admin_daerah | ketua_kampung | penghulu</code></li>
+    </ul>
+  </section>
+
+  <!-- ============ 6. MODUL ============ -->
+  <section id="modul">
+    <h2><span class="num">06</span>Modul &amp; Halaman</h2>
+
+    <h3>6 modul teras</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Modul</th><th>Fungsi utama</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Pengurusan Profil Kampung</td><td>CRUD kampung, koordinat GPS, profil mukim, paparan peta interaktif</td><td><span class="badge b-green">Siap</span></td></tr>
+        <tr><td>2</td><td>Data Penduduk &amp; B40</td><td>Rekod penduduk berstruktur, penanda B40, kiraan automatik, import CSV</td><td><span class="badge b-green">Siap</span></td></tr>
+        <tr><td>3</td><td>Laporan Bulanan Berstandard</td><td>Penyerahan digital, aliran draft → submitted, amaran laporan lewat, ringkasan AI</td><td><span class="badge b-green">Siap</span></td></tr>
+        <tr><td>4</td><td>Sistem Pelaporan Isu Komuniti</td><td>Log isu, kategorisasi AI automatik, pandangan peta ikut warna kategori, status</td><td><span class="badge b-green">Siap</span></td></tr>
+        <tr><td>5</td><td>Papan Pemuka &amp; Visualisasi</td><td>Statistik langsung, carta isu &amp; laporan, ranking pemimpin, amaran</td><td><span class="badge b-green">Siap</span></td></tr>
+        <tr><td>6</td><td>Analitik Sokongan AI</td><td>Ringkasan laporan, kategori isu, insight trend</td><td><span class="badge b-green">Siap</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Ciri tambahan</h3>
+    <ul>
+      <li><b>Pengurusan Pemimpin</b> — CRUD + muat naik foto profil (Supabase Storage)</li>
+      <li><b>Sistem Penilaian Pemimpin</b> — skor + ulasan ikut tempoh, ranking dalam dashboard</li>
+      <li><b>Kawalan Akses Berasaskan Peranan (RBAC)</b> — 3 peranan dengan skop tenant</li>
+      <li><b>Pandangan Peta Isu</b> — visualisasi geospatial isu komuniti</li>
+      <li><b>Log Audit Mutasi</b> — akauntabiliti PDPA 2010</li>
+    </ul>
+
+    <h3>Halaman (frontend)</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Halaman</th><th>Laluan</th><th>Fungsi</th></tr></thead>
+      <tbody>
+        <tr><td>Log Masuk</td><td><code>/log-masuk</code></td><td>Pengesahan pengguna</td></tr>
+        <tr><td>Papan Pemuka</td><td><code>/papan-pemuka</code></td><td>Statistik, carta, ranking, AI insight, amaran</td></tr>
+        <tr><td>Kampung</td><td><code>/kampung</code>, <code>/kampung/[id]</code></td><td>Jadual + peta, detail kampung + penduduk</td></tr>
+        <tr><td>Pemimpin</td><td><code>/pemimpin</code>, <code>/pemimpin/[id]</code></td><td>Profil, foto, penilaian</td></tr>
+        <tr><td>Laporan</td><td><code>/laporan</code>, <code>/laporan/[id]</code></td><td>Senarai + filter, detail + ringkasan AI</td></tr>
+        <tr><td>Isu Komuniti</td><td><code>/isu</code>, <code>/isu/[id]</code></td><td>Senarai + peta, detail + status</td></tr>
+        <tr><td>Penilaian</td><td><code>/penilaian</code></td><td>Skor prestasi pemimpin</td></tr>
+        <tr><td>Direktori</td><td><code>/direktori</code></td><td>Carian pantas profil</td></tr>
+        <tr><td>Borang</td><td><code>/borang</code></td><td>Borang laporan bulanan (Seksyen A–D)</td></tr>
+        <tr><td>Pengumuman</td><td><code>/pengumuman</code></td><td>Papan pengumuman daerah</td></tr>
+        <tr><td>Audit</td><td><code>/audit</code></td><td>Log audit (admin sahaja)</td></tr>
+        <tr><td>Profil</td><td><code>/profil</code></td><td>Profil pengguna</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 7. API ============ -->
+  <section id="api">
+    <h2><span class="num">07</span>API Endpoints</h2>
+    <p class="lead">Semua laluan di bawah awalan FastAPI. Dokumentasi interaktif: <code>http://localhost:8000/docs</code>.</p>
+
+    <h3>Auth &amp; Pengguna</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/me</code></td><td>Profil pengguna semasa</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/admin/ping</code></td><td>Pemeriksaan kesihatan admin</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Kampung</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/kampung</code></td><td>Senarai kampung (ikut skop peranan)</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/kampung/{id}</code></td><td>Detail kampung</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/kampung</code></td><td>Cipta kampung (admin)</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/kampung/{id}</code></td><td>Kemaskini kampung</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/mukim</code></td><td>Senarai mukim</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Pemimpin</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/leaders</code></td><td>Senarai pemimpin</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/leaders/{id}</code></td><td>Detail pemimpin</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/leaders</code></td><td>Cipta pemimpin</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/leaders/{id}</code></td><td>Kemaskini pemimpin</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Penduduk</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/kampung/{id}/residents</code></td><td>Senarai penduduk bagi kampung</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/kampung/{id}/residents</code></td><td>Tambah penduduk</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/residents/{rid}</code></td><td>Kemaskini penduduk</td></tr>
+        <tr><td><span class="badge b-red">DELETE</span></td><td><code>/residents/{rid}</code></td><td>Padam penduduk</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Laporan</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/reports</code></td><td>Senarai laporan</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/reports/{id}</code></td><td>Detail laporan</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/reports</code></td><td>Serah laporan</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/reports/{id}</code></td><td>Kemaskini laporan</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/reports/{id}/summary</code></td><td>Ringkasan AI</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Isu</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/issues</code></td><td>Senarai isu</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/issues/{id}</code></td><td>Detail isu</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/issues</code></td><td>Lapor isu (AI kategorikan di latar)</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/issues/{id}/recategorize</code></td><td>Kategorikan semula (AI)</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/issues/{id}</code></td><td>Kemaskini isu</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Penilaian</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/evaluations</code></td><td>Senarai penilaian</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/evaluations/{id}</code></td><td>Detail penilaian</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/evaluations</code></td><td>Cipta penilaian</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/evaluations/{id}</code></td><td>Kemaskini penilaian</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Statistik &amp; Audit</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Penerangan</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/stats</code></td><td>Statistik papan pemuka</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/stats/insights</code></td><td>Insight trend AI</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/audit</code></td><td>Log audit (admin sahaja)</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 8. RBAC ============ -->
+  <section id="rbc">
+    <h2><span class="num">08</span>Kawalan Akses (RBAC)</h2>
+    <p class="lead">Tiga peranan dengan skop data berbeza. Dikuatkuasakan dua lapisan: FastAPI (dari tuntutan JWT) dan RLS di peringkat DB. UI Next.js hanya menyembunyikan butang yang tidak boleh digunakan (pertahanan kedua, bukan sempadan keselamatan).</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fungsi</th><th>Admin Daerah</th><th>Ketua Kampung</th><th>Penghulu</th></tr></thead>
+      <tbody>
+        <tr><td>Lihat kampung</td><td><span class="badge b-green">Semua</span></td><td><span class="badge b-blue">Kampung sendiri</span></td><td><span class="badge b-blue">Mukim sendiri</span></td></tr>
+        <tr><td>Tambah / edit kampung</td><td><span class="badge b-green">Ya</span></td><td>—</td><td>—</td></tr>
+        <tr><td>Rekod penduduk &amp; B40</td><td><span class="badge b-green">Ya</span></td><td>—</td><td>—</td></tr>
+        <tr><td>Hantar laporan bulanan</td><td><span class="badge b-green">Ya</span></td><td><span class="badge b-green">Kampung sendiri</span></td><td>—</td></tr>
+        <tr><td>Log isu komuniti</td><td><span class="badge b-green">Ya</span></td><td><span class="badge b-green">Kampung sendiri</span></td><td>—</td></tr>
+        <tr><td>Semak papan pemuka</td><td><span class="badge b-green">Penuh</span></td><td><span class="badge b-blue">Terhad</span></td><td><span class="badge b-blue">Terhad</span></td></tr>
+        <tr><td>Penilaian pemimpin</td><td><span class="badge b-green">Ya</span></td><td>—</td><td>—</td></tr>
+        <tr><td>Log audit</td><td><span class="badge b-green">Ya</span></td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Pelaksanaan</h3>
+    <ul>
+      <li><b>Backend:</b> peranan dibaca daripada <code>app_metadata.role</code> dalam JWT; peranan tidak dikenali → <code>403</code> (tiada lalai).</li>
+      <li><b>Skop tenant:</b> <code>get_user_scope()</code> menyelesaikan ID kampung/leader yang dibenarkan per permintaan, dengan cache TTL 60 saat (mengurangkan 3–5 pertanyaan DB kepada 0 pada hit cache).</li>
+      <li><b>DB:</b> RLS aktif pada semua jadual; <code>auth_role()</code> kembali kosong jika peranan tiada.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 9. AI ============ -->
+  <section id="ai">
+    <h2><span class="num">09</span>Lapisan AI</h2>
+    <p class="lead">Tiga ciri AI — terhad skop mengikut kertas cadangan (tiada ML penuh, tiada ramalan).</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ciri</th><th>Fungsi</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ringkasan laporan</b></td><td>Memekatkan laporan bulanan kepada ringkasan 2–3 ayat untuk semakan pantas.</td></tr>
+        <tr><td><b>Kategorisasi isu automatik</b></td><td>Menandai isu masuk (infrastruktur / jalan / sosial) kepada <code>issue.ai_category</code>.</td></tr>
+        <tr><td><b>Insight trend</b></td><td>Menyerlahkan isu berulang / corak lewat serahan untuk papan pemuka daerah.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Antara muka</h3>
+<pre><span class="pk">class</span> AIProvider(Protocol):
+    <span class="pk">def</span> summarize_reports(self, reports: list[ReportText]) -&gt; Summary: ...
+    <span class="pk">def</span> categorize_issue(self, issue_text: str) -&gt; Category: ...
+    <span class="pk">def</span> detect_trends(self, records: list[Record]) -&gt; list[Insight]: ...</pre>
+
+    <h3>Pembekal</h3>
+    <ul>
+      <li><b>GroqProvider</b> — semasa, model <code>llama-3.3-70b-versatile</code> (dipilih melalui <code>AI_PROVIDER=groq</code>).</li>
+      <li><b>MockProvider</b> — lalai (<code>AI_PROVIDER=mock</code>), untuk demo luar talian tanpa API key.</li>
+      <li><b>OllamaProvider / ClaudeProvider</b> — pilihan masa depan (tempatan / kualiti tinggi).</li>
+    </ul>
+
+    <div class="callout warn">
+      <b class="t">Redaksi PII (syarat bukan fungsi)</b>
+      Sebelum sebarang teks meninggalkan mesin ke pembekal AI cloud, PII direntas (nombor IC, alamat penuh, nama jika tidak perlu). Ciri AI beroperasi pada kandungan laporan/isu dan trend, bukan medan identiti — jadi redaksi tidak menjejaskan kualiti dan memberi cerita privasi yang kukuh untuk pembentangan.
+    </div>
+  </section>
+
+  <!-- ============ 10. REKA BENTUK ============ -->
+  <section id="design">
+    <h2><span class="num">10</span>Reka Bentuk</h2>
+    <p class="lead">Mod cahaya sahaja. Sauh institusi biru laut, aksen emas hangat digunakan berjimat. Data-padat — jadual dan nombor adalah elemen UI utama, bukan kad hiasan.</p>
+
+    <h3>Warna (token utama)</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Token</th><th>Nilai (OKLCH)</th><th>Kegunaan</th></tr></thead>
+      <tbody>
+        <tr><td><code>--background</code></td><td><code>oklch(0.995 0.002 205)</code></td><td>Kanvas aplikasi — putih sejuk</td></tr>
+        <tr><td><code>--foreground</code></td><td><code>oklch(0.18 0.02 210)</code></td><td>Dakwat badan — hitam bernada navy</td></tr>
+        <tr><td><code>--primary</code></td><td><code>oklch(0.32 0.07 210)</code></td><td>Navy-teal — butang, pautan, aksi utama</td></tr>
+        <tr><td><code>--accent</code></td><td><code>oklch(0.90 0.05 85)</code></td><td>Emas — isian halus / chip sahaja</td></tr>
+        <tr><td><code>--chart-1</code></td><td><code>oklch(0.60 0.13 80)</code></td><td>Emas — siri utama carta</td></tr>
+        <tr><td><code>--chart-2</code></td><td><code>oklch(0.40 0.08 210)</code></td><td>Navy-teal — siri kedua</td></tr>
+        <tr><td><code>--sidebar</code></td><td><code>oklch(0.20 0.045 212)</code></td><td>Navy gelap — krom sidebar sentiasa gelap</td></tr>
+        <tr><td><code>--sidebar-primary</code></td><td><code>oklch(0.72 0.12 82)</code></td><td>Emas — penunjuk nav aktif</td></tr>
+        <tr><td><code>--success</code></td><td><code>oklch(0.42 0.09 150)</code></td><td>Pengesahan</td></tr>
+        <tr><td><code>--warning</code></td><td><code>oklch(0.52 0.10 75)</code></td><td>Amaran</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Tipografi</h3>
+    <ul>
+      <li><b>Headings</b> (<code>font-heading</code>): Barlow Semi Condensed, berat 600 — autoriti institusi terkondensat.</li>
+      <li><b>Badan / UI</b> (<code>font-sans</code>): Figtree 400/500/600/700 — boleh dibaca pada 13–16px dalam jadual padat.</li>
+      <li><b>Mono</b> (<code>font-mono</code>): JetBrains Mono — ID, kod, data mentah sahaja.</li>
+      <li>Nombor stat &amp; jadual: sentiasa <code>tabular-nums</code>.</li>
+    </ul>
+
+    <h3>Bentuk &amp; Komponen</h3>
+    <ul>
+      <li><code>--radius: 0.375rem</code> — lebih ketat daripada lalai shadcn (0.5rem).</li>
+      <li>Bingkai atas bayang-bayang sebagai pemisah utama — sistem berbordered, bukan kad terapung.</li>
+      <li>Sidebar sentiasa navy gelap, emas menanda item aktif — satu-satunya permukaan warna komited.</li>
+      <li>Carta: emas siri utama, navy-teal kedua; garisan grid malap, tiada isian 3D/gradien.</li>
+    </ul>
+
+    <h3>Prinsip reka bentuk</h3>
+    <ol>
+      <li><b>Data dahulu</b> — jadual dan nombor adalah permukaan UI utama.</li>
+      <li><b>Kekangan bermaruah</b> — tiada perhiasan; setiap elemen berhak pada tempatnya.</li>
+      <li><b>Hierarki jelas</b> — kontras tipografi kuat antara saiz tajuk.</li>
+      <li><b>Kebolehbacaan institusi</b> — dioptimumkan untuk membaca baris jadual di bawah pencahayaan pendarfluor pejabat.</li>
+      <li><b>Tiada persahabatan palsu</b> — elak glassmorphism, teks gradien, jalur aksen kiri.</li>
+    </ol>
+    <p>Aksesibiliti: WCAG 2.1 AA (perkhidmatan sektor awam); teks &amp; placeholder ≥ 4.5:1 kontras; mod cahaya sahaja; hormat <code>prefers-reduced-motion</code>.</p>
+  </section>
+
+  <!-- ============ 11. KESELAMATAN ============ -->
+  <section id="keselamatan">
+    <h2><span class="num">11</span>Keselamatan</h2>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Kawalan</th><th>Pelaksanaan</th></tr></thead>
+      <tbody>
+        <tr><td>Pengesahan</td><td>Supabase JWT (HS256) disahkan pada setiap permintaan — audience <code>authenticated</code>.</td></tr>
+        <tr><td>Autoriti peranan</td><td>Peranan daripada <code>app_metadata.role</code>; token tanpa peranan → <code>403</code> (tiada lalai).</td></tr>
+        <tr><td>Pengasingan data tenant</td><td><code>get_user_scope()</code> menyelesaikan ID kampung/leader dibenarkan per permintaan (cache 60s).</td></tr>
+        <tr><td>Keselamatan lapisan DB</td><td>Row-Level Security aktif pada semua jadual <code>aclis_*</code>.</td></tr>
+        <tr><td>Pengepala HTTP</td><td>X-Content-Type-Options, X-Frame-Options: DENY, Referrer-Policy, HSTS.</td></tr>
+        <tr><td>Jejak audit</td><td><code>aclis_audit_log</code> — setiap mutasi merekod aktor, entiti, medan ditukar, masa.</td></tr>
+        <tr><td>Perlindungan PII</td><td>Fail CSV tidak dikemit; nombor IC tidak pernah dicatat dalam log audit.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Redaksi PII dalam AI</h3>
+    <p>Sebelum teks ke pembekal AI cloud, IC/alamat/nama yang tidak perlu direntas. Dengan Ollama tempatan, data tidak pernah meninggalkan mesin — redaksi menjadi tali pinggang dan suspender.</p>
+  </section>
+
+  <!-- ============ 12. IMPORT ============ -->
+  <section id="import">
+    <h2><span class="num">12</span>Import Data</h2>
+    <div class="callout danger">
+      <b class="t">Jangan pandang rendah — tugas bukan-AI paling sukar</b>
+      Fail sumber utama <code>ID KKG UBAH BETUL .xlsx</code> ialah <b>37MB, kotor</b>: pelbagai dataset bercampur (kepala kampung Pontian + penilaian Johor Bahru + <b>registri masjid Kulaijaya yang bocor masuk</b>), satu sheet per mukim, dan <b>95 foto terbenam</b> dalam sel.
+    </div>
+
+    <ol>
+      <li>Tulis skrip import one-off (pandas + openpyxl).</li>
+      <li>Kenal pasti dan <b>buang baris masjid Kulaijaya yang di luar skop</b>.</li>
+      <li>Normalisasikan sheet per-mukim ke dalam skema relasional.</li>
+      <li>Ekstrak 95 imej terbenam → muat naik ke Supabase Storage → paut ke <code>Leader.photo_url</code>.</li>
+      <li>Sahkan konsistensi IC/format; log tolakan untuk semakan manual.</li>
+    </ol>
+
+    <h3>Fail sumber</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fail (data/raw/)</th><th>Kegunaan</th></tr></thead>
+      <tbody>
+        <tr><td><code>ID KKG UBAH BETUL .xlsx</code></td><td>Data kampung &amp; pemimpin (+ 95 foto terbenam)</td></tr>
+        <tr><td><code>SENARAI PERMOHONAN LAMPU JALAN KAMPUNG TAHUN 2025-1.xlsx</code></td><td>Isu komuniti (lampu jalan)</td></tr>
+        <tr><td><code>PENILAIAN KETUA KG.xlsx</code></td><td>Penilaian prestasi pemimpin</td></tr>
+        <tr><td><code>LAPORAN PENILAIAN...docx</code> &amp; <code>SURAT PEMASTAUTIN/PENDAPATAN</code></td><td>Rujukan borang &amp; penilaian</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout warn">
+      <b class="t">Input luaran belum selesai</b>
+      "Senarai ketua kampung" masih wujud sebagai imej dalam Google Drive klien (belum dimuat turun) — perlu diperoleh sebelum import disahkan.
+    </div>
+  </section>
+
+  <!-- ============ 13. PENGUJIAN ============ -->
+  <section id="pengujian">
+    <h2><span class="num">13</span>Pengujian</h2>
+
+    <h3>Unit Testing <span class="badge b-green">149 ujian · semua lulus</span></h3>
+    <ul>
+      <li>Alat: <code>pytest</code> + <code>unittest.mock</code> (tanpa DB sebenar).</li>
+      <li>Skop: kesahihan input, kawalan akses peranan, gelagat 400/403/404, aliran audit.</li>
+      <li>Frontend: <code>pnpm test</code> (Vitest).</li>
+    </ul>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Bahagian</th><th>Ujian</th></tr></thead>
+      <tbody>
+        <tr><td>Log masuk &amp; keselamatan</td><td>15</td></tr>
+        <tr><td>Modul Kampung</td><td>25</td></tr>
+        <tr><td>Modul Penduduk</td><td>20</td></tr>
+        <tr><td>Modul Pemimpin</td><td>20</td></tr>
+        <tr><td>Modul Penilaian</td><td>15</td></tr>
+        <tr><td>Modul Laporan</td><td>25</td></tr>
+        <tr><td>Modul Isu</td><td>20</td></tr>
+        <tr><td>Dashboard</td><td>5</td></tr>
+        <tr><td>AI</td><td>4</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Pengujian Pengguna <span class="badge b-gold">Belum bermula</span></h3>
+    <ul>
+      <li>Metodologi cadangan: <b>System Usability Scale (SUS)</b> — Brooke 1996.</li>
+      <li>Peserta sasaran: kakitangan Pejabat Daerah + Ketua Kampung + Penghulu (5–8 orang, ±1 jam).</li>
+    </ul>
+    <p>Senario ujian yang dicadangkan:</p>
+    <ol>
+      <li>Admin menambah kampung baharu dan menetapkan koordinat GPS.</li>
+      <li>Ketua Kampung menghantar laporan bulanan.</li>
+      <li>Ketua Kampung merekod isu komuniti.</li>
+      <li>Admin melihat papan pemuka dan pandangan AI.</li>
+      <li>Penghulu menyemak senarai kampung dalam mukimnya.</li>
+    </ol>
+  </section>
+
+  <!-- ============ 14. STATUS ============ -->
+  <section id="status">
+    <h2><span class="num">14</span>Status &amp; Roadmap</h2>
+
+    <h3>Status fasa pembangunan</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fasa</th><th>Huraian</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Analisis Keperluan &amp; Perancangan</td><td><span class="badge b-green">Selesai</span></td></tr>
+        <tr><td>2</td><td>Reka Bentuk Sistem (seni bina, skema DB, UI)</td><td><span class="badge b-green">Selesai</span></td></tr>
+        <tr><td>3</td><td>Pembangunan Sistem</td><td><span class="badge b-green">Selesai</span></td></tr>
+        <tr><td>4</td><td>Pengujian Pengguna (Usability Testing)</td><td><span class="badge b-gold">Belum bermula</span></td></tr>
+        <tr><td>5</td><td>Deployment &amp; Penyelenggaraan</td><td><span class="badge b-gold">Belum bermula</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Rancangan seterusnya</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tindakan</th><th>Sasaran</th></tr></thead>
+      <tbody>
+        <tr><td>Memohon migrasi 0004–0006 ke Supabase</td><td>Segera</td></tr>
+        <tr><td>Demo kepada klien</td><td>Julai 2026</td></tr>
+        <tr><td>Sesi pengujian pengguna (5–8 orang)</td><td>Julai–Ogos 2026</td></tr>
+        <tr><td>Penambahbaikan berdasarkan maklum balas</td><td>Ogos 2026</td></tr>
+        <tr><td>Deployment ke production</td><td>September 2026</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Skop — dibina / dipark</h3>
+    <ul>
+      <li><b>Dalam skop:</b> 6 modul, 3 ciri AI, 3 peranan, papan pemuka, aliran laporan bulanan, import data.</li>
+      <li><b>Dipotong / ditangguh:</b> penjanaan dokumen (surat pemastautin/pengesahan pendapatan) — bonus, bukan teras · modul kewangan terperinci · ML ramalan penuh · integrasi API persekutuan · chatbot/RAG — elak scope creep.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 15. RISIKO ============ -->
+  <section id="risiko">
+    <h2><span class="num">15</span>Isu &amp; Risiko</h2>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Risiko</th><th>Tahap</th><th>Minitigasi</th></tr></thead>
+      <tbody>
+        <tr><td>xlsx 37MB kotor + 95 foto terbenam</td><td><span class="badge b-red">Tinggi</span></td><td>Skrip import khusus, buang baris di luar skop, sahkan</td></tr>
+        <tr><td>PII (nombor IC, alamat sebenar)</td><td><span class="badge b-red">Tinggi</span></td><td>Auth + RBAC awal; redaksi sebelum AI; jangan commit PII mentah ke repo awam</td></tr>
+        <tr><td>3 migrasi DB belum diaplikasi (0004–0006)</td><td><span class="badge b-gold">Sederhana</span></td><td>Perlu dilaksanakan sebelum demo/pengujian</td></tr>
+        <tr><td>Pengujian RLS belum dijalankan pada Supabase sebenar</td><td><span class="badge b-gold">Sederhana</span></td><td>Dirancang selepas pengujian pengguna</td></tr>
+        <tr><td>AI terlalu dijanjikan / scope creep</td><td><span class="badge b-gold">Sederhana</span></td><td>Kunci kepada 3 ciri di belakang <code>AIProvider</code>; fallback mock untuk demo luar talian</td></tr>
+        <tr><td>Laptop tak mampu LLM tempatan (16GB, tanpa GPU)</td><td><span class="badge b-gold">Sederhana</span></td><td>Groq cloud utama; jika tempatan, model 3B sahaja</td></tr>
+        <tr><td>Imej roster pemimpin dalam Drive belum diperoleh</td><td><span class="badge b-gold">Sederhana</span></td><td>Peroleh sebelum siapkan import</td></tr>
+        <tr><td>Sejarah git mengandungi CSV PII lama</td><td><span class="badge b-blue">Rendah</span></td><td>Scrub dengan <code>git filter-repo</code> sebelum repo awam</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 16. KONTAK ============ -->
+  <section id="kontak">
+    <h2><span class="num">16</span>Hubungi</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Peranan</th><th>Nama</th><th>Maklumat</th></tr></thead>
+      <tbody>
+        <tr><td>Pembangun</td><td>Muhammad Hafizuddin Bin Abdul Hamid</td><td>DI230052 · piz230601@gmail.com</td></tr>
+        <tr><td>Penyelia</td><td>Prof. Madya Dr. Muhaini</td><td>UTHM — Fakulti Sains Komputer dan Teknologi Maklumat</td></tr>
+        <tr><td>Kajian kes</td><td>Pejabat Daerah Pontian</td><td>Johor, Malaysia</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+  <footer class="footer">
+    <p><b>DKP — Dokumentasi Knowledge Platform ACLIS.</b> Dokumen kendiri tunggal (HTML, tiada pautan luaran). Disediakan oleh Muhammad Hafizuddin Bin Abdul Hamid (DI230052) · UTHM · 2026.</p>
+    <p>Sumber pengetahuan: <span class="mono">docs/</span> (CLIENT, PRODUCT, DESIGN, TECHNICAL, SETUP, demo-script, laporan, plans, specs) + <span class="mono">backend/</span>, <span class="mono">frontend/</span>, <span class="mono">supabase/</span>.</p>
+  </footer>
+
+</main>
+</body>
+</html>

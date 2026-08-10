@@ -1,9 +1,33 @@
+import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import me, stats, kampung, leaders, reports, issues, evaluations, residents
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.routers import me, stats, kampung, leaders, reports, issues, evaluations, residents, audit
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="ACLIS API")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    logger.warning("%s %s -> %s %s", request.method, request.url.path, exc.status_code, exc.detail)
+    return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning("%s %s -> 422 %s", request.method, request.url.path, exc.errors())
+    return JSONResponse(status_code=422, content={"error": "Validation failed", "details": exc.errors()})
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    logger.critical("%s %s -> 500 %s", request.method, request.url.path, exc, exc_info=True)
+    return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 _SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -37,6 +61,7 @@ app.include_router(reports.router)
 app.include_router(issues.router)
 app.include_router(evaluations.router)
 app.include_router(residents.router)
+app.include_router(audit.router)
 
 @app.get("/health")
 def health():

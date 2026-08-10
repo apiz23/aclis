@@ -62,7 +62,8 @@ def test_create_leader_403_non_admin(mock_sb):
 def test_update_leader_ok(mock_sb):
     updated = {**LEADER_ROW, "name": "Ahmad Updated"}
     tbl = mock_sb.table.return_value
-    tbl.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [updated]
+    tbl.update.return_value.eq.return_value.execute.return_value.data = [updated]
+    tbl.select.return_value.eq.return_value.execute.return_value.data = [updated]
     tbl.select.return_value.limit.return_value.eq.return_value.execute.return_value.count = 3
     r = client.patch("/leaders/l1", headers=auth(), json={"name": "Ahmad Updated"})
     assert r.status_code == 200
@@ -71,7 +72,7 @@ def test_update_leader_ok(mock_sb):
 
 def test_update_leader_404(mock_sb):
     tbl = mock_sb.table.return_value
-    tbl.update.return_value.eq.return_value.select.return_value.execute.return_value.data = []
+    tbl.update.return_value.eq.return_value.execute.return_value.data = []
     r = client.patch("/leaders/missing", headers=auth(), json={"name": "X"})
     assert r.status_code == 404
 

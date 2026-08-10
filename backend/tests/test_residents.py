@@ -69,14 +69,15 @@ def test_create_resident_403_non_admin(mock_sb):
 def test_update_resident_ok(mock_sb):
     updated = {**RESIDENT_ROW, "phone": "0199999999"}
     tbl = mock_sb.table.return_value
-    tbl.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [updated]
+    tbl.update.return_value.eq.return_value.execute.return_value.data = [updated]
+    tbl.select.return_value.eq.return_value.execute.return_value.data = [updated]
     r = client.patch("/residents/r1", headers=auth(), json={"phone": "0199999999"})
     assert r.status_code == 200
     assert r.json()["phone"] == "0199999999"
 
 def test_update_resident_404(mock_sb):
     tbl = mock_sb.table.return_value
-    tbl.update.return_value.eq.return_value.select.return_value.execute.return_value.data = []
+    tbl.update.return_value.eq.return_value.execute.return_value.data = []
     r = client.patch("/residents/missing", headers=auth(), json={"name": "X"})
     assert r.status_code == 404
 

@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
-import { Nunito, Libre_Baskerville, JetBrains_Mono } from "next/font/google";
+import { Figtree, Barlow_Semi_Condensed, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { SplashScreen } from "@/components/splash-screen";
 
-const nunito = Nunito({
+const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
-const libreBaskerville = Libre_Baskerville({
+const barlowSemiCondensed = Barlow_Semi_Condensed({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "700"],
+  weight: ["600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -27,8 +27,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s — ACLIS",
-    default: "ACLIS — Pejabat Daerah Pontian",
+    template: "%s | ACLIS",
+    default: "ACLIS | Pejabat Daerah Pontian",
   },
   description: "Sistem AI Pengurusan Data Ketua Kampung & Penghulu, Pejabat Daerah Pontian",
   keywords: ["ACLIS", "Pejabat Daerah Pontian", "Ketua Kampung", "Penghulu", "Johor"],
@@ -51,21 +51,19 @@ export default function RootLayout({
   return (
     <html
       lang="ms"
-      suppressHydrationWarning
       className={cn(
         "h-full antialiased",
-        nunito.variable,
-        libreBaskerville.variable,
+        figtree.variable,
+        barlowSemiCondensed.variable,
         jetbrainsMono.variable,
         "font-sans"
       )}
     >
       <body className="min-h-full flex flex-col">
+        <SplashScreen />
         <Providers>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-            <TooltipProvider>{children}</TooltipProvider>
-            <Toaster richColors closeButton />
-          </ThemeProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+          <Toaster richColors closeButton />
         </Providers>
       </body>
     </html>

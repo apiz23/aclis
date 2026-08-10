@@ -59,7 +59,8 @@ def test_create_report_ketua_kampung_ok(mock_sb):
 
 def test_update_report_content_ok(mock_sb):
     updated = {**REPORT_ROW, "content": "Laporan dikemaskini."}
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [updated]
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [updated]
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [updated]
     r = client.patch("/reports/r1", headers=auth(), json={"content": "Laporan dikemaskini."})
     assert r.status_code == 200
     assert r.json()["content"] == "Laporan dikemaskini."
@@ -67,7 +68,8 @@ def test_update_report_content_ok(mock_sb):
 
 def test_submit_report_ok(mock_sb):
     submitted = {**REPORT_ROW, "status": "submitted", "submitted_at": "2025-01-31T10:00:00+00:00"}
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [submitted]
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [submitted]
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [submitted]
     r = client.patch("/reports/r1", headers=auth(), json={"status": "submitted"})
     assert r.status_code == 200
     assert r.json()["status"] == "submitted"
@@ -79,7 +81,7 @@ def test_update_report_403_non_admin(mock_sb):
 
 
 def test_update_report_404(mock_sb):
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = []
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = []
     r = client.patch("/reports/missing", headers=auth(), json={"content": "x"})
     assert r.status_code == 404
 
@@ -125,7 +127,8 @@ def test_update_report_submitted_sets_submitted_at(mock_sb):
         "status": "submitted", "submitted_at": fixed_iso,
         "content": "Laporan", "aclis_kampung": {"name": "Kampung Satu"},
     }
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [report_row]
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [report_row]
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [report_row]
 
     with patch("app.routers.reports.datetime") as mock_dt:
         mock_dt.now.return_value = fixed_dt

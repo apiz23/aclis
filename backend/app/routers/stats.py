@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends
 from supabase import Client
 from app.auth import get_user_scope, UserScope
@@ -5,6 +6,7 @@ from app.db import get_supabase
 from app.schemas import StatsExtended, StatusCount, InsightsResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _count_scoped(sb: Client, table: str, scope: UserScope, **eq_filters) -> int:

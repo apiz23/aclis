@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACLIS — Panduan Persediaan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm 18mm;
+    }
+
+    :root {
+      --navy: #0C2340;
+      --navy-light: #1a3a5c;
+      --gold: #C4922A;
+      --gold-light: #d4a84a;
+      --green: #10b981;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --radius: 6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Figtree', sans-serif;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--gray-800);
+      background: white;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 20mm 22mm;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid var(--gold);
+    }
+
+    .header-left h1 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .header-left h1 span { color: var(--gold); }
+
+    .header-left .subtitle {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .header-right {
+      text-align: right;
+      font-size: 9.5px;
+      color: var(--gray-500);
+    }
+
+    .header-right .version {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      background: var(--gray-100);
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: var(--navy);
+      font-weight: 500;
+    }
+
+    /* Section headings */
+    h2 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 18px 0 8px;
+      padding: 5px 10px;
+      background: var(--navy);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    h2 .icon {
+      font-size: 12px;
+    }
+
+    h3 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+      margin: 10px 0 4px;
+      padding-bottom: 2px;
+      border-bottom: 1px dashed var(--gray-300);
+    }
+
+    p { margin-bottom: 4px; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 10px;
+      font-size: 10.5px;
+    }
+
+    th {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 9.5px;
+      letter-spacing: 0.05em;
+      color: white;
+      background: var(--navy);
+      padding: 4px 8px;
+      text-align: left;
+    }
+
+    th:first-child { border-radius: var(--radius) 0 0 0; }
+    th:last-child { border-radius: 0 var(--radius) 0 0; }
+
+    td {
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    tr:nth-child(even) td { background: var(--gray-50); }
+
+    td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--gray-600);
+      width: 36px;
+      text-align: center;
+    }
+
+    /* Lists */
+    ul, ol {
+      padding-left: 16px;
+      margin: 4px 0 8px;
+    }
+
+    li { margin-bottom: 2px; }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      background: var(--gray-100);
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: var(--navy);
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      line-height: 1.55;
+      margin: 6px 0 8px;
+      overflow-x: auto;
+      white-space: pre;
+      border: 1px solid #1e293b;
+    }
+
+    .c { color: #64748b; }
+    .k { color: #93c5fd; }
+    .s { color: #86efac; }
+    .v { color: #fbbf24; }
+
+    /* Steps */
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 8px 10px;
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      background: var(--gold);
+      color: var(--navy);
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin-top: 1px;
+    }
+
+    .step-body { flex: 1; }
+
+    /* Notes */
+    .note {
+      background: #fef9ee;
+      border-left: 3px solid var(--gold);
+      padding: 6px 10px;
+      margin: 6px 0 8px;
+      font-size: 10.5px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+
+    .note strong { color: var(--navy); }
+
+    .note-danger {
+      background: #fef2f2;
+      border-left-color: var(--red);
+    }
+
+    .note-success {
+      background: #f0fdf4;
+      border-left-color: var(--green);
+    }
+
+    /* Env table */
+    .env-table td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: var(--gray-900);
+      width: auto;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .env-table td:nth-child(2) {
+      width: 50px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .env-table td:nth-child(2).required { color: var(--red); }
+    .env-table td:nth-child(2).optional { color: var(--gray-400); }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-required { background: #fef2f2; color: var(--red); }
+    .badge-optional { background: var(--gray-100); color: var(--gray-500); }
+    .badge-if { background: #eff6ff; color: var(--blue); }
+
+    /* Architecture diagram */
+    .arch-diagram {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      margin: 6px 0 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      line-height: 1.6;
+      color: var(--gray-700);
+      white-space: pre;
+      text-align: center;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 20px;
+      padding-top: 8px;
+      border-top: 2px solid var(--gold);
+      font-size: 9.5px;
+      color: var(--gray-500);
+      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    @media print {
+      body { padding: 0; }
+      .page-break { page-break-before: always; }
+      .step { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1><span>ACLIS</span> — Panduan Persediaan</h1>
+      <div class="subtitle">AI Community Leadership Intelligence System &bull; Pejabat Daerah Pontian, Johor</div>
+    </div>
+    <div class="header-right">
+      <div class="version">v0.1.0</div>
+      <div style="margin-top:3px">DI230052</div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <h2><span class="icon">&#9670;</span> Gambaran Keseluruhan</h2>
+  <div class="arch-diagram">┌─────────────┐     ┌─────────────┐     ┌─────────────────┐
+  │   Frontend   │────▶│   Backend   │────▶│  Supabase (DB)  │
+  │   Next.js    │◀────│   FastAPI   │◀────│  + Auth + Store  │
+  │  :3000       │     │   :8000     │     │                 │
+  └─────────────┘     └─────────────┘     └─────────────────┘
+       pnpm               python               hosted</div>
+
+  <!-- PREREQUISITES -->
+  <h2><span class="icon">&#9881;</span> Keperluan Sistem</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30%">Komponen</th>
+        <th style="width:25%">Versi</th>
+        <th>Catatan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Python</td><td><strong>3.12+</strong></td><td>Wajib — backend FastAPI</td></tr>
+      <tr><td>Node.js</td><td><strong>20+</strong></td><td>Wajib — frontend Next.js</td></tr>
+      <tr><td>pnpm</td><td><strong>latest</strong></td><td>Disyorkan — lebih pantas daripada npm</td></tr>
+      <tr><td>Git</td><td>latest</td><td>Untuk klon repositori</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Passang Keperluan</h3>
+  <table>
+    <thead>
+      <tr><th style="width:25%">Komponen</th><th>Windows</th><th>macOS</th><th>Linux (Ubuntu/Debian)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Python</td><td><code>winget install Python.Python.3.12</code></td><td><code>brew install python@3.12</code></td><td><code>sudo apt install python3.12 python3.12-venv</code></td></tr>
+      <tr><td>Node.js</td><td><code>winget install OpenJS.NodeJS.LTS</code></td><td><code>brew install node</code></td><td><code>curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs</code></td></tr>
+      <tr><td>pnpm</td><td colspan="3" style="text-align:center"><code>corepack enable &amp;&amp; corepack prepare pnpm@latest --activate</code></td></tr>
+      <tr><td>Git</td><td><code>winget install Git.Git</code></td><td><code>brew install git</code></td><td><code>sudo apt install git</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="icon">&#9881;</span> Keperluan Akaun</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30%">Perkhidmatan</th>
+        <th style="width:20%">Status</th>
+        <th>Keterangan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Supabase</td><td><span class="badge badge-required">Wajib</span></td><td>Database, Authentication, Storage — akaun percuma memadai</td></tr>
+      <tr><td>Groq API</td><td><span class="badge badge-optional">Pilihan</span></td><td>Hanya untuk ciri AI — dapatkan di console.groq.com</td></tr>
+    </tbody>
+  </table>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Klon Repositori</h3>
+      <pre><span class="c"># Buka Terminal (Windows: PowerShell / macOS: Terminal)</span>
+
+<span class="c"># Pilih lokasi untuk simpan projek</span>
+cd Desktop
+
+<span class="c"># Klon repositori</span>
+git clone https://github.com/&lt;nama-pengguna&gt;/aclis.git
+
+<span class="c"># Masuk ke folder projek</span>
+cd aclis</pre>
+      <div class="note"><strong>Catatan:</strong> Gantikan <code>&lt;nama-pengguna&gt;</code> dengan nama pengguna GitHub anda atau URL penuh repositori.</div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Persediaan Pangkalan Data (Supabase)</h3>
+      <ol>
+        <li>Pergi ke <a href="https://supabase.com/dashboard">Supabase Dashboard</a> → pilih projek anda</li>
+        <li>Buka <strong>SQL Editor</strong> di panel kiri</li>
+        <li>Jalankan <strong>migrasi skema penuh</strong> (salin &amp; tampal):</li>
+      </ol>
+      <pre><span class="c">// Skema ACLIS — jalankan sekali sahaja</span>
+<span class="v">supabase/migrations/0010_aclis_full_schema.sql</span></pre>
+      <ol start="4">
+        <li>Jalankan <strong>data awal</strong> untuk pengguna aplikasi:</li>
+      </ol>
+      <pre><span class="s">supabase/aclis_app_user_rows.sql</span></pre>
+      <div class="note"><strong>Catatan:</strong> Fail <code>0010_aclis_full_schema.sql</code> mengandungi semua jadual ACLIS (mukim, kampung, pemimpin, penduduk, laporan, isu, penilaian, pengguna, audit). Gunakan <code>IF NOT EXISTS</code> — selamat dijalankan berulang kali.</div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Muat Turun &amp; Muat Naik Foto Ketua Kampung</h3>
+      <ol>
+        <li>Fail <code>aclis-leader-photos.zip</code> terdapat di <code>data/raw/aclis-leader-photos.zip</code></li>
+        <li>Ekstrak fail zip tersebut</li>
+        <li>Buka Supabase Dashboard → <strong>Storage</strong> → pilih bucket <code>aclis-leader-photos</code></li>
+        <li>Klik <strong>Upload</strong> → pilih semua fail foto yang diekstrak</li>
+      </ol>
+      <div class="note"><strong>Catatan:</strong> Fail mestilah dalam format <code>.jpg</code> atau <code>.png</code>. Saiz maksimum 5MB seimbang. Nama fail akan digunakan sebagai <code>photo_url</code> dalam jadual <code>aclis_leader</code>.</div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Persediaan Backend (FastAPI)</h3>
+      <pre><span class="c"># Buka folder backend</span>
+cd backend
+
+<span class="c"># Cipta persekitaran maya</span>
+python -m venv .venv
+
+<span class="c"># Aktifkan persekitaran maya</span>
+.venv\Scripts\activate           <span class="c"># Windows</span>
+<span class="c"># source .venv/bin/activate      # macOS / Linux</span>
+
+<span class="c"># Pasang kebergantungan</span>
+pip install -e .
+pip install pytest</pre>
+
+      <h3>Fail .env</h3>
+      <p>Cipta fail <code>.env</code> daripada template:</p>
+      <pre>cp .env.example .env</pre>
+
+      <p>编辑 <code>.env</code> dan isi nilai berikut:</p>
+      <table class="env-table">
+        <thead>
+          <tr><th>Pemboleh Ubah</th><th>Status</th><th>Keterangan</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SUPABASE_URL</td><td class="required">Wajib</td><td>URL projek Supabase (cth: <code>https://xxxx.supabase.co</code>)</td></tr>
+          <tr><td>SUPABASE_JWT_SECRET</td><td class="required">Wajib</td><td>Rahsia JWT — Supabase → Settings → API</td></tr>
+          <tr><td>SUPABASE_SERVICE_ROLE_KEY</td><td class="required">Wajib</td><td>Kunci service role (untuk bypass RLS)</td></tr>
+          <tr><td>CORS_ORIGINS</td><td class="required">Wajib</td><td>URL frontend — pisahkan dengan koma (cth: <code>http://localhost:3000</code>)</td></tr>
+          <tr><td>AI_PROVIDER</td><td class="required">Wajib</td><td><code>mock</code> (tanpa AI) atau <code>groq</code> (dengan AI)</td></tr>
+          <tr><td>GROQ_API_KEY</td><td class="optional">Jika groq</td><td>Kunci API Groq — console.groq.com</td></tr>
+          <tr><td>GROQ_MODEL</td><td class="optional">Pilihan</td><td>Default: <code>llama-3.3-70b-versatile</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Mula Pelayan</h3>
+      <pre><span class="c"># Windows (laluan dengan ruang)</span>
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+
+<span class="c"># macOS / Linux</span>
+python -m uvicorn app.main:app --reload --port 8000</pre>
+
+      <div class="note note-success"><strong>Kejayaan:</strong> Backend berjalan di <code>http://localhost:8000</code>. API docs di <code>http://localhost:8000/docs</code>.</div>
+
+      <div class="note note-danger"><strong>Windows — ralat <em>"uv trampoline failed"</em>?</strong><br>
+      Path projek mengandungi ruang (<code>Desktop\Developer\aclis</code>). Gunakan <code>.venv\Scripts\python.exe -m uvicorn</code> seperti di atas — jangan guna <code>uvicorn</code> secara langsung.</div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Persediaan Frontend (Next.js)</h3>
+      <pre><span class="c"># Buka folder frontend</span>
+cd frontend
+
+<span class="c"># Pasang kebergantungan</span>
+pnpm install</pre>
+
+      <h3>Fail .env.local</h3>
+      <p>Cipta fail <code>.env.local</code> daripada template:</p>
+      <pre>cp .env.local.example .env.local</pre>
+
+      <p>编辑 <code>.env.local</code> dan isi nilai berikut:</p>
+      <table class="env-table">
+        <thead>
+          <tr><th>Pemboleh Ubah</th><th>Status</th><th>Keterangan</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>NEXT_PUBLIC_SUPABASE_URL</td><td class="required">Wajib</td><td>URL projek Supabase anda</td></tr>
+          <tr><td>NEXT_PUBLIC_SUPABASE_ANON_KEY</td><td class="required">Wajib</td><td>Kunci anon/public — Supabase → Settings → API</td></tr>
+          <tr><td>NEXT_PUBLIC_API_URL</td><td class="required">Wajib</td><td>URL backend API (cth: <code>http://localhost:8000</code>)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Mula Pelayan</h3>
+      <pre>pnpm run dev</pre>
+
+      <div class="note note-success"><strong>Kejayaan:</strong> Frontend berjalan di <code>http://localhost:3000</code>.</div>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Cipta Pengguna Admin Pertama</h3>
+      <ol>
+        <li>Pergi ke Supabase Dashboard → <strong>Authentication</strong> → <strong>Users</strong></li>
+        <li>Klik <strong>Add user</strong> — masukkan e-mel dan kata laluan</li>
+        <li>Salin UUID pengguna baru (terdapat pada halaman pengguna)</li>
+        <li>Buka SQL Editor dan jalankan:</li>
+      </ol>
+      <pre><span class="k">UPDATE</span> auth.users
+<span class="k">SET</span> raw_app_meta_data = raw_app_meta_data || <span class="s">'{"role": "admin_daerah"}'</span>::jsonb
+<span class="k">WHERE</span> id = <span class="s">'uuid-pengguna-di-sini'</span>;</pre>
+      <table>
+        <thead>
+          <tr><th style="width:30%">Peranan</th><th>Huraian</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>admin_daerah</code></td><td>Akses penuh — urus semua kampung dan pengguna</td></tr>
+          <tr><td><code>ketua_kampung</code></td><td>Urus kampung sendiri sahaja</td></tr>
+          <tr><td><code>penghulu</code></td><td>Lihat data mukim sendiri sahaja</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-body">
+      <h3>Ujian Sistem</h3>
+      <pre><span class="c"># Backend — 149 ujian (tiada DB sebenar diperlukan)</span>
+cd backend
+pytest -q
+
+<span class="c"># Frontend — ujian unit</span>
+cd frontend
+pnpm test</pre>
+    </div>
+  </div>
+
+  <!-- STEP 8 -->
+  <div class="step">
+    <div class="step-num">8</div>
+    <div class="step-body">
+      <h3>Penerbitan (Deployment)</h3>
+      <table>
+        <thead>
+          <tr><th style="width:18%">Komponen</th><th style="width:22%">Platform</th><th>Perintah / Nota</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Backend</td><td>Railway / Render / Fly.io</td><td><code>uvicorn app.main:app --host 0.0.0.0 --port $PORT</code></td></tr>
+          <tr><td>Frontend</td><td>Vercel / Netlify</td><td>Build: <code>pnpm build</code> — Output: <code>.next</code></td></tr>
+          <tr><td>Database</td><td>Supabase (hos)</td><td>Jalankan migrasi melalui SQL Editor</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TROUBLESHOOTING -->
+  <h2><span class="icon">&#9888;</span> Penyelesaian Masalah</h2>
+  <table>
+    <thead>
+      <tr><th style="width:30%">Masalah</th><th>Penyelesaian</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>uv trampoline failed</code></td><td>Gunakan <code>.venv\Scripts\python.exe -m uvicorn</code> bukan <code>uvicorn</code> terus (Windows dengan ruang dalam laluan)</td></tr>
+      <tr><td>Ralat CORS</td><td>Pastikan <code>CORS_ORIGINS</code> dalam <code>.env</code> backend sepadan dengan URL frontend</td></tr>
+      <tr><td>401 Unauthorized</td><td>Pastikan JWT secret sepadan dengan tetapan projek Supabase</td></tr>
+      <tr><td>403 Forbidden</td><td>Peranan pengguna tidak ditetapkan dalam <code>app_metadata.role</code></td></tr>
+      <tr><td>AI tidak berfungsi</td><td>Periksa <code>AI_PROVIDER</code> dan <code>GROQ_API_KEY</code> dalam <code>.env</code> backend</td></tr>
+      <tr><td>Foto tidak dimuat</td><td>Pastikan bucket Supabase Storage <code>leader-photos</code> wujud dan mempunyai dasar RLS</td></tr>
+      <tr><td>Peta tidak dipaparkan</td><td>Periksa sambungan internet — Leaflet memuatkan jubin daripada OpenStreetMap</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>ACLIS — AI Community Leadership Intelligence System</span>
+    <span>Muhammad Hafizuddin Bin Abdul Hamid &bull; DI230052</span>
+  </div>
+
+</body>
+</html>

@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_user_scope, UserScope, require_role, CurrentUser
@@ -6,6 +7,7 @@ from app.db import get_supabase
 from app.schemas import ResidentSummary, ResidentCreate, ResidentUpdate
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 _SELECT = "id, kampung_id, name, ic_no, phone, b40_status, address"
 

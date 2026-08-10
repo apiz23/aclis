@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
@@ -6,20 +7,25 @@ from app.db import get_supabase
 from app.schemas import LeaderSummary, LeaderDetail, LeaderCreate, LeaderUpdate
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _row_to_summary(r: dict) -> LeaderSummary:
+    kampung = r.get("aclis_kampung") or {}
+    mukim = kampung.get("aclis_mukim") or {}
     return LeaderSummary(
         id=r["id"],
         name=r["name"],
         ic_no=r.get("ic_no"),
         type=r["type"],
         kampung_id=r.get("kampung_id"),
-        kampung_name=(r.get("aclis_kampung") or {}).get("name"),
+        kampung_name=kampung.get("name"),
         tarikh_lantikan=str(r["tarikh_lantikan"]) if r.get("tarikh_lantikan") else None,
         photo_url=r.get("photo_url"),
         parti_lantikan=r.get("parti_lantikan"),
         parti_terkini=r.get("parti_terkini"),
+        mukim_name=mukim.get("name"),
+        phone=r.get("phone"),
     )
 
 
@@ -49,7 +55,7 @@ def list_leaders(
     sb: Client = Depends(get_supabase),
 ):
     q = sb.table("aclis_leader") \
-        .select("id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address, aclis_kampung(name)")
+        .select("id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address, aclis_kampung(name, aclis_mukim(name))")
     if not scope.is_admin:
         if not scope.allowed_kampung_ids:
             return []
@@ -80,8 +86,6 @@ def get_leader(
     r = rows[0]
     if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
         raise HTTPException(404, "Leader not found")
-    kampung = r.get("aclis_kampung") or {}
-    mukim = kampung.get("aclis_mukim") or {}
     eval_count = (
         sb.table("aclis_evaluation")
         .select("id", count="exact")
@@ -92,9 +96,7 @@ def get_leader(
     )
     return LeaderDetail(
         **_row_to_summary(r).model_dump(),
-        mukim_name=mukim.get("name"),
         evaluation_count=eval_count,
-        phone=r.get("phone"),
         address=r.get("address"),
         kampung_rangkaian=r.get("kampung_rangkaian"),
     )
@@ -117,9 +119,7 @@ def create_leader(
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
     record_audit(sb, actor, "create", "leader", r["id"], {"kampung_id": r.get("kampung_id")})
-    kampung = r.get("aclis_kampung") or {}
-    mukim = kampung.get("aclis_mukim") or {}
-    return LeaderDetail(**_row_to_summary(r).model_dump(), mukim_name=mukim.get("name"), evaluation_count=0)
+    return LeaderDetail(**_row_to_summary(r).model_dump(), evaluation_count=0)
 
 
 @router.patch("/leaders/{leader_id}", response_model=LeaderDetail)
@@ -142,8 +142,6 @@ def update_leader(
         .eq("id", leader_id)
         .execute()
     ).data[0]
-    kampung = r.get("aclis_kampung") or {}
-    mukim = kampung.get("aclis_mukim") or {}
     eval_count = (
         sb.table("aclis_evaluation")
         .select("id", count="exact")
@@ -154,9 +152,7 @@ def update_leader(
     )
     return LeaderDetail(
         **_row_to_summary(r).model_dump(),
-        mukim_name=mukim.get("name"),
         evaluation_count=eval_count,
-        phone=r.get("phone"),
         address=r.get("address"),
         kampung_rangkaian=r.get("kampung_rangkaian"),
     )

@@ -1,8 +1,15 @@
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
 export interface Stats {
   kampung_count: number;
   leader_count: number;
   pending_reports: number;
   open_issues: number;
+  issues_by_status: StatusCount[];
+  reports_by_status: StatusCount[];
 }
 
 export interface KampungSummary {
@@ -12,6 +19,8 @@ export interface KampungSummary {
   mukim_name: string | null;
   b40_count: number;
   profile: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface KampungDetail extends KampungSummary {
@@ -29,11 +38,14 @@ export interface LeaderSummary {
   photo_url: string | null;
   parti_lantikan: string | null;
   parti_terkini: string | null;
+  mukim_name: string | null;
+  phone: string | null;
 }
 
 export interface LeaderDetail extends LeaderSummary {
-  mukim_name: string | null;
   evaluation_count: number;
+  address: string | null;
+  kampung_rangkaian: string | null;
 }
 
 export interface ReportSummary {
@@ -58,11 +70,10 @@ export interface IssueSummary {
   description: string | null;
   ai_category: string | null;
   status: string;
-}
-
-export interface IssueDetail extends IssueSummary {
   coords: string | null;
 }
+
+export interface IssueDetail extends IssueSummary {}
 
 export interface EvaluationSummary {
   id: string;
@@ -75,4 +86,16 @@ export interface EvaluationSummary {
 
 export interface EvaluationDetail extends EvaluationSummary {
   scores: Record<string, number>;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actor_id: string | null;
+  actor_email: string | null;
+  actor_role: string | null;
+  action: string;
+  entity: string;
+  entity_id: string | null;
+  details: Record<string, unknown> | null;
+  created_at: string;
 }

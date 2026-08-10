@@ -18,24 +18,24 @@ INSERT INTO aclis_mukim (name, parlimen, dun) VALUES
 -- ============================================================
 -- 2. KAMPUNGS
 -- ============================================================
-INSERT INTO aclis_kampung (name, mukim_id, b40_count, profile)
-SELECT v.name, m.id, v.b40, v.profile
+INSERT INTO aclis_kampung (name, mukim_id, b40_count, profile, lat, lng)
+SELECT v.name, m.id, v.b40, v.profile, v.lat, v.lng
 FROM (VALUES
-  ('Kg. Bukit Benut',      'Benut',        45, 'Kampung pertanian padi dan getah'),
-  ('Kg. Sungai Benut',     'Benut',        38, 'Kampung nelayan sungai'),
-  ('Kg. Jalan Baru Benut', 'Benut',        22, 'Penempatan FELDA baru'),
-  ('Kg. Pontian Kechil',   'Pontian',      61, 'Kawasan perindustrian kecil'),
-  ('Kg. Sri Lambak',       'Pontian',      33, 'Kampung tradisional Melayu'),
-  ('Kg. Parit Lapis',      'Pontian',      27, 'Kawasan tanaman sayur-sayuran'),
-  ('Kg. Ayer Baloi',       'Ayer Baloi',   52, 'Kampung nelayan pantai'),
-  ('Kg. Parit Sulung',     'Ayer Baloi',   19, 'Kawasan kebun buah-buahan'),
-  ('Kg. Nenas Baru',       'Pekan Nenas',  41, 'Industri nenas dan pengawetan'),
-  ('Kg. Parit Ismail',     'Pekan Nenas',  30, 'Kawasan pesawah padi'),
-  ('Kg. Sri Gading',       'Sri Gading',   48, 'Kampung perikanan air tawar'),
-  ('Kg. Kukup Laut',       'Kukup',        55, 'Kampung nelayan pantai barat'),
-  ('Kg. Rimba Terjun',     'Rimba Terjun', 36, 'Kawasan sempadan hutan simpan'),
-  ('Kg. Serkat',           'Serkat',       29, 'Kampung pertanian pelbagai')
-) AS v(name, mukim_name, b40, profile)
+  ('Kg. Bukit Benut',      'Benut',        45, 'Kampung pertanian padi dan getah',        1.6780, 103.2630),
+  ('Kg. Sungai Benut',     'Benut',        38, 'Kampung nelayan sungai',                   1.6600, 103.2560),
+  ('Kg. Jalan Baru Benut', 'Benut',        22, 'Penempatan FELDA baru',                    1.6720, 103.2700),
+  ('Kg. Pontian Kechil',   'Pontian',      61, 'Kawasan perindustrian kecil',              1.4880, 103.3890),
+  ('Kg. Sri Lambak',       'Pontian',      33, 'Kampung tradisional Melayu',               1.4760, 103.3750),
+  ('Kg. Parit Lapis',      'Pontian',      27, 'Kawasan tanaman sayur-sayuran',            1.4650, 103.3600),
+  ('Kg. Ayer Baloi',       'Ayer Baloi',   52, 'Kampung nelayan pantai',                   1.3800, 103.3450),
+  ('Kg. Parit Sulung',     'Ayer Baloi',   19, 'Kawasan kebun buah-buahan',                1.3700, 103.3350),
+  ('Kg. Nenas Baru',       'Pekan Nenas',  41, 'Industri nenas dan pengawetan',            1.5150, 103.5150),
+  ('Kg. Parit Ismail',     'Pekan Nenas',  30, 'Kawasan pesawah padi',                     1.5280, 103.5000),
+  ('Kg. Sri Gading',       'Sri Gading',   48, 'Kampung perikanan air tawar',              1.4200, 103.4100),
+  ('Kg. Kukup Laut',       'Kukup',        55, 'Kampung nelayan pantai barat',             1.3280, 103.4450),
+  ('Kg. Rimba Terjun',     'Rimba Terjun', 36, 'Kawasan sempadan hutan simpan',            1.5200, 103.2900),
+  ('Kg. Serkat',           'Serkat',       29, 'Kampung pertanian pelbagai',               1.3600, 103.3900)
+) AS v(name, mukim_name, b40, profile, lat, lng)
 JOIN aclis_mukim m ON m.name = v.mukim_name;
 
 -- ============================================================

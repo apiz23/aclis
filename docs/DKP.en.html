@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DKP — ACLIS Documentation Knowledge Platform (English)</title>
+<style>
+  :root {
+    --background: #f7fafc;
+    --foreground: #17222e;
+    --card: #ffffff;
+    --border: #e3e9ee;
+    --primary: #123a5f;
+    --primary-foreground: #f4f9fc;
+    --muted: #f0f4f7;
+    --muted-foreground: #5a6b7a;
+    --accent: #e6d8a8;
+    --accent-foreground: #6b5115;
+    --gold: #c4922a;
+    --teal: #1f6f78;
+    --success: #2e7d4f;
+    --success-bg: #e8f4ec;
+    --warning: #b37800;
+    --warning-bg: #fbf3e0;
+    --destructive: #b0343c;
+    --destructive-bg: #fbe9ea;
+    --sidebar: #101f33;
+    --sidebar-foreground: #eef4fa;
+    --radius: 6px;
+    --font-display: 'Barlow Semi Condensed', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-sans: 'Figtree', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Main ===== */
+  .main { max-width: 900px; margin: 0 auto; padding: 0 32px 80px; }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    margin: 0 0 44px;
+    page-break-inside: avoid;
+  }
+  .toc h2 { margin: 0 0 12px; font-size: 20px; }
+  .toc ol { columns: 2; column-gap: 40px; margin: 0; list-style: none; counter-reset: toc; }
+  .toc li { margin-bottom: 5px; break-inside: avoid; }
+  .toc a {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13.5px;
+  }
+  .toc a:hover { text-decoration: underline; }
+  .toc li::before {
+    counter-increment: toc;
+    content: counter(toc, decimal-leading-zero) "  ";
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .hero {
+    padding: 56px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .hero .kicker {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: 44px; font-weight: 600; line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .hero p.tagline {
+    font-size: 17px; color: var(--muted-foreground);
+    max-width: 720px;
+  }
+  .hero .meta {
+    display: flex; flex-wrap: wrap; gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .hero .meta b { color: var(--foreground); font-weight: 600; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 26px; font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 56px 0 8px;
+    padding-top: 8px;
+  }
+  h2 .num {
+    color: var(--gold);
+    font-family: var(--font-mono);
+    font-size: 14px; font-weight: 500;
+    margin-right: 10px;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 600;
+    margin: 28px 0 10px;
+  }
+  h4 {
+    font-size: 14.5px; font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--primary);
+  }
+
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { margin-bottom: 4px; }
+
+  .lead {
+    font-size: 16px;
+    color: #33475b;
+    margin-bottom: 16px;
+  }
+
+  /* ===== Cards & grids ===== */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .card .c-label {
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted-foreground);
+    display: block; margin-bottom: 6px;
+  }
+  .card .c-val {
+    font-family: var(--font-display);
+    font-size: 26px; font-weight: 600;
+    color: var(--primary);
+  }
+  .card .c-sub { font-size: 12.5px; color: var(--muted-foreground); margin-top: 2px; }
+
+  /* ===== Tables ===== */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    margin: 14px 0 24px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted-foreground);
+    background: var(--muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f6f9fb; }
+  code, .mono { font-family: var(--font-mono); font-size: 0.9em; background: var(--muted); padding: 1px 5px; border-radius: 4px; }
+  table code { background: var(--muted); }
+
+  /* ===== Badges ===== */
+  .badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .b-green { background: var(--success-bg); color: var(--success); }
+  .b-gold { background: var(--warning-bg); color: var(--warning); }
+  .b-red { background: var(--destructive-bg); color: var(--destructive); }
+  .b-blue { background: #e4eef7; color: var(--primary); }
+  .b-gray { background: var(--muted); color: var(--muted-foreground); }
+
+  /* ===== Callouts ===== */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  .callout.warn { border-left-color: var(--warning); background: var(--warning-bg); }
+  .callout.info { border-left-color: var(--teal); background: #e9f3f4; }
+  .callout.danger { border-left-color: var(--destructive); background: var(--destructive-bg); }
+  .callout b.t { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+
+  /* ===== Code blocks ===== */
+  pre {
+    background: #0f1c2b;
+    color: #d7e2ee;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin: 14px 0 24px;
+  }
+  pre .cm { color: #7d94ab; }
+  pre .pk { color: #e3b84a; }
+
+  /* ===== Architecture diagram ===== */
+  .arch {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 16px 0 24px;
+    text-align: center;
+  }
+  .arch-node {
+    display: inline-block;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-family: var(--font-display);
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    margin: 4px 6px;
+  }
+  .arch-node.gold { background: var(--gold); color: #101f33; }
+  .arch-node.dark { background: var(--sidebar); color: var(--sidebar-foreground); }
+  .arch-node.teal { background: var(--teal); color: #fff; }
+  .arch-label { font-size: 11px; color: var(--muted-foreground); margin-top: 3px; }
+  .arch-arrow { font-family: var(--font-mono); color: var(--muted-foreground); font-size: 18px; letter-spacing: 2px; }
+
+  /* ===== Stack bars ===== */
+  .stack-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+  .stack-chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .stack-chip b { color: var(--primary); font-weight: 600; }
+
+  /* ===== Divider ===== */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+  /* ===== Footer ===== */
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted-foreground);
+  }
+
+  /* ===== Status dots ===== */
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .dot.g { background: var(--success); }
+  .dot.y { background: var(--warning); }
+  .dot.r { background: var(--destructive); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 900px) {
+    .hero h1 { font-size: 32px; }
+    .cards { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  }
+  @media print {
+    .arch-node { background: #ddd !important; color: #000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= MAIN ================= -->
+<main class="main">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="kicker">Documentation Knowledge Platform</div>
+    <h1>ACLIS — AI Community Leadership Intelligence System</h1>
+    <p class="tagline">Web platform for managing village leadership data for the Pontian District Office, Johor. Replaces manual spreadsheets with a centralized, secure, AI-assisted system.</p>
+    <div class="meta">
+      <span><b>System:</b> ACLIS</span>
+      <span><b>Type:</b> PSM / Final-Year Project</span>
+      <span><b>University:</b> UTHM — FSKTM</span>
+      <span><b>Case study:</b> Pontian District Office, Johor</span>
+      <span><b>Developer:</b> Muhammad Hafizuddin Bin Abdul Hamid (DI230052)</span>
+      <span><b>Status:</b> <span class="badge b-green">Development complete · ready for user testing</span></span>
+    </div>
+  </header>
+
+  <div class="callout info">
+    <b class="t">Self-contained document</b>
+    This document is a single self-contained HTML file — all information lives in this file only, with no links to other files or pages. It is a comprehensive knowledge index of the ACLIS system: architecture, data schema, modules, API, security, design, project status and more.
+  </div>
+
+  <!-- ===== TOC ===== -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#overview">Project Overview</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#stack">Tech Stack</a></li>
+      <li><a href="#structure">Folder Structure</a></li>
+      <li><a href="#data">Data Model &amp; Schema</a></li>
+      <li><a href="#modules">Modules &amp; Pages</a></li>
+      <li><a href="#api">API Endpoints</a></li>
+      <li><a href="#rbac">Access Control (RBAC)</a></li>
+      <li><a href="#ai">AI Layer</a></li>
+      <li><a href="#design">Design</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#import">Data Import</a></li>
+      <li><a href="#testing">Testing</a></li>
+      <li><a href="#status">Status &amp; Roadmap</a></li>
+      <li><a href="#risks">Issues &amp; Risks</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </div>
+
+  <!-- ============ 1. OVERVIEW ============ -->
+  <section id="overview">
+    <h2><span class="num">01</span>Project Overview</h2>
+    <p class="lead">ACLIS moves manual management of village leadership data — previously scattered across many spreadsheets — into one centralized web platform.</p>
+
+    <div class="cards">
+      <div class="card"><span class="c-label">Villages covered</span><div class="c-val">14</div><div class="c-sub">across Pontian district (sample data)</div></div>
+      <div class="card"><span class="c-label">Core modules</span><div class="c-val">6</div><div class="c-sub">+ 5 additional features</div></div>
+      <div class="card"><span class="c-label">User roles</span><div class="c-val">3</div><div class="c-sub">District Admin · Village Head · Sub-district Chief</div></div>
+      <div class="card"><span class="c-label">Automated tests</span><div class="c-val">149</div><div class="c-sub">all passing (pytest)</div></div>
+      <div class="card"><span class="c-label">AI features</span><div class="c-val">3</div><div class="c-sub">summaries · issue categories · trend insights</div></div>
+      <div class="card"><span class="c-label">Current phase</span><div class="c-val">4</div><div class="c-sub">development done → user testing</div></div>
+    </div>
+
+    <h3>Objectives (mapped to proposal)</h3>
+    <ol>
+      <li>Design an object-oriented system architecture from functional / non-functional requirements.</li>
+      <li>Build a web platform centralizing village data, streamlining reporting, with an AI-assisted monitoring dashboard.</li>
+      <li>Evaluate functionality, usability and effectiveness (usability testing + SUS).</li>
+    </ol>
+
+    <h3>How It Works (main scenarios)</h3>
+    <ul>
+      <li><b>District Admin</b> records villages, residents &amp; B40, leaders, and performance evaluations; reviews reports and issues district-wide.</li>
+      <li><b>Village Head</b> submits monthly reports and logs issues for their own village only.</li>
+      <li><b>Sub-district Chief</b> reviews (read-only) village data within their sub-district.</li>
+      <li><b>AI</b> summarizes long reports, categorizes issues, and surfaces trends — all data protected (PII redacted before leaving to the cloud).</li>
+    </ul>
+  </section>
+
+  <!-- ============ 2. ARCHITECTURE ============ -->
+  <section id="architecture">
+    <h2><span class="num">02</span>Architecture</h2>
+    <p class="lead">Clean three-layer separation: frontend, backend, and managed infrastructure — a strong "object-oriented system architecture" story for the thesis.</p>
+
+    <div class="arch">
+      <div class="arch-node">Next.js 16<span class="arch-label">Frontend · Port 3000</span></div>
+      <div class="arch-arrow">← JWT →</div>
+      <div class="arch-node teal">FastAPI<span class="arch-label">Backend · Port 8000</span></div>
+      <div class="arch-arrow">← SDK/HTTP →</div>
+      <div class="arch-node gold">Groq / AI<span class="arch-label">AI Layer · AIProvider</span></div>
+      <div class="arch-node dark">Supabase<span class="arch-label">Postgres · Auth · Storage</span></div>
+    </div>
+
+    <table>
+      <thead><tr><th>Layer</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td><code>Next.js</code></td><td>Frontend, forms, dashboards; holds the Supabase session; calls FastAPI with the JWT.</td></tr>
+        <tr><td><code>FastAPI</code></td><td>All business logic, authentication, validation, DB access, AI orchestration; verifies the Supabase JWT; enforces role-based access.</td></tr>
+        <tr><td><code>Supabase</code></td><td>Single source of truth for data, identity, and photo files.</td></tr>
+        <tr><td><code>AIProvider</code></td><td>One Python interface; provider chosen by configuration (<code>AI_PROVIDER</code>).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Stack Justification (for report/thesis)</h3>
+    <ul>
+      <li><b>Separate Next.js + FastAPI</b> — clean 3-tier separation → clear object-oriented system architecture for use-case/ERD diagrams.</li>
+      <li><b>Python backend</b> — leaves the door open for local models (Ollama) without a language switch.</li>
+      <li><b>Supabase</b> — solves cross-layer auth (one JWT verified by both Next.js and FastAPI) + photo storage + Postgres in one free box.</li>
+      <li><b>AI swappability</b> — all AI calls go through <code>AIProvider</code>: <code>GroqProvider</code> (current), <code>OllamaProvider</code> (local), <code>ClaudeProvider</code> (future).</li>
+    </ul>
+  </section>
+
+  <!-- ============ 3. TECH STACK ============ -->
+  <section id="stack">
+    <h2><span class="num">03</span>Tech Stack</h2>
+
+    <h3>Frontend</h3>
+    <div class="stack-row">
+      <span class="stack-chip"><b>Next.js</b> 16.2.9</span>
+      <span class="stack-chip"><b>React</b> 19.2.4</span>
+      <span class="stack-chip"><b>TypeScript</b> 5</span>
+      <span class="stack-chip"><b>shadcn/ui</b> 4.11 (Radix-Vega)</span>
+      <span class="stack-chip"><b>Tailwind CSS</b> v4</span>
+      <span class="stack-chip"><b>TanStack Query</b> v5</span>
+      <span class="stack-chip"><b>TanStack Table</b> v8</span>
+      <span class="stack-chip"><b>React Hook Form</b> + Zod</span>
+      <span class="stack-chip"><b>Leaflet</b> 1.9 + react-leaflet 5</span>
+      <span class="stack-chip"><b>Recharts</b> 3.8</span>
+      <span class="stack-chip"><b>lucide-react</b> icons</span>
+    </div>
+
+    <h3>Backend</h3>
+    <div class="stack-row">
+      <span class="stack-chip"><b>FastAPI</b> 0.115+</span>
+      <span class="stack-chip"><b>Python</b> 3.12</span>
+      <span class="stack-chip"><b>PyJWT</b> (HS256)</span>
+      <span class="stack-chip"><b>Pydantic v2</b></span>
+      <span class="stack-chip"><b>supabase-py</b> 2.4</span>
+      <span class="stack-chip"><b>pandas + openpyxl</b></span>
+      <span class="stack-chip"><b>httpx</b></span>
+      <span class="stack-chip"><b>cachetools</b> (TTL cache)</span>
+      <span class="stack-chip"><b>groq</b> 0.18</span>
+    </div>
+
+    <h3>Infrastructure</h3>
+    <div class="stack-row">
+      <span class="stack-chip"><b>Supabase</b> Postgres + GoTrue Auth + Storage</span>
+      <span class="stack-chip"><b>Vercel</b> (frontend, free)</span>
+      <span class="stack-chip"><b>Render / Railway</b> (backend, free tier)</span>
+      <span class="stack-chip"><b>Groq API</b> <code>llama-3.3-70b-versatile</code></span>
+    </div>
+  </section>
+
+  <!-- ============ 4. STRUCTURE ============ -->
+  <section id="structure">
+    <h2><span class="num">04</span>Folder Structure</h2>
+<pre><span class="cm"># Layout after reorganization (10 Aug 2026)</span>
+aclis/
+├── <span class="pk">backend/</span>                  <span class="cm"># FastAPI Python backend</span>
+│   ├── app/
+│   │   ├── main.py            <span class="cm"># Entry, CORS, security headers</span>
+│   │   ├── auth.py            <span class="cm"># JWT decode, role check, scope resolver (TTL cache)</span>
+│   │   ├── audit.py           <span class="cm"># Audit log helper</span>
+│   │   ├── db.py              <span class="cm"># Supabase client (service-role)</span>
+│   │   ├── ai.py              <span class="cm"># Groq / Mock AI provider</span>
+│   │   ├── config.py          <span class="cm"># Env settings (pydantic-settings)</span>
+│   │   ├── schemas.py         <span class="cm"># Pydantic request/response models</span>
+│   │   └── routers/           <span class="cm"># me, stats, kampung, leaders, residents, reports, issues, evaluations, audit</span>
+│   ├── tests/                 <span class="cm"># 149 tests (MagicMock, no real DB)</span>
+│   ├── scripts/               <span class="cm"># Data import / utility scripts</span>
+│   └── pyproject.toml
+│
+├── <span class="pk">frontend/</span>                  <span class="cm"># Next.js React frontend</span>
+│   ├── app/                   <span class="cm"># log-masuk, papan-pemuka, kampung, pemimpin, laporan, isu, penilaian, audit, direktori, borang, pengumuman, profil</span>
+│   ├── components/            <span class="cm"># app-layout, app-sidebar, kampung-map, ui/*</span>
+│   ├── lib/                   <span class="cm"># api.ts, queries.ts, supabase.ts, types.ts</span>
+│   └── package.json
+│
+├── <span class="pk">supabase/</span>                  <span class="cm"># SQL</span>
+│   ├── migrations/            <span class="cm"># 0001–0010 (run in order)</span>
+│   └── seeds/                 <span class="cm"># initial data</span>
+│
+├── <span class="pk">docs/</span>                     <span class="cm"># Documentation (see §07)</span>
+├── <span class="pk">data/</span>
+│   ├── raw/                   <span class="cm"># source xlsx/docx/pdf/zip — NOT committed (PII)</span>
+│   └── leaders_pontian.csv
+├── <span class="pk">extracted/</span>                <span class="cm"># data/photos extracted from xlsx</span>
+└── README.md
+</pre>
+  </section>
+
+  <!-- ============ 5. DATA ============ -->
+  <section id="data">
+    <h2><span class="num">05</span>Data Model &amp; Schema</h2>
+    <p class="lead">9 tables in the <code>aclis_*</code> schema — all with Row-Level Security (RLS) enabled. Schema source: <code>supabase/migrations/0010_aclis_full_schema.sql</code>.</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Table</th><th>Description</th><th>Key fields</th></tr></thead>
+      <tbody>
+        <tr><td><code>aclis_mukim</code></td><td>Sub-districts (parliament, state assembly)</td><td>id, name (unique), parlimen, dun</td></tr>
+        <tr><td><code>aclis_kampung</code></td><td>Villages</td><td>id, name, mukim_id FK, profile, b40_count, lat, lng</td></tr>
+        <tr><td><code>aclis_leader</code></td><td>Leaders (Village Head / Sub-district Chief / Community Head)</td><td>id, name, ic_no, type, kampung_id FK, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address</td></tr>
+        <tr><td><code>aclis_resident</code></td><td>Structured residents</td><td>id, kampung_id FK, data (jsonb), name, ic_no, phone, b40_status, address</td></tr>
+        <tr><td><code>aclis_monthly_report</code></td><td>Monthly reports</td><td>id, kampung_id FK, period, content, status (draft/submitted/late), submitted_at</td></tr>
+        <tr><td><code>aclis_issue</code></td><td>Community issues</td><td>id, kampung_id FK, type, location, coords, description, ai_category, status (open/in_progress/resolved/closed)</td></tr>
+        <tr><td><code>aclis_evaluation</code></td><td>Leader performance evaluations</td><td>id, leader_id FK, period, scores (jsonb), total, ulasan</td></tr>
+        <tr><td><code>aclis_app_user</code></td><td>User accounts</td><td>id, role (admin_daerah/ketua_kampung/penghulu), email, leader_id FK</td></tr>
+        <tr><td><code>aclis_audit_log</code></td><td>Audit trail (PDPA)</td><td>id, actor_id, actor_email, actor_role, action, entity, entity_id, details, created_at</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout info">
+      <b class="t">Key Relationships</b>
+      <code>mukim 1—N kampung</code> · <code>kampung 1—N leader</code> · <code>kampung 1—N resident</code> · <code>kampung 1—N monthly_report</code> · <code>kampung 1—N issue</code> · <code>leader 1—N evaluation</code> · <code>leader 1—1 app_user</code>
+    </div>
+
+    <h3>Constrained values (CHECK constraints)</h3>
+    <ul>
+      <li><code>leader.type</code> → <code>ketua_kampung | penghulu | ketua_masyarakat</code></li>
+      <li><code>monthly_report.status</code> → <code>draft | submitted | late</code></li>
+      <li><code>issue.status</code> → <code>open | in_progress | resolved | closed</code></li>
+      <li><code>app_user.role</code> → <code>admin_daerah | ketua_kampung | penghulu</code></li>
+    </ul>
+  </section>
+
+  <!-- ============ 6. MODULES ============ -->
+  <section id="modules">
+    <h2><span class="num">06</span>Modules &amp; Pages</h2>
+
+    <h3>6 core modules</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Module</th><th>Key functions</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Village Profile Management</td><td>Village CRUD, GPS coordinates, sub-district profile, interactive map view</td><td><span class="badge b-green">Done</span></td></tr>
+        <tr><td>2</td><td>Resident &amp; B40 Data</td><td>Structured resident records, B40 flag, automatic count, CSV import</td><td><span class="badge b-green">Done</span></td></tr>
+        <tr><td>3</td><td>Standardized Monthly Report</td><td>Digital submission, draft → submitted flow, late-report warnings, AI summaries</td><td><span class="badge b-green">Done</span></td></tr>
+        <tr><td>4</td><td>Community Issue Reporting</td><td>Issue logging, automatic AI categorization, map view color-coded by category, status</td><td><span class="badge b-green">Done</span></td></tr>
+        <tr><td>5</td><td>Dashboard &amp; Visualization</td><td>Live statistics, issue &amp; report charts, leader rankings, alerts</td><td><span class="badge b-green">Done</span></td></tr>
+        <tr><td>6</td><td>AI-assisted Analytics</td><td>Report summaries, issue categories, trend insights</td><td><span class="badge b-green">Done</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Additional features</h3>
+    <ul>
+      <li><b>Leader Management</b> — CRUD + profile photo upload (Supabase Storage)</li>
+      <li><b>Leader Evaluation System</b> — scores + comments per period, rankings in dashboard</li>
+      <li><b>Role-Based Access Control (RBAC)</b> — 3 roles with tenant scoping</li>
+      <li><b>Issue Map View</b> — geospatial visualization of community issues</li>
+      <li><b>Mutation Audit Log</b> — PDPA 2010 accountability</li>
+    </ul>
+
+    <h3>Pages (frontend)</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Page</th><th>Route</th><th>Function</th></tr></thead>
+      <tbody>
+        <tr><td>Login</td><td><code>/log-masuk</code></td><td>User authentication</td></tr>
+        <tr><td>Dashboard</td><td><code>/papan-pemuka</code></td><td>Statistics, charts, rankings, AI insights, alerts</td></tr>
+        <tr><td>Villages</td><td><code>/kampung</code>, <code>/kampung/[id]</code></td><td>Table + map, village detail + residents</td></tr>
+        <tr><td>Leaders</td><td><code>/pemimpin</code>, <code>/pemimpin/[id]</code></td><td>Profiles, photos, evaluations</td></tr>
+        <tr><td>Reports</td><td><code>/laporan</code>, <code>/laporan/[id]</code></td><td>List + filters, detail + AI summary</td></tr>
+        <tr><td>Issues</td><td><code>/isu</code>, <code>/isu/[id]</code></td><td>List + map, detail + status</td></tr>
+        <tr><td>Evaluations</td><td><code>/penilaian</code></td><td>Leader performance scores</td></tr>
+        <tr><td>Directory</td><td><code>/direktori</code></td><td>Quick profile search</td></tr>
+        <tr><td>Form</td><td><code>/borang</code></td><td>Monthly report form (Sections A–D)</td></tr>
+        <tr><td>Announcements</td><td><code>/pengumuman</code></td><td>District announcement board</td></tr>
+        <tr><td>Audit</td><td><code>/audit</code></td><td>Audit log (admin only)</td></tr>
+        <tr><td>Profile</td><td><code>/profil</code></td><td>User profile</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 7. API ============ -->
+  <section id="api">
+    <h2><span class="num">07</span>API Endpoints</h2>
+    <p class="lead">All routes under the FastAPI prefix. Interactive docs: <code>http://localhost:8000/docs</code>.</p>
+
+    <h3>Auth &amp; User</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/me</code></td><td>Current user profile</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/admin/ping</code></td><td>Admin health check</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Villages</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/kampung</code></td><td>List villages (scoped by role)</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/kampung/{id}</code></td><td>Village detail</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/kampung</code></td><td>Create village (admin)</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/kampung/{id}</code></td><td>Update village</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/mukim</code></td><td>List sub-districts</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Leaders</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/leaders</code></td><td>List leaders</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/leaders/{id}</code></td><td>Leader detail</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/leaders</code></td><td>Create leader</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/leaders/{id}</code></td><td>Update leader</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Residents</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/kampung/{id}/residents</code></td><td>List residents for a village</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/kampung/{id}/residents</code></td><td>Add resident</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/residents/{rid}</code></td><td>Update resident</td></tr>
+        <tr><td><span class="badge b-red">DELETE</span></td><td><code>/residents/{rid}</code></td><td>Delete resident</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Reports</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/reports</code></td><td>List reports</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/reports/{id}</code></td><td>Report detail</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/reports</code></td><td>Submit report</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/reports/{id}</code></td><td>Update report</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/reports/{id}/summary</code></td><td>AI summary</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Issues</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/issues</code></td><td>List issues</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/issues/{id}</code></td><td>Issue detail</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/issues</code></td><td>Report issue (AI categorizes in background)</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/issues/{id}/recategorize</code></td><td>Recategorize (AI)</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/issues/{id}</code></td><td>Update issue</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Evaluations</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/evaluations</code></td><td>List evaluations</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/evaluations/{id}</code></td><td>Evaluation detail</td></tr>
+        <tr><td><span class="badge b-gold">POST</span></td><td><code>/evaluations</code></td><td>Create evaluation</td></tr>
+        <tr><td><span class="badge b-gold">PATCH</span></td><td><code>/evaluations/{id}</code></td><td>Update evaluation</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Stats &amp; Audit</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/stats</code></td><td>Dashboard statistics</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/stats/insights</code></td><td>AI trend insights</td></tr>
+        <tr><td><span class="badge b-blue">GET</span></td><td><code>/audit</code></td><td>Audit log (admin only)</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 8. RBAC ============ -->
+  <section id="rbac">
+    <h2><span class="num">08</span>Access Control (RBAC)</h2>
+    <p class="lead">Three roles with different data scopes. Enforced at two layers: FastAPI (from the JWT claim) and RLS at the DB level. The Next.js UI only hides buttons a role cannot use (second line of defense, not the security boundary).</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Function</th><th>District Admin</th><th>Village Head</th><th>Sub-district Chief</th></tr></thead>
+      <tbody>
+        <tr><td>View villages</td><td><span class="badge b-green">All</span></td><td><span class="badge b-blue">Own village</span></td><td><span class="badge b-blue">Own sub-district</span></td></tr>
+        <tr><td>Add / edit villages</td><td><span class="badge b-green">Yes</span></td><td>—</td><td>—</td></tr>
+        <tr><td>Record residents &amp; B40</td><td><span class="badge b-green">Yes</span></td><td>—</td><td>—</td></tr>
+        <tr><td>Submit monthly reports</td><td><span class="badge b-green">Yes</span></td><td><span class="badge b-green">Own village</span></td><td>—</td></tr>
+        <tr><td>Log community issues</td><td><span class="badge b-green">Yes</span></td><td><span class="badge b-green">Own village</span></td><td>—</td></tr>
+        <tr><td>View dashboard</td><td><span class="badge b-green">Full</span></td><td><span class="badge b-blue">Limited</span></td><td><span class="badge b-blue">Limited</span></td></tr>
+        <tr><td>Leader evaluations</td><td><span class="badge b-green">Yes</span></td><td>—</td><td>—</td></tr>
+        <tr><td>Audit log</td><td><span class="badge b-green">Yes</span></td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Implementation</h3>
+    <ul>
+      <li><b>Backend:</b> role read from <code>app_metadata.role</code> in the JWT; unknown role → <code>403</code> (no default).</li>
+      <li><b>Tenant scope:</b> <code>get_user_scope()</code> resolves allowed village/leader IDs per request, with a 60-second TTL cache (reduces 3–5 DB queries to 0 on cache hit).</li>
+      <li><b>DB:</b> RLS enabled on all tables; <code>auth_role()</code> returns empty if role missing.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 9. AI ============ -->
+  <section id="ai">
+    <h2><span class="num">09</span>AI Layer</h2>
+    <p class="lead">Three AI features — scope-locked per the proposal (no full ML, no prediction).</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Feature</th><th>Function</th></tr></thead>
+      <tbody>
+        <tr><td><b>Report summarization</b></td><td>Condenses monthly reports into a 2–3 sentence summary for quick review.</td></tr>
+        <tr><td><b>Automatic issue categorization</b></td><td>Tags incoming issues (infrastructure / street-light / social) into <code>issue.ai_category</code>.</td></tr>
+        <tr><td><b>Trend insights</b></td><td>Surfaces recurring issues / late-submission patterns for the district dashboard.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Interface</h3>
+<pre><span class="pk">class</span> AIProvider(Protocol):
+    <span class="pk">def</span> summarize_reports(self, reports: list[ReportText]) -&gt; Summary: ...
+    <span class="pk">def</span> categorize_issue(self, issue_text: str) -&gt; Category: ...
+    <span class="pk">def</span> detect_trends(self, records: list[Record]) -&gt; list[Insight]: ...</pre>
+
+    <h3>Providers</h3>
+    <ul>
+      <li><b>GroqProvider</b> — current, model <code>llama-3.3-70b-versatile</code> (selected via <code>AI_PROVIDER=groq</code>).</li>
+      <li><b>MockProvider</b> — default (<code>AI_PROVIDER=mock</code>), for offline demos without an API key.</li>
+      <li><b>OllamaProvider / ClaudeProvider</b> — future options (local / high quality).</li>
+    </ul>
+
+    <div class="callout warn">
+      <b class="t">PII Redaction (non-functional requirement)</b>
+      Before any text leaves the machine to a cloud AI provider, PII is stripped (IC numbers, full addresses, names where not needed). AI features operate on report/issue content and trends, not identity fields — so redaction costs nothing in quality and gives a strong privacy story for the defense.
+    </div>
+  </section>
+
+  <!-- ============ 10. DESIGN ============ -->
+  <section id="design">
+    <h2><span class="num">10</span>Design</h2>
+    <p class="lead">Light mode only. Deep navy-teal institutional anchor, warm gold accent used sparingly. Data-dense — tables and numbers are the primary UI element, not decorative cards.</p>
+
+    <h3>Colors (key tokens)</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Token</th><th>Value (OKLCH)</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><code>--background</code></td><td><code>oklch(0.995 0.002 205)</code></td><td>App canvas — cool white</td></tr>
+        <tr><td><code>--foreground</code></td><td><code>oklch(0.18 0.02 210)</code></td><td>Body ink — navy-tinted black</td></tr>
+        <tr><td><code>--primary</code></td><td><code>oklch(0.32 0.07 210)</code></td><td>Navy-teal — buttons, links, primary actions</td></tr>
+        <tr><td><code>--accent</code></td><td><code>oklch(0.90 0.05 85)</code></td><td>Gold — subtle fills / chips only</td></tr>
+        <tr><td><code>--chart-1</code></td><td><code>oklch(0.60 0.13 80)</code></td><td>Gold — primary chart series</td></tr>
+        <tr><td><code>--chart-2</code></td><td><code>oklch(0.40 0.08 210)</code></td><td>Navy-teal — secondary series</td></tr>
+        <tr><td><code>--sidebar</code></td><td><code>oklch(0.20 0.045 212)</code></td><td>Dark navy — sidebar chrome always dark</td></tr>
+        <tr><td><code>--sidebar-primary</code></td><td><code>oklch(0.72 0.12 82)</code></td><td>Gold — active nav indicator</td></tr>
+        <tr><td><code>--success</code></td><td><code>oklch(0.42 0.09 150)</code></td><td>Confirmation</td></tr>
+        <tr><td><code>--warning</code></td><td><code>oklch(0.52 0.10 75)</code></td><td>Warning</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Typography</h3>
+    <ul>
+      <li><b>Headings</b> (<code>font-heading</code>): Barlow Semi Condensed, weight 600 — condensed institutional authority.</li>
+      <li><b>Body / UI</b> (<code>font-sans</code>): Figtree 400/500/600/700 — legible at 13–16px in dense tables.</li>
+      <li><b>Mono</b> (<code>font-mono</code>): JetBrains Mono — IDs, code, raw data only.</li>
+      <li>Stat &amp; table numbers: always <code>tabular-nums</code>.</li>
+    </ul>
+
+    <h3>Shape &amp; Components</h3>
+    <ul>
+      <li><code>--radius: 0.375rem</code> — tighter than the shadcn default (0.5rem).</li>
+      <li>Borders over shadows as the primary separator — a bordered, tabular system, not floating cards.</li>
+      <li>Sidebar always dark navy, gold marks the active item — the one deliberate committed-color surface.</li>
+      <li>Charts: gold lead series, navy-teal second; muted grid lines, no 3D/gradient fills.</li>
+    </ul>
+
+    <h3>Design principles</h3>
+    <ol>
+      <li><b>Data first</b> — tables and numbers are the primary UI surface.</li>
+      <li><b>Dignified restraint</b> — no decoration; every element earns its place.</li>
+      <li><b>Clear hierarchy</b> — strong typographic contrast between heading sizes.</li>
+      <li><b>Institutional legibility</b> — optimized for reading table rows under office fluorescent lighting.</li>
+      <li><b>No false friendliness</b> — avoid glassmorphism, gradient text, left accent stripes.</li>
+    </ol>
+    <p>Accessibility: WCAG 2.1 AA (public-sector service); text &amp; placeholders ≥ 4.5:1 contrast; light mode only; respects <code>prefers-reduced-motion</code>.</p>
+  </section>
+
+  <!-- ============ 11. SECURITY ============ -->
+  <section id="security">
+    <h2><span class="num">11</span>Security</h2>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Control</th><th>Implementation</th></tr></thead>
+      <tbody>
+        <tr><td>Authentication</td><td>Supabase JWT (HS256) verified on every request — audience <code>authenticated</code>.</td></tr>
+        <tr><td>Role authority</td><td>Role from <code>app_metadata.role</code>; token without role → <code>403</code> (no default).</td></tr>
+        <tr><td>Tenant data isolation</td><td><code>get_user_scope()</code> resolves allowed village/leader IDs per request (60s cache).</td></tr>
+        <tr><td>DB layer security</td><td>Row-Level Security enabled on all <code>aclis_*</code> tables.</td></tr>
+        <tr><td>HTTP headers</td><td>X-Content-Type-Options, X-Frame-Options: DENY, Referrer-Policy, HSTS.</td></tr>
+        <tr><td>Audit trail</td><td><code>aclis_audit_log</code> — every mutation records actor, entity, changed fields, timestamp.</td></tr>
+        <tr><td>PII protection</td><td>CSV files never committed; IC numbers never written to audit logs.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>PII Redaction in AI</h3>
+    <p>Before text reaches a cloud AI provider, unnecessary IC/address/name data is stripped. With local Ollama, data never leaves the machine — redaction becomes belt-and-suspenders.</p>
+  </section>
+
+  <!-- ============ 12. IMPORT ============ -->
+  <section id="import">
+    <h2><span class="num">12</span>Data Import</h2>
+    <div class="callout danger">
+      <b class="t">Do not underestimate — hardest non-AI task</b>
+      The main source file <code>ID KKG UBAH BETUL .xlsx</code> is <b>37MB, dirty</b>: multiple mixed datasets (Pontian village heads + Johor Bahru evaluations + a <b>Kulaijaya mosque registry that leaked in</b>), one sheet per sub-district, and <b>95 embedded photos</b> inside cells.
+    </div>
+
+    <ol>
+      <li>Write a one-off import script (pandas + openpyxl).</li>
+      <li>Identify and <b>discard the out-of-scope Kulaijaya mosque rows</b>.</li>
+      <li>Normalize per-sub-district sheets into the relational schema.</li>
+      <li>Extract 95 embedded images → upload to Supabase Storage → link to <code>Leader.photo_url</code>.</li>
+      <li>Validate IC/format consistency; log rejects for manual review.</li>
+    </ol>
+
+    <h3>Source files</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>File (data/raw/)</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><code>ID KKG UBAH BETUL .xlsx</code></td><td>Village &amp; leader data (+ 95 embedded photos)</td></tr>
+        <tr><td><code>SENARAI PERMOHONAN LAMPU JALAN KAMPUNG TAHUN 2025-1.xlsx</code></td><td>Community issues (street lights)</td></tr>
+        <tr><td><code>PENILAIAN KETUA KG.xlsx</code></td><td>Leader performance evaluations</td></tr>
+        <tr><td><code>LAPORAN PENILAIAN...docx</code> &amp; <code>SURAT PEMASTAUTIN/PENDAPATAN</code></td><td>Form &amp; evaluation references</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout warn">
+      <b class="t">Pending external input</b>
+      The "village heads list" still exists as an image in the client's Google Drive (not yet downloaded) — needed before the import can be finalized.
+    </div>
+  </section>
+
+  <!-- ============ 13. TESTING ============ -->
+  <section id="testing">
+    <h2><span class="num">13</span>Testing</h2>
+
+    <h3>Unit Testing <span class="badge b-green">149 tests · all passing</span></h3>
+    <ul>
+      <li>Tools: <code>pytest</code> + <code>unittest.mock</code> (no real DB).</li>
+      <li>Scope: input validation, role access control, 400/403/404 behavior, audit flow.</li>
+      <li>Frontend: <code>pnpm test</code> (Vitest).</li>
+    </ul>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Area</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr><td>Login &amp; security</td><td>15</td></tr>
+        <tr><td>Village module</td><td>25</td></tr>
+        <tr><td>Resident module</td><td>20</td></tr>
+        <tr><td>Leader module</td><td>20</td></tr>
+        <tr><td>Evaluation module</td><td>15</td></tr>
+        <tr><td>Report module</td><td>25</td></tr>
+        <tr><td>Issue module</td><td>20</td></tr>
+        <tr><td>Dashboard</td><td>5</td></tr>
+        <tr><td>AI</td><td>4</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>User Testing <span class="badge b-gold">Not started</span></h3>
+    <ul>
+      <li>Proposed methodology: <b>System Usability Scale (SUS)</b> — Brooke 1996.</li>
+      <li>Target participants: District Office staff + Village Heads + Sub-district Chiefs (5–8 people, ±1 hour).</li>
+    </ul>
+    <p>Proposed test scenarios:</p>
+    <ol>
+      <li>Admin adds a new village and sets GPS coordinates.</li>
+      <li>Village Head submits a monthly report.</li>
+      <li>Village Head records a community issue.</li>
+      <li>Admin views the dashboard and AI insights.</li>
+      <li>Sub-district Chief reviews villages in their sub-district.</li>
+    </ol>
+  </section>
+
+  <!-- ============ 14. STATUS ============ -->
+  <section id="status">
+    <h2><span class="num">14</span>Status &amp; Roadmap</h2>
+
+    <h3>Development phase status</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Phase</th><th>Description</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Requirements Analysis &amp; Planning</td><td><span class="badge b-green">Complete</span></td></tr>
+        <tr><td>2</td><td>System Design (architecture, DB schema, UI)</td><td><span class="badge b-green">Complete</span></td></tr>
+        <tr><td>3</td><td>System Development</td><td><span class="badge b-green">Complete</span></td></tr>
+        <tr><td>4</td><td>User Testing (Usability Testing)</td><td><span class="badge b-gold">Not started</span></td></tr>
+        <tr><td>5</td><td>Deployment &amp; Maintenance</td><td><span class="badge b-gold">Not started</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Next steps</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Action</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td>Apply migrations 0004–0006 to Supabase</td><td>Immediate</td></tr>
+        <tr><td>Client demo</td><td>July 2026</td></tr>
+        <tr><td>User testing sessions (5–8 people)</td><td>July–August 2026</td></tr>
+        <tr><td>Improvements from feedback</td><td>August 2026</td></tr>
+        <tr><td>Production deployment</td><td>September 2026</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Scope — built / parked</h3>
+    <ul>
+      <li><b>In scope:</b> 6 modules, 3 AI features, 3 roles, dashboards, monthly-report workflow, data import.</li>
+      <li><b>Cut / deferred:</b> document generation (surat pemastautin/income verification) — bonus, not core · detailed financial module · full predictive ML · federal API integration · chatbot/RAG — avoid scope creep.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 15. RISKS ============ -->
+  <section id="risks">
+    <h2><span class="num">15</span>Issues &amp; Risks</h2>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>37MB dirty xlsx + 95 embedded photos</td><td><span class="badge b-red">High</span></td><td>Dedicated import script, discard out-of-scope rows, validate</td></tr>
+        <tr><td>PII (real IC numbers, addresses)</td><td><span class="badge b-red">High</span></td><td>Auth + RBAC early; redact before AI; never commit raw PII to a public repo</td></tr>
+        <tr><td>3 DB migrations not yet applied (0004–0006)</td><td><span class="badge b-gold">Medium</span></td><td>Must be applied before demo/testing</td></tr>
+        <tr><td>RLS not yet tested on real Supabase</td><td><span class="badge b-gold">Medium</span></td><td>Planned after user testing</td></tr>
+        <tr><td>AI over-promise / scope creep</td><td><span class="badge b-gold">Medium</span></td><td>Lock to 3 features behind <code>AIProvider</code>; mock fallback for offline demos</td></tr>
+        <tr><td>Laptop can't run local LLM (16GB, no GPU)</td><td><span class="badge b-gold">Medium</span></td><td>Groq cloud primary; if local needed, 3B model only</td></tr>
+        <tr><td>Leader roster image in Drive not obtained</td><td><span class="badge b-gold">Medium</span></td><td>Obtain before finalizing import</td></tr>
+        <tr><td>Git history contains old PII CSVs</td><td><span class="badge b-blue">Low</span></td><td>Scrub with <code>git filter-repo</code> before making repo public</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 16. CONTACT ============ -->
+  <section id="contact">
+    <h2><span class="num">16</span>Contact</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Role</th><th>Name</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Developer</td><td>Muhammad Hafizuddin Bin Abdul Hamid</td><td>DI230052 · piz230601@gmail.com</td></tr>
+        <tr><td>Supervisor</td><td>Assoc. Prof. Dr. Muhaini</td><td>UTHM — Faculty of Computer Science and Information Technology</td></tr>
+        <tr><td>Case study</td><td>Pontian District Office</td><td>Johor, Malaysia</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+  <footer class="footer">
+    <p><b>DKP — ACLIS Documentation Knowledge Platform.</b> Single self-contained document (HTML, no external links). Prepared by Muhammad Hafizuddin Bin Abdul Hamid (DI230052) · UTHM · 2026.</p>
+    <p>Knowledge sources: <span class="mono">docs/</span> (CLIENT, PRODUCT, DESIGN, TECHNICAL, SETUP, demo-script, reports, plans, specs) + <span class="mono">backend/</span>, <span class="mono">frontend/</span>, <span class="mono">supabase/</span>.</p>
+  </footer>
+
+</main>
+</body>
+</html>

@@ -52,7 +52,7 @@ export function NavUser() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    router.replace("/login")
+    router.replace("/log-masuk")
   }
 
   return (
@@ -65,7 +65,7 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold tracking-wide">
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold tracking-wide">
                   {initials(user.email)}
                 </AvatarFallback>
               </Avatar>
@@ -87,7 +87,7 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold tracking-wide">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold tracking-wide">
                     {initials(user.email)}
                   </AvatarFallback>
                 </Avatar>
@@ -101,7 +101,7 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/profile">
+              <Link href="/profil">
                 <UserCircleIcon className="h-4 w-4" />
                 Profil Saya
               </Link>

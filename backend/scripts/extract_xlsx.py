@@ -21,7 +21,7 @@ from pathlib import Path
 import pandas as pd
 import openpyxl
 
-XLSX_PATH = Path(__file__).parent.parent.parent / "ID KKG UBAH BETUL .xlsx"
+XLSX_PATH = Path(__file__).parent.parent.parent / "data" / "raw" / "ID KKG UBAH BETUL .xlsx"
 OUT_DIR   = Path(__file__).parent.parent.parent / "extracted"
 DATA_DIR  = OUT_DIR / "data"
 PHOTO_DIR = OUT_DIR / "photos"

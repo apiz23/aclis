@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
@@ -6,6 +7,7 @@ from app.db import get_supabase
 from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpdate, MukimOption
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 _SELECT = "id, name, mukim_id, profile, b40_count, lat, lng, aclis_mukim(name)"
 

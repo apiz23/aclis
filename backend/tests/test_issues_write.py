@@ -69,7 +69,8 @@ def test_create_issue_ketua_kampung_ok(mock_sb):
 
 def test_update_issue_ok(mock_sb):
     updated = {**ISSUE_ROW, "status": "resolved"}
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [updated]
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [updated]
+    mock_sb.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [updated]
     r = client.patch("/issues/i1", headers=auth(), json={"status": "resolved"})
     assert r.status_code == 200
     assert r.json()["status"] == "resolved"
@@ -81,7 +82,7 @@ def test_update_issue_403_non_admin(mock_sb):
 
 
 def test_update_issue_404(mock_sb):
-    mock_sb.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value.data = []
+    mock_sb.table.return_value.update.return_value.eq.return_value.execute.return_value.data = []
     r = client.patch("/issues/missing", headers=auth(), json={"status": "resolved"})
     assert r.status_code == 404
 

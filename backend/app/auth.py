@@ -1,15 +1,15 @@
+import logging
 import jwt
 from dataclasses import dataclass, field
-from cachetools import TTLCache
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 from app.config import settings
 from app.db import get_supabase
 
-bearer = HTTPBearer(auto_error=True)
+logger = logging.getLogger(__name__)
 
-_scope_cache: TTLCache = TTLCache(maxsize=256, ttl=60)
+bearer = HTTPBearer(auto_error=True)
 
 
 @dataclass
@@ -96,10 +96,5 @@ def get_user_scope(
     user: CurrentUser = Depends(get_current_user),
     sb: Client = Depends(get_supabase),
 ) -> UserScope:
-    key = (user.id, user.role)
-    cached = _scope_cache.get(key)
-    if cached is not None:
-        return cached
-    scope = _resolve_scope(user, sb)
-    _scope_cache[key] = scope
-    return scope
+    logger.debug("Resolving scope for user=%s role=%s", user.id, user.role)
+    return _resolve_scope(user, sb)

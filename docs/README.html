@@ -1,0 +1,467 @@
+﻿<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACLIS - AI Community Leadership Intelligence System</title>
+  <style>
+    :root {
+      --navy: #0C2340;
+      --navy-light: #1a3a5c;
+      --gold: #C4922A;
+      --gold-light: #d4a84a;
+      --gold-pale: #fdf6e8;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --green: #059669;
+      --green-bg: #ecfdf5;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      color: var(--gray-800);
+      background: var(--gray-50);
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      color: var(--white);
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C4922A' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.3;
+    }
+
+    .header-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+
+    .header-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy);
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .header h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 8px; }
+    .header h1 span { color: var(--gold); }
+    .header .subtitle { font-size: 1.15rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+    .header .org { margin-top: 24px; font-size: 0.95rem; opacity: 0.8; }
+    .header .org strong { color: var(--gold); }
+
+    .nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 16px 40px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .nav-inner { max-width: 1000px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .nav a { text-decoration: none; color: var(--gray-600); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+    .nav a:hover { background: var(--gold-pale); color: var(--navy); }
+
+    .main { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+
+    .section { margin-bottom: 48px; }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid var(--gold);
+      display: inline-block;
+    }
+    .section-desc { color: var(--gray-600); margin-bottom: 24px; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover { border-color: var(--gold); box-shadow: 0 4px 12px rgba(196,146,42,0.15); transform: translateY(-2px); }
+    .card-number {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--gold-pale); color: var(--gold);
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem;
+    }
+    .card-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; font-size: 1.5rem;
+    }
+    .card h3 { font-size: 1.05rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .card p { font-size: 0.9rem; color: var(--gray-600); line-height: 1.6; }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .feature {
+      background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px;
+      padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; transition: all 0.2s;
+    }
+    .feature:hover { border-color: var(--gold); background: var(--gold-pale); }
+    .feature-dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; margin-top: 8px; flex-shrink: 0; }
+    .feature-text { font-size: 0.9rem; color: var(--gray-700); }
+    .feature-text strong { color: var(--navy); }
+
+    .table-wrapper { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--navy); color: var(--white); }
+    th { padding: 14px 20px; text-align: left; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); font-size: 0.9rem; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--gold-pale); }
+    .role-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; font-family: 'Consolas', monospace; }
+    .role-admin { background: var(--blue-bg); color: var(--blue); }
+    .role-kk { background: var(--green-bg); color: var(--green); }
+    .role-penghulu { background: var(--gold-pale); color: var(--gold); }
+
+    .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .link-card {
+      background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px;
+      padding: 16px 20px; text-decoration: none; color: var(--gray-700);
+      transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+    }
+    .link-card:hover { border-color: var(--gold); background: var(--gold-pale); color: var(--navy); }
+    .link-icon {
+      width: 36px; height: 36px; background: var(--gold-pale); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .link-card:hover .link-icon { background: var(--gold); color: var(--white); }
+    .link-label { font-weight: 600; font-size: 0.9rem; }
+    .link-path { font-size: 0.75rem; color: var(--gray-400); font-family: 'Consolas', monospace; }
+
+    .colors { display: flex; gap: 16px; flex-wrap: wrap; }
+    .color-swatch { text-align: center; }
+    .color-box { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--gray-200); }
+    .color-label { font-size: 0.8rem; font-weight: 600; color: var(--gray-700); }
+    .color-hex { font-size: 0.75rem; color: var(--gray-400); font-family: 'Consolas', monospace; }
+
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .tech-item { background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; text-align: center; transition: all 0.2s; }
+    .tech-item:hover { border-color: var(--gold); }
+    .tech-name { font-weight: 700; color: var(--navy); font-size: 0.9rem; margin-bottom: 4px; }
+    .tech-desc { font-size: 0.75rem; color: var(--gray-400); }
+
+    .footer { background: var(--navy); color: var(--white); padding: 40px; text-align: center; margin-top: 60px; }
+    .footer-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .footer-id { font-size: 0.85rem; opacity: 0.7; }
+    .footer-divider { width: 60px; height: 3px; background: var(--gold); margin: 16px auto; border-radius: 2px; }
+    .footer-note { font-size: 0.8rem; opacity: 0.6; margin-top: 12px; }
+
+    @media (max-width: 768px) {
+      .header { padding: 40px 20px; }
+      .header h1 { font-size: 2rem; }
+      .nav { padding: 12px 16px; }
+      .main { padding: 24px 16px; }
+      .cards, .features { grid-template-columns: 1fr; }
+      .links-grid { grid-template-columns: 1fr 1fr; }
+      .tech-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media print {
+      .nav { display: none; }
+      .card:hover, .feature:hover, .link-card:hover { transform: none; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="header-badge">Sistem Web Rasmi</div>
+      <h1>ACL<span>IS</span></h1>
+      <p class="subtitle">AI Community Leadership Intelligence System</p>
+      <p class="org">Pejabat Daerah <strong>Pontian</strong>, Johor</p>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#tentang">Tentang</a>
+      <a href="#modul">Modul</a>
+      <a href="#ciri">Ciri Tambahan</a>
+      <a href="#peranan">Peranan</a>
+      <a href="#pautan">Pautan</a>
+      <a href="#reka-bentuk">Reka Bentuk</a>
+      <a href="#teknologi">Teknologi</a>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- Tentang -->
+    <section class="section" id="tentang">
+      <h2 class="section-title">Tentang Sistem</h2>
+      <p class="section-desc">
+        ACLIS menumpukan data kepimpinan kampung daripada hamparan tebaran (spreadsheet) kepada satu platform web yang terpusat.
+        Sistem ini membolehkan pentadbir daerah, ketua kampung, dan penghulu mengurus maklumat, laporan bulanan,
+        isu komuniti, dan penilaian prestasi — semuanya di satu tempat.
+      </p>
+    </section>
+
+    <!-- Modul -->
+    <section class="section" id="modul">
+      <h2 class="section-title">Modul Utama</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-number">1</div>
+          <div class="card-icon">🏘️</div>
+          <h3>Profil Kampung</h3>
+          <p>Pengurusan maklumat kampung termasuk koordinat GPS, jumlah penduduk B40, dan profil asas.</p>
+        </div>
+        <div class="card">
+          <div class="card-number">2</div>
+          <div class="card-icon">👥</div>
+          <h3>Data Penduduk &amp; B40</h3>
+          <p>Senarai penduduk mengikut kampung dengan penandaan status B40.</p>
+        </div>
+        <div class="card">
+          <div class="card-number">3</div>
+          <div class="card-icon">📋</div>
+          <h3>Laporan Bulanan</h3>
+          <p>Penyerahan dan pengurusan laporan bulanan dengan penandaan status (draf / dihantar / lewat).</p>
+        </div>
+        <div class="card">
+          <div class="card-number">4</div>
+          <div class="card-icon">⚠️</div>
+          <h3>Isu Komuniti</h3>
+          <p>Pelaporan isu komuniti dengan pengelasan automatik menggunakan AI.</p>
+        </div>
+        <div class="card">
+          <div class="card-number">5</div>
+          <div class="card-icon">📊</div>
+          <h3>Papan Pemuka</h3>
+          <p>Paparan statistik visual dengan carta dan amaran laporan lewat.</p>
+        </div>
+        <div class="card">
+          <div class="card-number">6</div>
+          <div class="card-icon">🤖</div>
+          <h3>Analitik AI</h3>
+          <p>Ringkasan laporan dan trend insights menjana automasi AI.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ciri Tambahan -->
+    <section class="section" id="ciri">
+      <h2 class="section-title">Ciri Tambahan</h2>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-dot"></div>
+          <div class="feature-text"><strong>Pemimpin</strong> — profil Ketua Kampung / Penghulu dengan muat naik foto dan skor penilaian</div>
+        </div>
+        <div class="feature">
+          <div class="feature-dot"></div>
+          <div class="feature-text"><strong>Peta</strong> — paparan peta untuk isu komuniti dan pemilihan koordinat GPS</div>
+        </div>
+        <div class="feature">
+          <div class="feature-dot"></div>
+          <div class="feature-text"><strong>Direktori</strong> — carian pantas profil pemimpin dan kampung</div>
+        </div>
+        <div class="feature">
+          <div class="feature-dot"></div>
+          <div class="feature-text"><strong>Borang</strong> — borang laporan bulanan berasingan (Seksyen A-D)</div>
+        </div>
+        <div class="feature">
+          <div class="feature-dot"></div>
+          <div class="feature-text"><strong>Pengumuman</strong> — papan pengumuman daerah</div>
+        </div>
+        <div class="feature">
+          <div class="feature-dot"></div>
+          <div class="feature-text"><strong>Audit Jejak</strong> — log lengkap untuk setiap perubahan data (pematuhan PDPA)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Peranan -->
+    <section class="section" id="peranan">
+      <h2 class="section-title">Peranan Pengguna</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Peranan</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="role-badge role-admin">admin_daerah</span></td>
+              <td>Akses penuh kepada semua data dan kampung</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-kk">ketua_kampung</span></td>
+              <td>Mengurus data kampung sendiri; menghantar laporan; melaporkan isu</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-penghulu">penghulu</span></td>
+              <td>Melihat data kampung dalam mukim sendiri</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Pautan -->
+    <section class="section" id="pautan">
+      <h2 class="section-title">Pautan Sistem</h2>
+      <div class="links-grid">
+        <a class="link-card" href="/papan-pemuka">
+          <div class="link-icon">📊</div>
+          <div><div class="link-label">Papan Pemuka</div><div class="link-path">/papan-pemuka</div></div>
+        </a>
+        <a class="link-card" href="/kampung">
+          <div class="link-icon">🏘️</div>
+          <div><div class="link-label">Kampung</div><div class="link-path">/kampung</div></div>
+        </a>
+        <a class="link-card" href="/pemimpin">
+          <div class="link-icon">👤</div>
+          <div><div class="link-label">Pemimpin</div><div class="link-path">/pemimpin</div></div>
+        </a>
+        <a class="link-card" href="/laporan">
+          <div class="link-icon">📋</div>
+          <div><div class="link-label">Laporan</div><div class="link-path">/laporan</div></div>
+        </a>
+        <a class="link-card" href="/isu">
+          <div class="link-icon">⚠️</div>
+          <div><div class="link-label">Isu Komuniti</div><div class="link-path">/isu</div></div>
+        </a>
+        <a class="link-card" href="/penilaian">
+          <div class="link-icon">⭐</div>
+          <div><div class="link-label">Penilaian</div><div class="link-path">/penilaian</div></div>
+        </a>
+        <a class="link-card" href="/direktori">
+          <div class="link-icon">📖</div>
+          <div><div class="link-label">Direktori</div><div class="link-path">/direktori</div></div>
+        </a>
+        <a class="link-card" href="/borang">
+          <div class="link-icon">📝</div>
+          <div><div class="link-label">Borang</div><div class="link-path">/borang</div></div>
+        </a>
+        <a class="link-card" href="/pengumuman">
+          <div class="link-icon">📢</div>
+          <div><div class="link-label">Pengumuman</div><div class="link-path">/pengumuman</div></div>
+        </a>
+        <a class="link-card" href="/audit">
+          <div class="link-icon">🔍</div>
+          <div><div class="link-label">Audit</div><div class="link-path">/audit</div></div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Reka Bentuk -->
+    <section class="section" id="reka-bentuk">
+      <h2 class="section-title">Sistem Reka Bentuk</h2>
+      <p class="section-desc">Antaramuka menggunakan Bahasa Melayu sepenuhnya dengan identiti rasmi Pejabat Daerah Pontian.</p>
+      <div class="colors">
+        <div class="color-swatch">
+          <div class="color-box" style="background: #0C2340;"></div>
+          <div class="color-label">Navi</div>
+          <div class="color-hex">#0C2340</div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: #C4922A;"></div>
+          <div class="color-label">Emas</div>
+          <div class="color-hex">#C4922A</div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: #fdf6e8; border-color: #e5e7eb;"></div>
+          <div class="color-label">Emas Pucat</div>
+          <div class="color-hex">#FDF6E8</div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: #f9fafb; border-color: #e5e7eb;"></div>
+          <div class="color-label">Kelabu</div>
+          <div class="color-hex">#F9FAFB</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Teknologi -->
+    <section class="section" id="teknologi">
+      <h2 class="section-title">Teknologi</h2>
+      <div class="tech-grid">
+        <div class="tech-item">
+          <div class="tech-name">Next.js</div>
+          <div class="tech-desc">Frontend</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">React</div>
+          <div class="tech-desc">UI Library</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Tailwind CSS</div>
+          <div class="tech-desc">Styling</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">shadcn/ui</div>
+          <div class="tech-desc">Components</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">FastAPI</div>
+          <div class="tech-desc">Backend</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Supabase</div>
+          <div class="tech-desc">Database & Auth</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Groq AI</div>
+          <div class="tech-desc">AI Analytics</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Leaflet</div>
+          <div class="tech-desc">Maps</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-name">Muhammad Hafizuddin Bin Abdul Hamid</div>
+    <div class="footer-id">DI230052</div>
+    <div class="footer-divider"></div>
+    <div class="footer-note">AI Community Leadership Intelligence System</div>
+  </footer>
+
+</body>
+</html>

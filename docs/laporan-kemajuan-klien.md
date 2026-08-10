@@ -1,7 +1,7 @@
 # Laporan Kemajuan Sistem ACLIS — Pejabat Daerah Pontian
 **Sistem:** AI Community Leadership Intelligence System (ACLIS)
 **Tarikh:** 27 Jun 2026
-**Disediakan oleh:** Hafizu
+**Disediakan oleh:** Muhammad Hafizuddin Bin Abdul Hamid (DI230052)
 
 ---
 
@@ -109,8 +109,8 @@ Sistem ini mengendalikan data sensitif (IC, alamat, status B40). Langkah perlind
 
 ## Hubungi Pembangun
 
-**Hafizu**
-hafizu2302@gmail.com
+**Muhammad Hafizuddin Bin Abdul Hamid (DI230052)**
+piz230601@gmail.com
 
 ---
 

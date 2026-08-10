@@ -75,7 +75,8 @@ def test_create_kampung_403_non_admin(mock_sb):
 def test_update_kampung_ok(mock_sb):
     updated = {**KAMPUNG_ROW, "b40_count": 20}
     tbl = mock_sb.table.return_value
-    tbl.update.return_value.eq.return_value.select.return_value.execute.return_value.data = [updated]
+    tbl.update.return_value.eq.return_value.execute.return_value.data = [updated]
+    tbl.select.return_value.eq.return_value.execute.return_value.data = [updated]
     tbl.select.return_value.limit.return_value.eq.return_value.execute.return_value.count = 5
     r = client.patch("/kampung/k1", headers=auth(), json={"b40_count": 20})
     assert r.status_code == 200
@@ -84,7 +85,7 @@ def test_update_kampung_ok(mock_sb):
 
 def test_update_kampung_404(mock_sb):
     tbl = mock_sb.table.return_value
-    tbl.update.return_value.eq.return_value.select.return_value.execute.return_value.data = []
+    tbl.update.return_value.eq.return_value.execute.return_value.data = []
     r = client.patch("/kampung/missing", headers=auth(), json={"name": "X"})
     assert r.status_code == 404
 

@@ -30,11 +30,11 @@ class LeaderSummary(BaseModel):
     photo_url: str | None
     parti_lantikan: str | None
     parti_terkini: str | None
+    mukim_name: str | None = None
+    phone: str | None = None
 
 class LeaderDetail(LeaderSummary):
-    mukim_name: str | None = None
     evaluation_count: int = 0
-    phone: str | None = None
     address: str | None = None
     kampung_rangkaian: str | None = None
 
@@ -192,3 +192,14 @@ class ResidentUpdate(BaseModel):
     phone: str | None = None
     b40_status: bool | None = None
     address: str | None = None
+
+class AuditLogEntry(BaseModel):
+    id: str
+    actor_id: str | None
+    actor_email: str | None
+    actor_role: str | None
+    action: str
+    entity: str
+    entity_id: str | None
+    details: dict | None
+    created_at: str

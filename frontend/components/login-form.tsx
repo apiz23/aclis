@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field"
 import { Eye, EyeOff } from "lucide-react"
 
@@ -45,7 +46,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
     try {
       await promise
-      router.push("/dashboard")
+      router.push("/papan-pemuka")
     } catch {
       // handled by toast.promise
     }
@@ -55,8 +56,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     <div className={cn("flex flex-col gap-5", className)} {...props}>
 
       <div className="mb-2">
-        <h2 className="font-heading text-2xl font-bold tracking-tight">Log Masuk</h2>
-        <p className="text-sm text-muted-foreground mt-1">Masukkan kelayakan anda untuk meneruskan.</p>
+        <h2 className="font-heading text-[28px] font-bold leading-none tracking-[0.02em] text-navy">Log Masuk</h2>
+        <p className="text-[13px] text-muted-foreground mt-2">Masukkan maklumat log masuk anda untuk meneruskan.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -97,15 +98,17 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                     aria-invalid={fieldState.invalid}
                     className="pr-10"
                   />
-                  <button
+                  <Button
                     type="button"
                     tabIndex={-1}
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowPw((v) => !v)}
-                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="absolute inset-y-0 right-0 h-full text-muted-foreground hover:text-foreground"
                     aria-label={showPw ? "Sembunyikan kata laluan" : "Tunjukkan kata laluan"}
                   >
                     {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                  </Button>
                 </div>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -115,7 +118,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
           <Field className="pt-1">
             <LoadingButton
               type="submit"
-              className="w-full"
+              className="font-heading h-11 w-full text-sm font-bold uppercase tracking-[0.08em]"
               loading={isSubmitting}
               loadingText="Memasuk…"
             >

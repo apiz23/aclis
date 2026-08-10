@@ -5,10 +5,7 @@
 !.env.local.example
 
 # --- PII sample data (real IC numbers, addresses) — NEVER commit ---
-/*.xlsx
-/*.docx
-/*.doc
-/*.pdf
+data/raw/
 extracted
 *.csv
 !*.example.csv
@@ -33,3 +30,8 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# --- Dev folders ---
+.impeccable/
+.superpowers/
+.claude/

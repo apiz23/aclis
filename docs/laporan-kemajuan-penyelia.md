@@ -1,6 +1,6 @@
 # Laporan Teknikal Kemajuan Sistem — ACLIS
 **Sistem:** AI Community Leadership Intelligence System (ACLIS)
-**Pembangun:** Hafizu
+**Pembangun:** Muhammad Hafizuddin Bin Abdul Hamid (DI230052)
 **Tarikh Laporan:** 27 Jun 2026
 **Fasa Semasa:** Pembangunan Selesai → Peralihan ke Pengujian Pengguna
 
@@ -132,4 +132,4 @@ Supabase (Postgres + GoTrue Auth + Storage)
 
 ---
 
-*Disediakan oleh: Hafizu | hafizu2302@gmail.com | 27 Jun 2026*
+*Disediakan oleh: Muhammad Hafizuddin Bin Abdul Hamid (DI230052) | piz230601@gmail.com | 27 Jun 2026*
