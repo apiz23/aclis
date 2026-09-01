@@ -1,10 +1,11 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpdate, MukimOption
+from app.main import limiter
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -65,7 +66,9 @@ def list_mukim(
 
 
 @router.post("/kampung", response_model=KampungDetail, status_code=201)
+@limiter.limit("10/minute")
 def create_kampung(
+    request: Request,
     body: KampungCreate,
     actor: CurrentUser = Depends(require_role("admin_daerah")),
     sb: Client = Depends(get_supabase),
@@ -85,7 +88,9 @@ def create_kampung(
 
 
 @router.patch("/kampung/{kampung_id}", response_model=KampungDetail)
+@limiter.limit("10/minute")
 def update_kampung(
+    request: Request,
     kampung_id: str,
     body: KampungUpdate,
     actor: CurrentUser = Depends(require_role("admin_daerah")),
@@ -111,3 +116,18 @@ def update_kampung(
         .count or 0
     )
     return KampungDetail(**_row_to_summary(r).model_dump(), resident_count=resident_count)
+
+
+@router.delete("/kampung/{kampung_id}", status_code=204)
+@limiter.limit("10/minute")
+def delete_kampung(
+    request: Request,
+    kampung_id: str,
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
+    sb: Client = Depends(get_supabase),
+):
+    result = sb.table("aclis_kampung").delete().eq("id", kampung_id).execute()
+    if not result.data:
+        raise HTTPException(404, "Kampung not found")
+    record_audit(sb, actor, "delete", "kampung", kampung_id)
+    return None

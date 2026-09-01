@@ -6,10 +6,16 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.routers import me, stats, kampung, leaders, reports, issues, evaluations, residents, audit
 from app.config import settings
+from slowapi import Limiter, _rate_limit_exceeded
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 logger = logging.getLogger(__name__)
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="ACLIS API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -34,6 +40,7 @@ _SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
 }
 
 
