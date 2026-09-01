@@ -22,13 +22,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { MapMount } from "@/components/ui/map-mount";
-import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/components/ui/map";
+import { Map, MapControls, MapMarker, MarkerPopup, useMap } from "@/components/ui/map";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { apiGet, apiPatch, apiPost, apiDelete } from "@/lib/api";
 import { QUERY_KEYS, useCurrentUser } from "@/lib/queries";
 import { ArrowLeft, MapPin, Pencil, Trash2, UserPlus } from "lucide-react";
-import { useMapEvents } from "react-leaflet";
 
 interface KampungDetail {
   id: string;
@@ -83,11 +81,16 @@ const residentSchema = z.object({
 type ResidentValues = z.infer<typeof residentSchema>;
 
 function MapClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onPick(e.latlng.lat, e.latlng.lng);
-    },
-  });
+  const { map } = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const handler = (e: any) => {
+      const lngLat = e.lngLat;
+      onPick(lngLat.lat, lngLat.lng);
+    };
+    map.on('click', handler);
+    return () => { map.off('click', handler); };
+  }, [map, onPick]);
   return null;
 }
 
@@ -249,7 +252,7 @@ export default function KampungDetailPage() {
   }
 
   const hasCoords = data?.lat != null && data?.lng != null;
-  const center: [number, number] = hasCoords ? [data!.lat!, data!.lng!] : [1.4855, 103.3892];
+  const viewportCenter: [number, number] = hasCoords ? [data!.lng!, data!.lat!] : [103.3892, 1.4855];
 
   return (
     <AppLayout>
@@ -311,22 +314,22 @@ export default function KampungDetailPage() {
           {isLoading ? (
             <Skeleton className="h-56 w-full rounded-none" />
           ) : (
-            <MapMount className="h-56 w-full">
-              <Map center={center} zoom={hasCoords ? 14 : 11} className="h-56 w-full">
-                <MapTileLayer />
-                <MapZoomControl />
-                {hasCoords && (
-                  <MapMarker position={[data!.lat!, data!.lng!]}>
-                    <MapPopup>
-                      <Card className="ring-0 shadow-none p-3 min-w-[140px]">
-                        <p className="font-semibold text-sm">{data?.name}</p>
-                        {data?.mukim_name && <p className="text-xs text-muted-foreground">{data.mukim_name}</p>}
-                      </Card>
-                    </MapPopup>
-                  </MapMarker>
-                )}
-              </Map>
-            </MapMount>
+            <Map
+              viewport={{ center: viewportCenter, zoom: hasCoords ? 14 : 11 }}
+              className="h-56 w-full"
+            >
+              <MapControls showZoom />
+              {hasCoords && (
+                <MapMarker longitude={data!.lng!} latitude={data!.lat!}>
+                  <MarkerPopup>
+                    <Card className="ring-0 shadow-none p-3 min-w-[140px]">
+                      <p className="font-semibold text-sm">{data?.name}</p>
+                      {data?.mukim_name && <p className="text-xs text-muted-foreground">{data.mukim_name}</p>}
+                    </Card>
+                  </MarkerPopup>
+                </MapMarker>
+              )}
+            </Map>
           )}
           {!isLoading && !hasCoords && (
             <p className="px-5 py-3 text-xs text-muted-foreground">
@@ -592,31 +595,28 @@ export default function KampungDetailPage() {
               {/* Map picker */}
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground">Atau klik pada peta untuk tetapkan koordinat</p>
-                <MapMount className="h-48 w-full rounded-md overflow-hidden border">
-                  <Map
-                    center={
-                      (watch("lat") && watch("lng"))
-                        ? [Number(watch("lat")), Number(watch("lng"))]
-                        : (hasCoords ? [data!.lat!, data!.lng!] : [1.4855, 103.3892])
-                    }
-                    zoom={hasCoords ? 14 : 11}
-                    className="h-48 w-full"
-                  >
-                    <MapTileLayer />
-                    <MapZoomControl />
-                    <MapClickHandler onPick={(lat, lng) => {
-                      setValue("lat", lat);
-                      setValue("lng", lng);
-                    }} />
-                    {(watch("lat") && watch("lng")) && (
-                      <MapMarker position={[Number(watch("lat")), Number(watch("lng"))]}>
-                        <MapPopup>
-                          <p className="text-sm font-semibold">{data?.name}</p>
-                        </MapPopup>
-                      </MapMarker>
-                    )}
-                  </Map>
-                </MapMount>
+                <Map
+                  viewport={{
+                    center: (watch("lat") && watch("lng"))
+                      ? [Number(watch("lng")), Number(watch("lat"))]
+                      : (hasCoords ? [data!.lng!, data!.lat!] : [103.3892, 1.4855]),
+                    zoom: hasCoords ? 14 : 11
+                  }}
+                  className="h-48 w-full rounded-md overflow-hidden border"
+                >
+                  <MapControls showZoom />
+                  <MapClickHandler onPick={(lat, lng) => {
+                    setValue("lat", lat);
+                    setValue("lng", lng);
+                  }} />
+                  {(watch("lat") && watch("lng")) && (
+                    <MapMarker longitude={Number(watch("lng"))} latitude={Number(watch("lat"))}>
+                  <MarkerPopup>
+                        <p className="text-sm font-semibold">{data?.name}</p>
+                      </MarkerPopup>
+                    </MapMarker>
+                  )}
+                </Map>
               </div>
 
               <Controller name="profile" control={control} render={({ field }) => (

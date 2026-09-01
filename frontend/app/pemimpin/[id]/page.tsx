@@ -27,8 +27,7 @@ import {
   AttachmentDescription, AttachmentActions, AttachmentAction, AttachmentTrigger,
 } from "@/components/ui/attachment";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { MapMount } from "@/components/ui/map-mount";
-import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl } from "@/components/ui/map";
+import { Map, MapControls, MapMarker, MarkerPopup } from "@/components/ui/map";
 
 interface LeaderDetail {
   id: string;
@@ -365,19 +364,19 @@ export default function LeaderDetailPage() {
                 {data?.kampung_name ?? "Lokasi Kampung"}
               </DialogTitle>
             </DialogHeader>
-            <MapMount className="h-[60vh] w-full">
-              <Map center={[kampungCoords.lat, kampungCoords.lng]} zoom={14} className="h-[60vh] w-full">
-                <MapTileLayer />
-                <MapZoomControl />
-                <MapMarker position={[kampungCoords.lat, kampungCoords.lng]}>
-                  <MapPopup>
-                    <div className="rounded-lg border bg-card p-3">
-                      <p className="font-semibold text-sm">{kampungCoords.name}</p>
-                    </div>
-                  </MapPopup>
-                </MapMarker>
-              </Map>
-            </MapMount>
+            <Map
+              viewport={{ center: [kampungCoords.lng, kampungCoords.lat], zoom: 14 }}
+              className="h-[60vh] w-full"
+            >
+              <MapControls showZoom />
+              <MapMarker longitude={kampungCoords.lng} latitude={kampungCoords.lat}>
+                <MarkerPopup>
+                  <div className="rounded-lg border bg-card p-3">
+                    <p className="font-semibold text-sm">{kampungCoords.name}</p>
+                  </div>
+                </MarkerPopup>
+              </MapMarker>
+            </Map>
           </DialogContent>
         </Dialog>
       )}

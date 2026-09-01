@@ -22,8 +22,7 @@ import { DataTable, SortableHeader } from "@/components/ui/data-table";
 import { apiGet, apiPost } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Plus, Bot, TableIcon, MapIcon } from "lucide-react";
-import { MapMount } from "@/components/ui/map-mount";
-import { Map, MapTileLayer, MapMarker, MapPopup, MapZoomControl, MapFullscreenControl } from "@/components/ui/map";
+import { Map, MapControls, MapMarker, MarkerPopup } from "@/components/ui/map";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useIssues, QUERY_KEYS } from "@/lib/queries";
@@ -111,7 +110,7 @@ const STATUS_COLOR: Record<string, string> = {
   closed:      "text-muted-foreground fill-muted-foreground",
 };
 
-const PONTIAN: [number, number] = [1.4855, 103.3892];
+const PONTIAN: [number, number] = [103.3892, 1.4855];
 
 export default function IssuesPage() {
   const router = useRouter();
@@ -240,41 +239,36 @@ export default function IssuesPage() {
               {(filtered as IssueSummary[]).filter(i => parseCoords(i.coords)).length} isu dengan koordinat
             </p>
           </div>
-          <MapMount className="h-[480px] w-full">
-            <Map center={PONTIAN} zoom={11} className="h-[480px] w-full">
-              <MapTileLayer />
-              <MapZoomControl />
-              <MapFullscreenControl />
-              {(filtered as IssueSummary[]).map((issue) => {
-                const pos = parseCoords(issue.coords);
-                if (!pos) return null;
-                return (
-                  <MapMarker
-                    key={issue.id}
-                    position={pos}
-                    icon={
-                      <svg viewBox="0 0 24 24" className={`h-6 w-6 ${STATUS_COLOR[issue.status] ?? STATUS_COLOR.open}`}>
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                      </svg>
-                    }
-                  >
-                    <MapPopup>
-                      <Card className="ring-0 shadow-sm p-3 min-w-[200px]">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-sm">{issue.type ?? "Isu"}</p>
-                          <Badge variant={STATUS_CONFIG[issue.status as IssueStatus]?.variant ?? "secondary"}>
-                            {STATUS_CONFIG[issue.status as IssueStatus]?.label ?? issue.status}
-                          </Badge>
-                        </div>
-                        {issue.kampung_name && <p className="text-xs text-muted-foreground mb-1">{issue.kampung_name}</p>}
-                        {issue.description && <p className="text-xs text-muted-foreground line-clamp-2">{issue.description}</p>}
-                      </Card>
-                    </MapPopup>
-                  </MapMarker>
-                );
-              })}
-            </Map>
-          </MapMount>
+          <Map
+            viewport={{ center: PONTIAN, zoom: 11 }}
+            className="h-[480px] w-full"
+          >
+            <MapControls showZoom showFullscreen />
+            {(filtered as IssueSummary[]).map((issue) => {
+              const pos = parseCoords(issue.coords);
+              if (!pos) return null;
+              return (
+                <MapMarker
+                  key={issue.id}
+                  longitude={pos[0]}
+                  latitude={pos[1]}
+                >
+                  <MarkerPopup>
+                    <Card className="ring-0 shadow-sm p-3 min-w-[200px]">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-semibold text-sm">{issue.type ?? "Isu"}</p>
+                        <Badge variant={STATUS_CONFIG[issue.status as IssueStatus]?.variant ?? "secondary"}>
+                          {STATUS_CONFIG[issue.status as IssueStatus]?.label ?? issue.status}
+                        </Badge>
+                      </div>
+                      {issue.kampung_name && <p className="text-xs text-muted-foreground mb-1">{issue.kampung_name}</p>}
+                      {issue.description && <p className="text-xs text-muted-foreground line-clamp-2">{issue.description}</p>}
+                    </Card>
+                  </MarkerPopup>
+                </MapMarker>
+              );
+            })}
+          </Map>
         </Card>
       )}
 

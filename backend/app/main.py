@@ -6,16 +6,16 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.routers import me, stats, kampung, leaders, reports, issues, evaluations, residents, audit
 from app.config import settings
-from slowapi import Limiter, _rate_limit_exceeded
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
-limiter = Limiter(key_func=get_remote_address)
+# limiter imported from rate_limit
 app = FastAPI(title="ACLIS API")
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.exception_handler(StarletteHTTPException)

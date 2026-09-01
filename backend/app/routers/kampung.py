@@ -5,7 +5,7 @@ from app.auth import get_current_user, CurrentUser, require_role, get_user_scope
 from app.audit import record_audit
 from app.db import get_supabase
 from app.schemas import KampungSummary, KampungDetail, KampungCreate, KampungUpdate, MukimOption
-from app.main import limiter
+from app.rate_limit import limiter
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

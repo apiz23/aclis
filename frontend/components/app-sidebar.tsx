@@ -37,6 +37,7 @@ import {
 	ScrollText,
 } from "lucide-react";
 import { useCurrentUser } from "@/lib/queries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ALL_ROLES = ["admin_daerah", "penghulu", "ketua_kampung"];
 
@@ -147,49 +148,103 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarHeader>
 
 			<SidebarContent className="gap-0">
-				{NAV_GROUPS.map((group) => {
-					const visible = meLoading
-						? []
-						: group.items.filter((item) => role && item.roles.includes(role));
-					if (!visible.length) return null;
-					return (
-						<SidebarGroup key={group.label} className="py-1">
-							<Collapsible defaultOpen className="group/collapsible">
-								<SidebarGroupLabel
-									asChild
-									className="w-full flex justify-between group/label px-5 text-[9px] font-semibold uppercase tracking-[0.13em] text-sidebar-foreground/30 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-								>
-									<CollapsibleTrigger>
-										{group.label}
-										<Plus className="ml-auto size-3 group-data-[state=open]/collapsible:hidden" />
-										<Minus className="ml-auto size-3 group-data-[state=closed]/collapsible:hidden" />
-									</CollapsibleTrigger>
-								</SidebarGroupLabel>
-								<CollapsibleContent>
-									<SidebarGroupContent>
-										<SidebarMenu className="gap-0">
-											{visible.map(({ label, href, icon: Icon }) => (
-												<SidebarMenuItem key={href}>
-													<SidebarMenuButton
-														asChild
-														isActive={pathname === href || pathname.startsWith(href + "/")}
-														tooltip={label}
-														className="rounded-none border-l-[3px] border-transparent px-5 text-[13px] text-sidebar-foreground/55 hover:bg-white/5 hover:text-sidebar-foreground data-[active=true]:border-gold data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-white"
-													>
-														<Link href={href}>
-															<Icon className="h-4 w-4" />
-															<span>{label}</span>
-														</Link>
-													</SidebarMenuButton>
-												</SidebarMenuItem>
-											))}
-										</SidebarMenu>
-									</SidebarGroupContent>
-								</CollapsibleContent>
-							</Collapsible>
+				{meLoading ? (
+					<>
+						<SidebarGroup className="py-1">
+							<SidebarGroupLabel className="px-5 text-[9px] font-semibold uppercase tracking-[0.13em] text-sidebar-foreground/30">
+								<Skeleton className="h-3 w-20" />
+							</SidebarGroupLabel>
+							<SidebarGroupContent>
+								<SidebarMenu className="gap-0">
+									{[1, 2, 3, 4, 5].map((idx) => (
+										<SidebarMenuItem key={idx}>
+											<SidebarMenuButton className="px-5">
+												<Skeleton className="h-4 w-4 rounded" />
+												<Skeleton className="h-3 w-24" />
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									))}
+								</SidebarMenu>
+							</SidebarGroupContent>
 						</SidebarGroup>
-					);
-				})}
+						<SidebarGroup className="py-1">
+							<SidebarGroupLabel className="px-5 text-[9px] font-semibold uppercase tracking-[0.13em] text-sidebar-foreground/30">
+								<Skeleton className="h-3 w-24" />
+							</SidebarGroupLabel>
+							<SidebarGroupContent>
+								<SidebarMenu className="gap-0">
+									{[1, 2, 3].map((idx) => (
+										<SidebarMenuItem key={idx}>
+											<SidebarMenuButton className="px-5">
+												<Skeleton className="h-4 w-4 rounded" />
+												<Skeleton className="h-3 w-24" />
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									))}
+								</SidebarMenu>
+							</SidebarGroupContent>
+						</SidebarGroup>
+						<SidebarGroup className="py-1">
+							<SidebarGroupLabel className="px-5 text-[9px] font-semibold uppercase tracking-[0.13em] text-sidebar-foreground/30">
+								<Skeleton className="h-3 w-28" />
+							</SidebarGroupLabel>
+							<SidebarGroupContent>
+								<SidebarMenu className="gap-0">
+									{[1].map((idx) => (
+										<SidebarMenuItem key={idx}>
+											<SidebarMenuButton className="px-5">
+												<Skeleton className="h-4 w-4 rounded" />
+												<Skeleton className="h-3 w-24" />
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									))}
+								</SidebarMenu>
+							</SidebarGroupContent>
+						</SidebarGroup>
+					</>
+				) : (
+					NAV_GROUPS.map((group) => {
+						const visible = group.items.filter((item) => role && item.roles.includes(role));
+						if (!visible.length) return null;
+						return (
+							<SidebarGroup key={group.label} className="py-1">
+								<Collapsible defaultOpen className="group/collapsible">
+									<SidebarGroupLabel
+										asChild
+										className="w-full flex justify-between group/label px-5 text-[9px] font-semibold uppercase tracking-[0.13em] text-sidebar-foreground/30 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+									>
+										<CollapsibleTrigger>
+											{group.label}
+											<Plus className="ml-auto size-3 group-data-[state=open]/collapsible:hidden" />
+											<Minus className="ml-auto size-3 group-data-[state=closed]/collapsible:hidden" />
+										</CollapsibleTrigger>
+									</SidebarGroupLabel>
+									<CollapsibleContent>
+										<SidebarGroupContent>
+											<SidebarMenu className="gap-0">
+												{visible.map(({ label, href, icon: Icon }) => (
+													<SidebarMenuItem key={href}>
+														<SidebarMenuButton
+															asChild
+															isActive={pathname === href || pathname.startsWith(href + "/")}
+															tooltip={label}
+															className="rounded-none border-l-[3px] border-transparent px-5 text-[13px] text-sidebar-foreground/55 hover:bg-white/5 hover:text-sidebar-foreground data-[active=true]:border-gold data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-white"
+														>
+															<Link href={href}>
+																<Icon className="h-4 w-4" />
+																<span>{label}</span>
+															</Link>
+														</SidebarMenuButton>
+													</SidebarMenuItem>
+												))}
+											</SidebarMenu>
+										</SidebarGroupContent>
+									</CollapsibleContent>
+								</Collapsible>
+							</SidebarGroup>
+						);
+					})
+				)}
 			</SidebarContent>
 
 			<SidebarFooter className="border-t border-sidebar-border">

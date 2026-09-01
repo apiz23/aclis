@@ -22,8 +22,8 @@ class KampungDetail(KampungSummary):
 class LeaderSummary(BaseModel):
     id: str
     name: constr(min_length=1, max_length=100)
-    ic_no: constr(pattern=r'^\d{12}$') | None = None
-    type: constr(pattern=r'^(ketua_kampung|penghulu)$')
+    ic_no: str | None = None
+    type: constr(pattern=r'^(ketua_kampung|penghulu|ketua_masyarakat)$')
     kampung_id: str | None
     kampung_name: str | None
     tarikh_lantikan: str | None
@@ -124,9 +124,9 @@ class EvaluationUpdate(BaseModel):
 
 class LeaderCreate(BaseModel):
     name: constr(min_length=1, max_length=100)
-    type: constr(pattern=r'^(ketua_kampung|penghulu)$')
+    type: constr(pattern=r'^(ketua_kampung|penghulu|ketua_masyarakat)$')
     kampung_id: str | None = None
-    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    ic_no: str | None = None
     tarikh_lantikan: str | None = None
     photo_url: str | None = None
     parti_lantikan: str | None = None
@@ -134,9 +134,9 @@ class LeaderCreate(BaseModel):
 
 class LeaderUpdate(BaseModel):
     name: constr(min_length=1, max_length=100) | None = None
-    type: constr(pattern=r'^(ketua_kampung|penghulu)$') | None = None
+    type: constr(pattern=r'^(ketua_kampung|penghulu|ketua_masyarakat)$') | None = None
     kampung_id: str | None = None
-    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    ic_no: str | None = None
     tarikh_lantikan: str | None = None
     photo_url: str | None = None
     parti_lantikan: str | None = None
@@ -173,7 +173,7 @@ class ResidentSummary(BaseModel):
     id: str
     kampung_id: str | None
     name: constr(min_length=1, max_length=100) | None
-    ic_no: constr(pattern=r'^\d{12}$') | None
+    ic_no: str | None
     phone: constr(pattern=r'^[\d\s+-]+$') | None
     b40_status: bool
     address: str | None
@@ -181,14 +181,14 @@ class ResidentSummary(BaseModel):
 class ResidentCreate(BaseModel):
     kampung_id: str | None = None  # ignored; kampung_id comes from URL path
     name: constr(min_length=1, max_length=100)
-    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    ic_no: str | None = None
     phone: constr(pattern=r'^[\d\s+-]+$') | None = None
     b40_status: bool = False
     address: str | None = None
 
 class ResidentUpdate(BaseModel):
     name: constr(min_length=1, max_length=100) | None = None
-    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    ic_no: str | None = None
     phone: constr(pattern=r'^[\d\s+-]+$') | None = None
     b40_status: bool | None = None
     address: str | None = None
