@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, constr
 
 class Stats(BaseModel):
     kampung_count: int
@@ -8,11 +8,11 @@ class Stats(BaseModel):
 
 class KampungSummary(BaseModel):
     id: str
-    name: str
+    name: constr(min_length=1, max_length=100)
     mukim_id: str | None
     mukim_name: str | None
     b40_count: int
-    profile: str | None
+    profile: str | None = None
     lat: float | None = None
     lng: float | None = None
 
@@ -21,9 +21,9 @@ class KampungDetail(KampungSummary):
 
 class LeaderSummary(BaseModel):
     id: str
-    name: str
-    ic_no: str | None
-    type: str
+    name: constr(min_length=1, max_length=100)
+    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    type: constr(pattern=r'^(ketua_kampung|penghulu)$')
     kampung_id: str | None
     kampung_name: str | None
     tarikh_lantikan: str | None
@@ -31,7 +31,7 @@ class LeaderSummary(BaseModel):
     parti_lantikan: str | None
     parti_terkini: str | None
     mukim_name: str | None = None
-    phone: str | None = None
+    phone: constr(pattern=r'^[\d\s+-]+$') | None = None
 
 class LeaderDetail(LeaderSummary):
     evaluation_count: int = 0
@@ -42,8 +42,8 @@ class ReportSummary(BaseModel):
     id: str
     kampung_id: str | None
     kampung_name: str | None
-    period: str
-    status: str
+    period: constr(min_length=1, max_length=20)
+    status: constr(pattern=r'^(draft|submitted|late)$')
     submitted_at: str | None
 
 class ReportDetail(ReportSummary):
@@ -57,7 +57,7 @@ class IssueSummary(BaseModel):
     location: str | None
     description: str | None
     ai_category: str | None
-    status: str
+    status: constr(pattern=r'^(open|in_progress|resolved|closed)$')
     coords: str | None = None
 
 class IssueDetail(IssueSummary):
@@ -82,7 +82,7 @@ class IssueCreate(BaseModel):
     coords: str | None = None
 
 class IssueUpdate(BaseModel):
-    status: str | None = None
+    status: constr(pattern=r'^(open|in_progress|resolved|closed)$') | None = None
     type: str | None = None
     location: str | None = None
     description: str | None = None
@@ -91,12 +91,12 @@ class IssueUpdate(BaseModel):
 
 class ReportCreate(BaseModel):
     kampung_id: str
-    period: str
+    period: constr(min_length=1, max_length=20)
     content: str | None = None
 
 class ReportUpdate(BaseModel):
     content: str | None = None
-    status: str | None = None
+    status: constr(pattern=r'^(draft|submitted|late)$') | None = None
 
 class StatusCount(BaseModel):
     status: str
@@ -114,7 +114,7 @@ class ReportSummaryAI(BaseModel):
 
 class EvaluationCreate(BaseModel):
     leader_id: str
-    period: str
+    period: constr(min_length=1, max_length=20)
     scores: dict[str, float] = {}
     ulasan: str | None = None
 
@@ -123,30 +123,30 @@ class EvaluationUpdate(BaseModel):
     ulasan: str | None = None
 
 class LeaderCreate(BaseModel):
-    name: str
-    type: str
+    name: constr(min_length=1, max_length=100)
+    type: constr(pattern=r'^(ketua_kampung|penghulu)$')
     kampung_id: str | None = None
-    ic_no: str | None = None
+    ic_no: constr(pattern=r'^\d{12}$') | None = None
     tarikh_lantikan: str | None = None
     photo_url: str | None = None
     parti_lantikan: str | None = None
     parti_terkini: str | None = None
 
 class LeaderUpdate(BaseModel):
-    name: str | None = None
-    type: str | None = None
+    name: constr(min_length=1, max_length=100) | None = None
+    type: constr(pattern=r'^(ketua_kampung|penghulu)$') | None = None
     kampung_id: str | None = None
-    ic_no: str | None = None
+    ic_no: constr(pattern=r'^\d{12}$') | None = None
     tarikh_lantikan: str | None = None
     photo_url: str | None = None
     parti_lantikan: str | None = None
     parti_terkini: str | None = None
-    phone: str | None = None
+    phone: constr(pattern=r'^[\d\s+-]+$') | None = None
     address: str | None = None
     kampung_rangkaian: str | None = None
 
 class KampungCreate(BaseModel):
-    name: str
+    name: constr(min_length=1, max_length=100)
     mukim_id: str | None = None
     b40_count: int | None = None
     profile: str | None = None
@@ -154,7 +154,7 @@ class KampungCreate(BaseModel):
     lng: float | None = None
 
 class KampungUpdate(BaseModel):
-    name: str | None = None
+    name: constr(min_length=1, max_length=100) | None = None
     mukim_id: str | None = None
     b40_count: int | None = None
     profile: str | None = None
@@ -163,7 +163,7 @@ class KampungUpdate(BaseModel):
 
 class MukimOption(BaseModel):
     id: str
-    name: str
+    name: constr(min_length=1, max_length=100)
 
 class RecategorizeResponse(BaseModel):
     status: str
@@ -172,24 +172,24 @@ class RecategorizeResponse(BaseModel):
 class ResidentSummary(BaseModel):
     id: str
     kampung_id: str | None
-    name: str | None
-    ic_no: str | None
-    phone: str | None
+    name: constr(min_length=1, max_length=100) | None
+    ic_no: constr(pattern=r'^\d{12}$') | None
+    phone: constr(pattern=r'^[\d\s+-]+$') | None
     b40_status: bool
     address: str | None
 
 class ResidentCreate(BaseModel):
     kampung_id: str | None = None  # ignored; kampung_id comes from URL path
-    name: str
-    ic_no: str | None = None
-    phone: str | None = None
+    name: constr(min_length=1, max_length=100)
+    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    phone: constr(pattern=r'^[\d\s+-]+$') | None = None
     b40_status: bool = False
     address: str | None = None
 
 class ResidentUpdate(BaseModel):
-    name: str | None = None
-    ic_no: str | None = None
-    phone: str | None = None
+    name: constr(min_length=1, max_length=100) | None = None
+    ic_no: constr(pattern=r'^\d{12}$') | None = None
+    phone: constr(pattern=r'^[\d\s+-]+$') | None = None
     b40_status: bool | None = None
     address: str | None = None
 
