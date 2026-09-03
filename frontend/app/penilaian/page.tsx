@@ -52,6 +52,17 @@ const evalSchema = z.object({
   komunikasi:       z.coerce.number().min(0).max(10),
   inisiatif:        z.coerce.number().min(0).max(10),
   kerjasama:        z.coerce.number().min(0).max(10),
+  keupayaan_ulasan: z.string().optional(),
+  potensi_ulasan:   z.string().optional(),
+  penilai_nama:     z.string().optional(),
+  penilai_no_kad:   z.string().optional(),
+  penilai_jawatan:  z.string().optional(),
+  penilai_lama_mengenali: z.string().optional(),
+  penilai_tarikh:   z.string().optional(),
+  penilai_semula_nama:    z.string().optional(),
+  penilai_semula_no_kad:  z.string().optional(),
+  penilai_semula_jawatan: z.string().optional(),
+  penilai_semula_tarikh:  z.string().optional(),
 });
 type EvalFormValues = z.infer<typeof evalSchema>;
 
@@ -59,6 +70,11 @@ const DEFAULT_VALS: EvalFormValues = {
   leader_id: "", period: "", ulasan: "",
   kehadiran: 0, khidmat_komuniti: 0, pengurusan: 0,
   komunikasi: 0, inisiatif: 0, kerjasama: 0,
+  keupayaan_ulasan: "", potensi_ulasan: "",
+  penilai_nama: "", penilai_no_kad: "", penilai_jawatan: "",
+  penilai_lama_mengenali: "", penilai_tarikh: "",
+  penilai_semula_nama: "", penilai_semula_no_kad: "",
+  penilai_semula_jawatan: "", penilai_semula_tarikh: "",
 };
 
 function scoreTier(total: number | null) {
@@ -115,12 +131,24 @@ export default function EvaluationsPage() {
 
   async function onSubmit(values: EvalFormValues) {
     const scores = Object.fromEntries(SCORE_KEYS.map((k) => [k, Number(values[k])]));
-    const promise = apiPost("/evaluations", {
+    const payload: Record<string, unknown> = {
       leader_id: values.leader_id,
       period: values.period,
       scores,
       ulasan: values.ulasan || null,
-    });
+      keupayaan_ulasan: values.keupayaan_ulasan || null,
+      potensi_ulasan: values.potensi_ulasan || null,
+      penilai_nama: values.penilai_nama || null,
+      penilai_no_kad: values.penilai_no_kad || null,
+      penilai_jawatan: values.penilai_jawatan || null,
+      penilai_lama_mengenali: values.penilai_lama_mengenali || null,
+      penilai_tarikh: values.penilai_tarikh || null,
+      penilai_semula_nama: values.penilai_semula_nama || null,
+      penilai_semula_no_kad: values.penilai_semula_no_kad || null,
+      penilai_semula_jawatan: values.penilai_semula_jawatan || null,
+      penilai_semula_tarikh: values.penilai_semula_tarikh || null,
+    };
+    const promise = apiPost("/evaluations", payload);
 
     toast.promise(promise, {
       loading: "Menyimpan penilaian...",
@@ -334,6 +362,110 @@ export default function EvaluationsPage() {
                   </Field>
                 )}
               />
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Penilaian Rasmi</p>
+                <Controller
+                  name="keupayaan_ulasan"
+                  control={control}
+                  render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>(a) Keupayaan menyandang terus jawatan ini</FieldLabel>
+                      <Textarea
+                        {...field}
+                        id={field.name}
+                        placeholder="Ulasan keupayaan..."
+                        rows={2}
+                      />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="potensi_ulasan"
+                  control={control}
+                  render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>(b) Potensi dalam kemajuan kerja</FieldLabel>
+                      <Textarea
+                        {...field}
+                        id={field.name}
+                        placeholder="Ulasan potensi..."
+                        rows={2}
+                      />
+                    </Field>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Maklumat Pegawai Penilai</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Controller name="penilai_nama" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Nama Penilai</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="Nama penuh" />
+                    </Field>
+                  )} />
+                  <Controller name="penilai_no_kad" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>No. Kad Pengenalan</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="No. KP" />
+                    </Field>
+                  )} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Controller name="penilai_jawatan" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Jawatan</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="Jawatan penilai" />
+                    </Field>
+                  )} />
+                  <Controller name="penilai_lama_mengenali" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Lama Mengenali</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="cth: 5 tahun" />
+                    </Field>
+                  )} />
+                </div>
+                <Controller name="penilai_tarikh" control={control} render={({ field }) => (
+                  <Field>
+                    <FieldLabel htmlFor={field.name}>Tarikh Penilaian</FieldLabel>
+                    <Input {...field} id={field.name} type="date" />
+                  </Field>
+                )} />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pegawai Penilai Semula (jika ada)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Controller name="penilai_semula_nama" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Nama Penilai Semula</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="Nama penuh" />
+                    </Field>
+                  )} />
+                  <Controller name="penilai_semula_no_kad" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>No. Kad Pengenalan</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="No. KP" />
+                    </Field>
+                  )} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Controller name="penilai_semula_jawatan" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Jawatan</FieldLabel>
+                      <Input {...field} id={field.name} placeholder="Jawatan penilai semula" />
+                    </Field>
+                  )} />
+                  <Controller name="penilai_semula_tarikh" control={control} render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Tarikh</FieldLabel>
+                      <Input {...field} id={field.name} type="date" />
+                    </Field>
+                  )} />
+                </div>
+              </div>
 
             </div>
               <SheetFooter className="shrink-0 border-t px-4 py-4">

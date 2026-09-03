@@ -25,6 +25,17 @@ interface EvaluationDetail {
   total: number | null;
   ulasan: string | null;
   scores: Record<string, number>;
+  keupayaan_ulasan: string | null;
+  potensi_ulasan: string | null;
+  penilai_nama: string | null;
+  penilai_no_kad: string | null;
+  penilai_jawatan: string | null;
+  penilai_lama_mengenali: string | null;
+  penilai_tarikh: string | null;
+  penilai_semula_nama: string | null;
+  penilai_semula_no_kad: string | null;
+  penilai_semula_jawatan: string | null;
+  penilai_semula_tarikh: string | null;
 }
 
 const MAX_SCORE = 60;
@@ -144,6 +155,88 @@ export default function EvaluationDetailPage() {
           </div>
           <CardContent className="p-5">
             <p className="text-sm leading-relaxed">{data.ulasan}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && (data?.keupayaan_ulasan || data?.potensi_ulasan) && (
+        <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
+          <div className="px-5 py-4 border-b">
+            <p className="text-sm font-semibold">Penilaian Rasmi</p>
+          </div>
+          <CardContent className="px-5 space-y-4">
+            {data?.keupayaan_ulasan && (
+              <div className="py-3 border-b last:border-0">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">(a) Keupayaan menyandang terus jawatan ini</p>
+                <p className="text-sm leading-relaxed">{data.keupayaan_ulasan}</p>
+              </div>
+            )}
+            {data?.potensi_ulasan && (
+              <div className="py-3 border-b last:border-0">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">(b) Potensi dalam kemajuan kerja</p>
+                <p className="text-sm leading-relaxed">{data.potensi_ulasan}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && data?.penilai_nama && (
+        <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
+          <div className="px-5 py-4 border-b">
+            <p className="text-sm font-semibold">Pegawai Penilai</p>
+          </div>
+          <CardContent className="px-5">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Nama</p>
+                <p className="text-sm">{data.penilai_nama}</p>
+              </div>
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">No. Kad Pengenalan</p>
+                <p className="text-sm font-mono text-[13px]">{data.penilai_no_kad}</p>
+              </div>
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Jawatan</p>
+                <p className="text-sm">{data.penilai_jawatan}</p>
+              </div>
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Lama Mengenali</p>
+                <p className="text-sm">{data.penilai_lama_mengenali}</p>
+              </div>
+              <div className="py-3">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Tarikh</p>
+                <p className="text-sm">{data.penilai_tarikh}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && data?.penilai_semula_nama && (
+        <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
+          <div className="px-5 py-4 border-b">
+            <p className="text-sm font-semibold">Pegawai Penilai Semula</p>
+          </div>
+          <CardContent className="px-5">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Nama</p>
+                <p className="text-sm">{data.penilai_semula_nama}</p>
+              </div>
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">No. Kad Pengenalan</p>
+                <p className="text-sm font-mono text-[13px]">{data.penilai_semula_no_kad}</p>
+              </div>
+              <div className="py-3 border-b">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Jawatan</p>
+                <p className="text-sm">{data.penilai_semula_jawatan}</p>
+              </div>
+              <div className="py-3">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Tarikh</p>
+                <p className="text-sm">{data.penilai_semula_tarikh}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

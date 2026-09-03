@@ -29,6 +29,24 @@ def _row_to_summary(r: dict) -> LeaderSummary:
     )
 
 
+def _row_to_detail(r: dict, eval_count: int = 0) -> dict:
+    base = _row_to_summary(r).model_dump()
+    base.update({
+        "evaluation_count": eval_count,
+        "address": r.get("address"),
+        "poskod": r.get("poskod"),
+        "tarikh_lahir": str(r["tarikh_lahir"]) if r.get("tarikh_lahir") else None,
+        "pekerjaan_utama": r.get("pekerjaan_utama"),
+        "pekerjaan_sampingan": r.get("pekerjaan_sampingan"),
+        "tahap_pendidikan": r.get("tahap_pendidikan"),
+        "tanggungan": r.get("tanggungan"),
+        "kegiatan_masyarakat": r.get("kegiatan_masyarakat"),
+        "pengalaman_kursus": r.get("pengalaman_kursus"),
+        "kampung_rangkaian": r.get("kampung_rangkaian"),
+    })
+    return base
+
+
 def _dedup_by_ic(rows: list[dict]) -> list[dict]:
     """Keep one record per IC number, preferring the one with the most data."""
     def score(r: dict) -> int:
@@ -65,7 +83,7 @@ def list_leaders(
     return [_row_to_summary(r) for r in rows]
 
 
-_SELECT_DETAIL = "id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address, kampung_rangkaian, aclis_kampung(name, aclis_mukim(name))"
+_SELECT_DETAIL = "id, name, ic_no, type, kampung_id, tarikh_lantikan, photo_url, parti_lantikan, parti_terkini, phone, address, poskod, tarikh_lahir, pekerjaan_utama, pekerjaan_sampingan, tahap_pendidikan, tanggungan, kegiatan_masyarakat, pengalaman_kursus, kampung_rangkaian, aclis_kampung(name, aclis_mukim(name))"
 
 
 @router.get("/leaders/{leader_id}", response_model=LeaderDetail)
@@ -94,12 +112,7 @@ def get_leader(
         .execute()
         .count or 0
     )
-    return LeaderDetail(
-        **_row_to_summary(r).model_dump(),
-        evaluation_count=eval_count,
-        address=r.get("address"),
-        kampung_rangkaian=r.get("kampung_rangkaian"),
-    )
+    return LeaderDetail(**_row_to_detail(r, eval_count))
 
 
 @router.post("/leaders", response_model=LeaderDetail, status_code=201)
@@ -119,7 +132,7 @@ def create_leader(
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
     record_audit(sb, actor, "create", "leader", r["id"], {"kampung_id": r.get("kampung_id")})
-    return LeaderDetail(**_row_to_summary(r).model_dump(), evaluation_count=0)
+    return LeaderDetail(**_row_to_detail(r))
 
 
 @router.patch("/leaders/{leader_id}", response_model=LeaderDetail)
@@ -150,9 +163,4 @@ def update_leader(
         .execute()
         .count or 0
     )
-    return LeaderDetail(
-        **_row_to_summary(r).model_dump(),
-        evaluation_count=eval_count,
-        address=r.get("address"),
-        kampung_rangkaian=r.get("kampung_rangkaian"),
-    )
+    return LeaderDetail(**_row_to_detail(r, eval_count))

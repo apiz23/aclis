@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -44,6 +45,14 @@ interface LeaderDetail {
   evaluation_count: number;
   phone: string | null;
   address: string | null;
+  poskod: string | null;
+  tarikh_lahir: string | null;
+  pekerjaan_utama: string | null;
+  pekerjaan_sampingan: string | null;
+  tahap_pendidikan: string | null;
+  tanggungan: number | null;
+  kegiatan_masyarakat: string | null;
+  pengalaman_kursus: string | null;
   kampung_rangkaian: string | null;
 }
 
@@ -103,6 +112,14 @@ const editSchema = z.object({
   parti_terkini:     z.string().optional(),
   phone:             z.string().optional(),
   address:           z.string().optional(),
+  poskod:            z.string().optional(),
+  tarikh_lahir:      z.string().optional(),
+  pekerjaan_utama:   z.string().optional(),
+  pekerjaan_sampingan: z.string().optional(),
+  tahap_pendidikan:  z.string().optional(),
+  tanggungan:        z.string().optional(),
+  kegiatan_masyarakat: z.string().optional(),
+  pengalaman_kursus: z.string().optional(),
   kampung_rangkaian: z.string().optional(),
   photo_url:         z.string().optional(),
 });
@@ -161,6 +178,14 @@ export default function LeaderDetailPage() {
       parti_terkini:     data.parti_terkini ?? "",
       phone:             data.phone ?? "",
       address:           data.address ?? "",
+      poskod:            data.poskod ?? "",
+      tarikh_lahir:      data.tarikh_lahir ?? "",
+      pekerjaan_utama:   data.pekerjaan_utama ?? "",
+      pekerjaan_sampingan: data.pekerjaan_sampingan ?? "",
+      tahap_pendidikan:  data.tahap_pendidikan ?? "",
+      tanggungan:        data.tanggungan?.toString() ?? "",
+      kegiatan_masyarakat: data.kegiatan_masyarakat ?? "",
+      pengalaman_kursus: data.pengalaman_kursus ?? "",
       kampung_rangkaian: data.kampung_rangkaian ?? "",
       photo_url:         data.photo_url ?? "",
     });
@@ -171,14 +196,22 @@ export default function LeaderDetailPage() {
   }
 
   async function onSubmit(values: EditValues) {
-    const payload: Record<string, string | null> = {};
+    const payload: Record<string, string | number | null> = {};
     const fields: (keyof EditValues)[] = [
       "name","type","kampung_id","ic_no","tarikh_lantikan",
-      "parti_lantikan","parti_terkini","phone","address","kampung_rangkaian","photo_url",
+      "parti_lantikan","parti_terkini","phone","address","poskod","tarikh_lahir",
+      "pekerjaan_utama","pekerjaan_sampingan","tahap_pendidikan","tanggungan",
+      "kegiatan_masyarakat","pengalaman_kursus","kampung_rangkaian","photo_url",
     ];
     for (const f of fields) {
       const v = values[f];
-      payload[f] = (v === "" || v === undefined) ? null : v;
+      if (v === "" || v === undefined) {
+        payload[f] = null;
+      } else if (f === "tanggungan" && typeof v === "string") {
+        payload[f] = v ? parseInt(v, 10) : null;
+      } else {
+        payload[f] = v as string | number | null;
+      }
     }
     // type is required, never null
     payload["name"] = values.name;
@@ -305,10 +338,39 @@ export default function LeaderDetailPage() {
                     { label: "Jawatan", value: TYPE_LABEL[data?.type ?? ""] ?? data?.type },
                   ]} />
                   <InfoRow items={[
-                    { label: "Tarikh Dilantik", value: data?.tarikh_lantikan },
+                    { label: "Tarikh Lahir", value: data?.tarikh_lahir },
                     { label: "No. Telefon", value: data?.phone },
                   ]} />
+                  <InfoRow items={[
+                    { label: "Tarikh Dilantik", value: data?.tarikh_lantikan },
+                    { label: "Poskod", value: data?.poskod },
+                  ]} />
                   <InfoField label="Alamat" value={data?.address} />
+                  <InfoRow items={[
+                    { label: "Pekerjaan Utama", value: data?.pekerjaan_utama },
+                    { label: "Pekerjaan Sampingan", value: data?.pekerjaan_sampingan },
+                  ]} />
+                  <InfoRow items={[
+                    { label: "Tahap Pendidikan", value: data?.tahap_pendidikan },
+                    { label: "Tanggungan", value: data?.tanggungan != null ? `${data.tanggungan} orang` : null },
+                  ]} />
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Community & Experience */}
+          <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
+            <SectionHeader title="Kegiatan &amp; Pengalaman" />
+            <CardContent className="px-5">
+              {loading ? (
+                <div className="py-4 space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : (
+                <>
+                  <InfoField label="Kegiatan dalam Masyarakat" value={data?.kegiatan_masyarakat} />
+                  <InfoField label="Lain-lain Pengalaman &amp; Kursus" value={data?.pengalaman_kursus} />
                 </>
               )}
             </CardContent>
@@ -469,6 +531,65 @@ export default function LeaderDetailPage() {
               <Field>
                 <FieldLabel htmlFor={field.name}>Alamat</FieldLabel>
                 <Input {...field} id={field.name} placeholder="No. X, Jalan..." />
+              </Field>
+            )} />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Controller name="poskod" control={control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Poskod</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="82000" />
+                </Field>
+              )} />
+              <Controller name="tarikh_lahir" control={control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Tarikh Lahir</FieldLabel>
+                  <Input {...field} id={field.name} type="date" />
+                </Field>
+              )} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Controller name="pekerjaan_utama" control={control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Pekerjaan Utama</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="cth: Pesara Kerajaan" />
+                </Field>
+              )} />
+              <Controller name="pekerjaan_sampingan" control={control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Pekerjaan Sampingan</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="cth: Penjual sayur" />
+                </Field>
+              )} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Controller name="tahap_pendidikan" control={control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Tahap Pendidikan</FieldLabel>
+                  <Input {...field} id={field.name} placeholder="cth: SPM" />
+                </Field>
+              )} />
+              <Controller name="tanggungan" control={control} render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Tanggungan (bilangan)</FieldLabel>
+                  <Input {...field} id={field.name} type="number" min={0} placeholder="cth: 5" />
+                </Field>
+              )} />
+            </div>
+
+            <Controller name="kegiatan_masyarakat" control={control} render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor={field.name}>Kegiatan dalam Masyarakat</FieldLabel>
+                <Textarea {...field} id={field.name} placeholder="Senaraikan kegiatan masyarakat..." rows={3} />
+              </Field>
+            )} />
+
+            <Controller name="pengalaman_kursus" control={control} render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor={field.name}>Lain-lain Pengalaman &amp; Kursus</FieldLabel>
+                <Textarea {...field} id={field.name} placeholder="Senaraikan pengalaman dan kursus..." rows={3} />
               </Field>
             )} />
 

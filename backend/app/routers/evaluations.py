@@ -57,10 +57,21 @@ def get_evaluation(
     return EvaluationDetail(
         **_row_to_summary(r).model_dump(),
         scores=r.get("scores") or {},
+        keupayaan_ulasan=r.get("keupayaan_ulasan"),
+        potensi_ulasan=r.get("potensi_ulasan"),
+        penilai_nama=r.get("penilai_nama"),
+        penilai_no_kad=r.get("penilai_no_kad"),
+        penilai_jawatan=r.get("penilai_jawatan"),
+        penilai_lama_mengenali=r.get("penilai_lama_mengenali"),
+        penilai_tarikh=r.get("penilai_tarikh"),
+        penilai_semula_nama=r.get("penilai_semula_nama"),
+        penilai_semula_no_kad=r.get("penilai_semula_no_kad"),
+        penilai_semula_jawatan=r.get("penilai_semula_jawatan"),
+        penilai_semula_tarikh=r.get("penilai_semula_tarikh"),
     )
 
 
-_SELECT_DETAIL = "id, leader_id, period, total, ulasan, scores, aclis_leader(name)"
+_SELECT_DETAIL = "id, leader_id, period, total, ulasan, scores, keupayaan_ulasan, potensi_ulasan, penilai_nama, penilai_no_kad, penilai_jawatan, penilai_lama_mengenali, penilai_tarikh, penilai_semula_nama, penilai_semula_no_kad, penilai_semula_jawatan, penilai_semula_tarikh, aclis_leader(name)"
 
 
 @router.post("/evaluations", response_model=EvaluationDetail, status_code=201)
@@ -78,6 +89,17 @@ def create_evaluation(
             "scores": body.scores,
             "ulasan": body.ulasan,
             "total": total,
+            "keupayaan_ulasan": body.keupayaan_ulasan,
+            "potensi_ulasan": body.potensi_ulasan,
+            "penilai_nama": body.penilai_nama,
+            "penilai_no_kad": body.penilai_no_kad,
+            "penilai_jawatan": body.penilai_jawatan,
+            "penilai_lama_mengenali": body.penilai_lama_mengenali,
+            "penilai_tarikh": body.penilai_tarikh,
+            "penilai_semula_nama": body.penilai_semula_nama,
+            "penilai_semula_no_kad": body.penilai_semula_no_kad,
+            "penilai_semula_jawatan": body.penilai_semula_jawatan,
+            "penilai_semula_tarikh": body.penilai_semula_tarikh,
         })
         .select(_SELECT_DETAIL)
         .execute()
@@ -86,7 +108,19 @@ def create_evaluation(
         raise HTTPException(500, "Insert failed")
     r = result.data[0]
     record_audit(sb, actor, "create", "evaluation", r["id"], {"leader_id": body.leader_id})
-    return EvaluationDetail(**_row_to_summary(r).model_dump(), scores=r.get("scores") or {})
+    return EvaluationDetail(**_row_to_summary(r).model_dump(), scores=r.get("scores") or {},
+        keupayaan_ulasan=r.get("keupayaan_ulasan"),
+        potensi_ulasan=r.get("potensi_ulasan"),
+        penilai_nama=r.get("penilai_nama"),
+        penilai_no_kad=r.get("penilai_no_kad"),
+        penilai_jawatan=r.get("penilai_jawatan"),
+        penilai_lama_mengenali=r.get("penilai_lama_mengenali"),
+        penilai_tarikh=r.get("penilai_tarikh"),
+        penilai_semula_nama=r.get("penilai_semula_nama"),
+        penilai_semula_no_kad=r.get("penilai_semula_no_kad"),
+        penilai_semula_jawatan=r.get("penilai_semula_jawatan"),
+        penilai_semula_tarikh=r.get("penilai_semula_tarikh"),
+    )
 
 
 @router.patch("/evaluations/{eval_id}", response_model=EvaluationDetail)
@@ -102,6 +136,28 @@ def update_evaluation(
         payload["total"] = sum(body.scores.values())
     if body.ulasan is not None:
         payload["ulasan"] = body.ulasan
+    if body.keupayaan_ulasan is not None:
+        payload["keupayaan_ulasan"] = body.keupayaan_ulasan
+    if body.potensi_ulasan is not None:
+        payload["potensi_ulasan"] = body.potensi_ulasan
+    if body.penilai_nama is not None:
+        payload["penilai_nama"] = body.penilai_nama
+    if body.penilai_no_kad is not None:
+        payload["penilai_no_kad"] = body.penilai_no_kad
+    if body.penilai_jawatan is not None:
+        payload["penilai_jawatan"] = body.penilai_jawatan
+    if body.penilai_lama_mengenali is not None:
+        payload["penilai_lama_mengenali"] = body.penilai_lama_mengenali
+    if body.penilai_tarikh is not None:
+        payload["penilai_tarikh"] = body.penilai_tarikh
+    if body.penilai_semula_nama is not None:
+        payload["penilai_semula_nama"] = body.penilai_semula_nama
+    if body.penilai_semula_no_kad is not None:
+        payload["penilai_semula_no_kad"] = body.penilai_semula_no_kad
+    if body.penilai_semula_jawatan is not None:
+        payload["penilai_semula_jawatan"] = body.penilai_semula_jawatan
+    if body.penilai_semula_tarikh is not None:
+        payload["penilai_semula_tarikh"] = body.penilai_semula_tarikh
     if not payload:
         raise HTTPException(400, "No fields to update")
     upd = sb.table("aclis_evaluation").update(payload).eq("id", eval_id).execute()
@@ -112,4 +168,16 @@ def update_evaluation(
         raise HTTPException(404, "Evaluation not found")
     record_audit(sb, actor, "update", "evaluation", eval_id, {"fields": list(payload.keys())})
     r = result.data[0]
-    return EvaluationDetail(**_row_to_summary(r).model_dump(), scores=r.get("scores") or {})
+    return EvaluationDetail(**_row_to_summary(r).model_dump(), scores=r.get("scores") or {},
+        keupayaan_ulasan=r.get("keupayaan_ulasan"),
+        potensi_ulasan=r.get("potensi_ulasan"),
+        penilai_nama=r.get("penilai_nama"),
+        penilai_no_kad=r.get("penilai_no_kad"),
+        penilai_jawatan=r.get("penilai_jawatan"),
+        penilai_lama_mengenali=r.get("penilai_lama_mengenali"),
+        penilai_tarikh=r.get("penilai_tarikh"),
+        penilai_semula_nama=r.get("penilai_semula_nama"),
+        penilai_semula_no_kad=r.get("penilai_semula_no_kad"),
+        penilai_semula_jawatan=r.get("penilai_semula_jawatan"),
+        penilai_semula_tarikh=r.get("penilai_semula_tarikh"),
+    )

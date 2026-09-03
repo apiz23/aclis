@@ -52,6 +52,10 @@ const ENTITY_LABEL: Record<string, string> = {
   kampung:    "Kampung",
   evaluation: "Penilaian",
   resident:   "Penduduk",
+  jpkk_bank:  "JPKK - Bank",
+  jpkk_member: "JPKK - Ahli",
+  jpkk_meeting: "JPKK - Mesyuarat",
+  jpkk_claim: "JPKK - Tuntutan",
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -60,7 +64,7 @@ const ROLE_LABEL: Record<string, string> = {
   ketua_kampung: "Ketua Kampung",
 };
 
-const ENTITY_FILTERS = ["Semua", "leader", "report", "issue", "kampung", "evaluation", "resident"] as const;
+const ENTITY_FILTERS = ["Semua", "leader", "report", "issue", "kampung", "evaluation", "resident", "jpkk_bank", "jpkk_member", "jpkk_meeting", "jpkk_claim"] as const;
 
 function formatTime(iso: string) {
   const d = new Date(iso);

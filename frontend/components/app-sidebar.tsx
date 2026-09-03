@@ -35,6 +35,7 @@ import {
 	BookUser,
 	FileInput,
 	ScrollText,
+	Users2,
 } from "lucide-react";
 import { useCurrentUser } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,6 +76,12 @@ const NAV_GROUPS = [
 				href: "/penilaian",
 				icon: ClipboardList,
 				roles: ["admin_daerah"],
+			},
+			{
+				label: "JPKK",
+				href: "/jpkk",
+				icon: Users2,
+				roles: ["admin_daerah", "penghulu"],
 			},
 		],
 	},

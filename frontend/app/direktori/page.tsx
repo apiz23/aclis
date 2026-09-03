@@ -162,8 +162,8 @@ export default function DirektoriPage() {
 
 			{/* Ketua Kampung table */}
 			{(filter === "Semua" || filter === "KK") && (
-				<Card className="ring-0 shadow-none gap-0">
-					<div className="flex items-center justify-between border-b px-4 py-3.5">
+				<Card className="ring-0 shadow-none gap-0 pt-3">
+					<div className="flex items-center justify-between border-b px-4 py-3.5 pt-0">
 						<div>
 							<p className="text-sm font-semibold">
 								Ketua Kampung ({isLoading ? "…" : kks.length})

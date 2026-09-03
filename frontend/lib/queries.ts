@@ -3,6 +3,8 @@ import { apiGet } from "@/lib/api";
 import type {
   Stats, KampungSummary, LeaderSummary, ReportSummary,
   IssueSummary, EvaluationSummary, AuditLogEntry,
+  JpkkBankSummary, JpkkMemberSummary, JpkkMeetingSummary,
+  JpkkMeetingDetail, JpkkClaimSummary, JpkkClaimDetail, JpkkStats,
 } from "@/lib/types";
 
 export const QUERY_KEYS = {
@@ -15,6 +17,14 @@ export const QUERY_KEYS = {
   reports:     ["reports"] as const,
   evaluations: ["evaluations"] as const,
   audit:       ["audit"] as const,
+  jpkk: {
+    bank: (kampungId: string) => ["jpkk", "bank", kampungId] as const,
+    members: (kampungId: string) => ["jpkk", "members", kampungId] as const,
+    meetings: (kampungId: string) => ["jpkk", "meetings", kampungId] as const,
+    meeting: (id: string) => ["jpkk", "meeting", id] as const,
+    claims: (kampungId: string) => ["jpkk", "claims", kampungId] as const,
+    stats: (kampungId: string) => ["jpkk", "stats", kampungId] as const,
+  },
 };
 
 export interface MeResponse { id: string; email: string | null; role: string }
@@ -82,6 +92,54 @@ export function useAuditLog(enabled = true) {
     queryKey: QUERY_KEYS.audit,
     queryFn: () => apiGet("/audit"),
     enabled,
+  });
+}
+
+export function useJpkkBank(kampungId: string) {
+  return useQuery<JpkkBankSummary | null>({
+    queryKey: QUERY_KEYS.jpkk.bank(kampungId),
+    queryFn: () => apiGet(`/jpkk/bank/${kampungId}`),
+    enabled: !!kampungId,
+  });
+}
+
+export function useJpkkMembers(kampungId: string) {
+  return useQuery<JpkkMemberSummary[]>({
+    queryKey: QUERY_KEYS.jpkk.members(kampungId),
+    queryFn: () => apiGet(`/jpkk/members/${kampungId}`),
+    enabled: !!kampungId,
+  });
+}
+
+export function useJpkkMeetings(kampungId: string) {
+  return useQuery<JpkkMeetingSummary[]>({
+    queryKey: QUERY_KEYS.jpkk.meetings(kampungId),
+    queryFn: () => apiGet(`/jpkk/meetings/${kampungId}`),
+    enabled: !!kampungId,
+  });
+}
+
+export function useJpkkMeeting(id: string) {
+  return useQuery<JpkkMeetingDetail>({
+    queryKey: QUERY_KEYS.jpkk.meeting(id),
+    queryFn: () => apiGet(`/jpkk/meetings/detail/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useJpkkClaims(kampungId: string) {
+  return useQuery<JpkkClaimSummary[]>({
+    queryKey: QUERY_KEYS.jpkk.claims(kampungId),
+    queryFn: () => apiGet(`/jpkk/claims/${kampungId}`),
+    enabled: !!kampungId,
+  });
+}
+
+export function useJpkkStats(kampungId: string) {
+  return useQuery<JpkkStats>({
+    queryKey: QUERY_KEYS.jpkk.stats(kampungId),
+    queryFn: () => apiGet(`/jpkk/stats/${kampungId}`),
+    enabled: !!kampungId,
   });
 }
 

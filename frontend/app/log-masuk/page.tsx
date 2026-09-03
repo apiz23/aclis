@@ -26,13 +26,13 @@ export default function LoginPage() {
 				<div className="relative z-10 flex flex-1 flex-col justify-center px-14 py-16">
 					{/* Logo + org */}
 					<div className="mb-12 flex items-center gap-4">
-						<div className="size-14 shrink-0 overflow-hidden">
+						<div className="size-12 shrink-0 overflow-hidden">
 							<Image
 								src="/icons/android-chrome-192x192.png"
 								alt="ACLIS"
-								width={56}
-								height={56}
-								className="size-full object-cover"
+								width={48}
+								height={48}
+								className="object-contain"
 								priority
 							/>
 						</div>
@@ -41,7 +41,7 @@ export default function LoginPage() {
 								Kerajaan Malaysia
 							</p>
 							<p className="font-heading text-[13px] font-semibold uppercase tracking-[0.12em] text-white/55">
-								Pejabat Daerah dan Tanah
+								Pejabat Daerah Pontian, Johor
 							</p>
 						</div>
 					</div>
@@ -82,8 +82,8 @@ export default function LoginPage() {
 				{/* Footer */}
 				<div className="relative z-10 border-t border-white/10 px-14 py-6">
 					<p className="text-[11px] leading-[1.6] text-white/25">
-						Jabatan Daerah dan Tanah Pontian
-						<br />© 2026 Kerajaan Malaysia. Hak Cipta Terpelihara.
+						Jabatan Daerah Pontian
+						<br />© 2026 Kerajaan Johor. Hak Cipta Terpelihara.
 					</p>
 				</div>
 			</div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
 							alt="ACLIS"
 							width={40}
 							height={40}
-							className="size-full object-cover"
+							className="object-contain"
 						/>
 					</div>
 					<div>

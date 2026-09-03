@@ -4,11 +4,24 @@ import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrentUser } from "@/lib/queries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiPost } from "@/lib/api";
 
 type Category = "Notis Rasmi" | "Arahan" | "Taklimat" | "Borang";
 const CATEGORIES: Category[] = ["Notis Rasmi", "Arahan", "Taklimat", "Borang"];
@@ -99,9 +112,33 @@ const DEADLINE_TONE = {
   muted: "bg-background border-border text-muted-foreground",
 };
 
+interface NewAnnouncement {
+  title: string;
+  body: string;
+  category: Category;
+}
+
 export default function PengumumanPage() {
   const [filter, setFilter] = useState<"Semua" | Category>("Semua");
   const [query, setQuery] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState<NewAnnouncement>({
+    title: "",
+    body: "",
+    category: "Notis Rasmi",
+  });
+  const { data: me } = useCurrentUser();
+  const isAdmin = me?.role === "admin_daerah";
+  const qc = useQueryClient();
+
+  const createAnnouncement = useMutation({
+    mutationFn: (data: NewAnnouncement) => apiPost("/announcements", data),
+    onSuccess: () => {
+      setDialogOpen(false);
+      setNewAnnouncement({ title: "", body: "", category: "Notis Rasmi" });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
+    },
+  });
 
   const items = useMemo(() => {
     return ANNOUNCEMENTS.filter(a => {
@@ -123,7 +160,81 @@ export default function PengumumanPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">Arkib</Button>
-          <Button size="sm">+ Pengumuman Baru</Button>
+          {isAdmin && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">+ Pengumuman Baru</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Tambah Pengumuman Baru</DialogTitle>
+                  <DialogDescription>
+                    Cipta pengumuman untuk ditunjukkan kepada penghulu dan ketua kampung.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <label className="text-xs font-medium">Kategori</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {CATEGORIES.map((cat) => (
+                        <Button
+                          key={cat}
+                          variant={newAnnouncement.category === cat ? "default" : "outline"}
+                          size="sm"
+                          type="button"
+                          onClick={() =>
+                            setNewAnnouncement((prev) => ({ ...prev, category: cat }))
+                          }
+                        >
+                          {cat}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-xs font-medium">Tajuk</label>
+                    <Input
+                      value={newAnnouncement.title}
+                      onChange={(e) =>
+                        setNewAnnouncement((prev) => ({ ...prev, title: e.target.value }))
+                      }
+                      placeholder="Tajuk pengumuman…"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-xs font-medium">Kandungan</label>
+                    <Textarea
+                      value={newAnnouncement.body}
+                      onChange={(e) =>
+                        setNewAnnouncement((prev) => ({ ...prev, body: e.target.value }))
+                      }
+                      placeholder="Tulis pengumuman di sini…"
+                      rows={4}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                    disabled={createAnnouncement.isPending}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    onClick={() => createAnnouncement.mutate(newAnnouncement)}
+                    disabled={
+                      !newAnnouncement.title.trim() ||
+                      !newAnnouncement.body.trim() ||
+                      createAnnouncement.isPending
+                    }
+                  >
+                    {createAnnouncement.isPending ? "Menghantar…" : "Hantar"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 

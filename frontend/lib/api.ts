@@ -40,6 +40,17 @@ export async function apiPatch(path: string, body: unknown) {
   return res.json();
 }
 
+export async function apiPut(path: string, body: unknown) {
+  const token = await getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...buildAuthHeaders(token) },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
 export async function apiDelete(path: string): Promise<void> {
   const token = await getToken();
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {

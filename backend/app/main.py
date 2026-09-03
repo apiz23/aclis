@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.routers import me, stats, kampung, leaders, reports, issues, evaluations, residents, audit
+from app.routers import me, stats, kampung, leaders, reports, issues, evaluations, residents, audit, jpkk
 from app.config import settings
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
