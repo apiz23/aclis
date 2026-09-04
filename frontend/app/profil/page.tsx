@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +22,13 @@ import {
 } from "@/components/ui/dialog";
 import { apiGet } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import { z } from "zod";
 import { Settings, KeyRound, ShieldCheck } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 const emailSchema = z.object({
   email: z.string().min(1, "E-mel diperlukan.").email("Format e-mel tidak sah."),
 });
+type EmailValues = z.infer<typeof emailSchema>;
 
 const passwordSchema = z.object({
   password: z.string().min(8, "Kata laluan mestilah sekurang-kurangnya 8 aksara.")
@@ -35,6 +40,7 @@ const passwordSchema = z.object({
   message: "Kata laluan tidak sepadan.",
   path: ["confirm"],
 });
+type PasswordValues = z.infer<typeof passwordSchema>;
 
 interface LeaderInfo {
   id: string;
@@ -108,15 +114,22 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   const [editOpen, setEditOpen] = useState(false);
-  const [editEmail, setEditEmail] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [editMsg, setEditMsg] = useState("");
 
   const [pwOpen, setPwOpen] = useState(false);
-  const [pwNew, setPwNew] = useState("");
-  const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState("");
+
+  const emailForm = useForm<EmailValues>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: "" },
+  });
+
+  const pwForm = useForm<PasswordValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { password: "", confirm: "" },
+  });
 
   useEffect(() => {
     apiGet("/me")
@@ -129,52 +142,40 @@ export default function ProfilePage() {
     ? me.email.slice(0, 2).toUpperCase()
     : "?";
 
-  async function handleEditProfile() {
-    const parsed = emailSchema.safeParse({ email: editEmail });
-    if (!parsed.success) {
-      setEditMsg(parsed.error.issues[0]?.message || "E-mel tidak sah.");
-      return;
-    }
+  async function handleEditProfile(data: EmailValues) {
     setEditSaving(true);
     setEditMsg("");
-    const { error } = await supabase.auth.updateUser({ email: editEmail });
+    const { error } = await supabase.auth.updateUser({ email: data.email });
     if (error) {
       setEditMsg(error.message);
     } else {
       setEditMsg("E-mel dikemaskini. Semak inbox untuk pengesahan.");
-      setMe((prev) => (prev ? { ...prev, email: editEmail } : prev));
+      setMe((prev) => (prev ? { ...prev, email: data.email } : prev));
     }
     setEditSaving(false);
   }
 
-  async function handleChangePassword() {
-    const parsed = passwordSchema.safeParse({ password: pwNew, confirm: pwConfirm });
-    if (!parsed.success) {
-      setPwMsg(parsed.error.issues[0]?.message || "Data tidak sah.");
-      return;
-    }
+  async function handleChangePassword(data: PasswordValues) {
     setPwSaving(true);
     setPwMsg("");
-    const { error } = await supabase.auth.updateUser({ password: pwNew });
+    const { error } = await supabase.auth.updateUser({ password: data.password });
     if (error) {
       setPwMsg(error.message);
     } else {
       setPwMsg("Kata laluan berjaya ditukar.");
-      setPwNew("");
-      setPwConfirm("");
+      pwForm.reset();
     }
     setPwSaving(false);
   }
 
   function openEditDialog() {
-    setEditEmail(me?.email ?? "");
+    emailForm.reset({ email: me?.email ?? "" });
     setEditMsg("");
     setEditOpen(true);
   }
 
   function openPwDialog() {
-    setPwNew("");
-    setPwConfirm("");
+    pwForm.reset();
     setPwMsg("");
     setPwOpen(true);
   }
@@ -292,35 +293,37 @@ export default function ProfilePage() {
                       Kemas kini alamat e-mel anda.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <label className="text-xs font-medium">E-mel</label>
-                      <Input
-                        type="email"
-                        value={editEmail}
-                        onChange={(e) => setEditEmail(e.target.value)}
-                        placeholder="e-mel baru…"
-                      />
-                    </div>
+                  <form onSubmit={emailForm.handleSubmit(handleEditProfile)} className="grid gap-4">
+                    <Controller name="email" control={emailForm.control} render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>E-mel</FieldLabel>
+                        <Input
+                          {...field}
+                          type="email"
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="e-mel baru…"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )} />
                     {editMsg && (
-                      <p className="text-xs text-muted-foreground">{editMsg}</p>
+                      <p className={`text-xs ${editMsg.includes("berjaya") ? "text-green" : "text-destructive"}`}>{editMsg}</p>
                     )}
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setEditOpen(false)}
-                      disabled={editSaving}
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      onClick={handleEditProfile}
-                      disabled={!editEmail.trim() || editSaving}
-                    >
-                      {editSaving ? "Menyimpan…" : "Simpan"}
-                    </Button>
-                  </DialogFooter>
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditOpen(false)}
+                        disabled={editSaving}
+                      >
+                        Batal
+                      </Button>
+                      <LoadingButton type="submit" loading={editSaving} loadingText="Menyimpan…">
+                        Simpan
+                      </LoadingButton>
+                    </DialogFooter>
+                  </form>
                 </DialogContent>
               </Dialog>
 
@@ -342,44 +345,50 @@ export default function ProfilePage() {
                       Masukkan kata laluan baru anda.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <label className="text-xs font-medium">Kata Laluan Baru</label>
-                      <Input
-                        type="password"
-                        value={pwNew}
-                        onChange={(e) => setPwNew(e.target.value)}
-                        placeholder="Kata laluan baru…"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-xs font-medium">Sahkan Kata Laluan</label>
-                      <Input
-                        type="password"
-                        value={pwConfirm}
-                        onChange={(e) => setPwConfirm(e.target.value)}
-                        placeholder="Taip semula kata laluan…"
-                      />
-                    </div>
+                  <form onSubmit={pwForm.handleSubmit(handleChangePassword)} className="grid gap-4">
+                    <Controller name="password" control={pwForm.control} render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Kata Laluan Baru</FieldLabel>
+                        <Input
+                          {...field}
+                          type="password"
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="Kata laluan baru…"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )} />
+                    <Controller name="confirm" control={pwForm.control} render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Sahkan Kata Laluan</FieldLabel>
+                        <Input
+                          {...field}
+                          type="password"
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="Taip semula kata laluan…"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )} />
                     {pwMsg && (
                       <p className={`text-xs ${pwMsg.includes("berjaya") ? "text-green" : "text-destructive"}`}>{pwMsg}</p>
                     )}
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setPwOpen(false)}
-                      disabled={pwSaving}
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      onClick={handleChangePassword}
-                      disabled={!pwNew || !pwConfirm || pwSaving}
-                    >
-                      {pwSaving ? "Menyimpan…" : "Tukar"}
-                    </Button>
-                  </DialogFooter>
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPwOpen(false)}
+                        disabled={pwSaving}
+                      >
+                        Batal
+                      </Button>
+                      <LoadingButton type="submit" loading={pwSaving} loadingText="Menyimpan…">
+                        Tukar
+                      </LoadingButton>
+                    </DialogFooter>
+                  </form>
                 </DialogContent>
               </Dialog>
             </CardContent>
