@@ -18,7 +18,23 @@ import {
 } from "@/components/ui/dialog";
 import { apiGet } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { z } from "zod";
 import { Settings, KeyRound, ShieldCheck } from "lucide-react";
+
+const emailSchema = z.object({
+  email: z.string().min(1, "E-mel diperlukan.").email("Format e-mel tidak sah."),
+});
+
+const passwordSchema = z.object({
+  password: z.string().min(8, "Kata laluan mestilah sekurang-kurangnya 8 aksara.")
+    .regex(/[A-Z]/, "Mestilah mengandungi sekurang-kurangnya satu huruf besar.")
+    .regex(/[a-z]/, "Mestilah mengandungi sekurang-kurangnya satu huruf kecil.")
+    .regex(/[0-9]/, "Mestilah mengandungi sekurang-kurangnya satu nombor."),
+  confirm:  z.string(),
+}).refine((d) => d.password === d.confirm, {
+  message: "Kata laluan tidak sepadan.",
+  path: ["confirm"],
+});
 
 interface LeaderInfo {
   id: string;
@@ -114,6 +130,11 @@ export default function ProfilePage() {
     : "?";
 
   async function handleEditProfile() {
+    const parsed = emailSchema.safeParse({ email: editEmail });
+    if (!parsed.success) {
+      setEditMsg(parsed.error.issues[0]?.message || "E-mel tidak sah.");
+      return;
+    }
     setEditSaving(true);
     setEditMsg("");
     const { error } = await supabase.auth.updateUser({ email: editEmail });
@@ -127,12 +148,9 @@ export default function ProfilePage() {
   }
 
   async function handleChangePassword() {
-    if (pwNew !== pwConfirm) {
-      setPwMsg("Kata laluan tidak sepadan.");
-      return;
-    }
-    if (pwNew.length < 6) {
-      setPwMsg("Kata laluan mestilah sekurang-kurangnya 6 aksara.");
+    const parsed = passwordSchema.safeParse({ password: pwNew, confirm: pwConfirm });
+    if (!parsed.success) {
+      setPwMsg(parsed.error.issues[0]?.message || "Data tidak sah.");
       return;
     }
     setPwSaving(true);
@@ -344,7 +362,7 @@ export default function ProfilePage() {
                       />
                     </div>
                     {pwMsg && (
-                      <p className="text-xs text-muted-foreground">{pwMsg}</p>
+                      <p className={`text-xs ${pwMsg.includes("berjaya") ? "text-green" : "text-destructive"}`}>{pwMsg}</p>
                     )}
                   </div>
                   <DialogFooter>

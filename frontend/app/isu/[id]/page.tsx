@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { apiGet, apiPatch, apiPost } from "@/lib/api";
-import { ArrowLeft, Bot, RefreshCw } from "lucide-react";
+import { apiGet, apiPatch } from "@/lib/api";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -58,7 +58,9 @@ export default function IssueDetailPage() {
   const [error, setError]             = useState(false);
   const [isAdmin, setIsAdmin]         = useState(false);
   const [updating, setUpdating]       = useState(false);
-  const [recategorizing, setRecategorizing] = useState(false);
+  const [summary, setSummary]         = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function load() {
     setLoading(true);
@@ -74,6 +76,28 @@ export default function IssueDetailPage() {
       const role = (s.session?.user?.app_metadata as Record<string,string> | undefined)?.role;
       setIsAdmin(role === "admin_daerah");
     });
+
+    setSummaryLoading(true);
+    apiGet(`/issues/${id}/summary`)
+      .then((d: { summary: string | null }) => {
+        setSummary(d.summary);
+        if (!d.summary) {
+          pollRef.current = setInterval(() => {
+            apiGet(`/issues/${id}/summary`)
+              .then((d2: { summary: string | null }) => {
+                if (d2.summary) {
+                  setSummary(d2.summary);
+                  if (pollRef.current) clearInterval(pollRef.current);
+                }
+              })
+              .catch(() => {});
+          }, 3000);
+        }
+      })
+      .catch(() => setSummary(null))
+      .finally(() => setSummaryLoading(false));
+
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [id]);
   useEffect(() => {
     if (error) { toast.error("Rekod tidak ditemui atau akses ditolak."); router.replace("/isu"); }
@@ -96,25 +120,6 @@ export default function IssueDetailPage() {
       // handled by toast.promise
     } finally {
       setUpdating(false);
-    }
-  }
-
-  async function handleRecategorize() {
-    setRecategorizing(true);
-    const promise = apiPost(`/issues/${id}/recategorize`, {});
-
-    toast.promise(promise, {
-      loading: "Menghantar ke AI...",
-      success: "Permintaan kategori AI dihantar. Sila muat semula sebentar.",
-      error: "Gagal menghantar permintaan kategori AI.",
-    });
-
-    try {
-      await promise;
-    } catch {
-      // handled by toast.promise
-    } finally {
-      setRecategorizing(false);
     }
   }
 
@@ -198,40 +203,25 @@ export default function IssueDetailPage() {
         </CardContent>
       </Card>
 
-      {/* ── AI Category card ── */}
-      <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
-        <div className="px-5 py-4 border-b flex items-center gap-2">
-          <Bot className="h-4 w-4 text-primary" />
-          <p className="text-sm font-semibold">Kategori AI</p>
-          <Badge variant="outline" className="ml-auto text-[10px] leading-none">AI</Badge>
-          {isAdmin && !loading && data?.description && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2 text-xs"
-              onClick={handleRecategorize}
-              disabled={recategorizing}
-            >
-              <RefreshCw className={`h-3 w-3 mr-1 ${recategorizing ? "animate-spin" : ""}`} />
-              {recategorizing ? "Memproses…" : "Kemas Semula"}
-            </Button>
-          )}
-        </div>
-        <CardContent className="p-5">
-          {loading ? (
-            <Skeleton className="h-6 w-32" />
-          ) : data?.ai_category ? (
-            <Badge variant="accent" className="gap-1.5 text-sm px-2.5 py-1">
-              <Bot className="h-3.5 w-3.5" />
-              {data.ai_category}
-            </Badge>
-          ) : (
-            <p className="text-sm text-muted-foreground italic">
-              Kategori belum dijana. {data?.description ? "AI akan memproses dalam masa terdekat." : "Tiada penerangan untuk dikategori."}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {/* ── AI Summary card ── */}
+      {(summaryLoading || summary) && (
+        <Card className="rounded-none ring-0 shadow-none gap-0 overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold">Ringkasan AI</p>
+            <Badge variant="outline" className="ml-auto text-[10px] leading-none">AI</Badge>
+          </div>
+          <CardContent className="p-5">
+            {summaryLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-foreground/80">{summary}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </AppLayout>
   );
 }

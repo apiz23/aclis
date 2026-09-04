@@ -87,7 +87,7 @@ export default function ReportsPage() {
       </div>
 
       {!loading && reportList.length > 0 && (
-        <div className="border bg-card rounded-lg shadow-sm p-4 flex items-center gap-4">
+        <div className="border bg-card rounded-lg p-4 flex items-center gap-4">
           <div className="flex-1">
             <div className="flex justify-between text-xs mb-1.5">
               <span className="font-medium text-muted-foreground">Kadar Penghantaran</span>
@@ -99,7 +99,7 @@ export default function ReportsPage() {
         </div>
       )}
 
-      <div className="border bg-card rounded-lg shadow-sm overflow-hidden">
+      <div className="border bg-card rounded-lg overflow-hidden">
         <div className="px-5 py-4 border-b">
           <p className="text-sm font-semibold">Rekod Laporan</p>
         </div>

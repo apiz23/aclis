@@ -72,7 +72,7 @@ function ChartCard({ title, icon: Icon, children, loading }: { title: string; ic
   );
 }
 
-const MAX_EVAL = 60;
+const MAX_EVAL = 56;
 
 export default function DashboardPage() {
   const { data: me, isLoading: meLoading }           = useCurrentUser();
@@ -216,7 +216,7 @@ export default function DashboardPage() {
 
         <Card className="rounded-none ring-0 shadow-none py-0 gap-0 overflow-hidden">
           <div className="px-5 py-3.5 border-b flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-gold" />
+            <Sparkles className="h-4 w-4 text-[var(--gold)]" />
             <p className="heading-section">Analisis AI</p>
             <Badge variant="secondary" className="ml-auto text-[10px] uppercase tracking-wide font-semibold">AI</Badge>
           </div>

@@ -47,9 +47,9 @@ const ISSUE_TYPES = ["Lampu Jalan", "Jalan Rosak", "Paip Air", "Longkang", "Samp
 
 const issueSchema = z.object({
   kampung_id: z.string().min(1, "Sila pilih kampung."),
-  type: z.string().optional(),
-  location: z.string().optional(),
-  description: z.string().optional(),
+  type: z.enum(ISSUE_TYPES as [string, ...string[]], { required_error: "Sila pilih jenis isu." }),
+  location: z.string().max(200, "Lokasi terlalu panjang.").optional().or(z.literal("")),
+  description: z.string().max(2000, "Penerangan terlalu panjang.").optional().or(z.literal("")),
 });
 type IssueFormValues = z.infer<typeof issueSchema>;
 
@@ -105,8 +105,8 @@ function parseCoords(coords: string | null): [number, number] | null {
 
 const STATUS_COLOR: Record<string, string> = {
   open:        "text-destructive fill-destructive",
-  in_progress: "text-amber-500 fill-amber-500",
-  resolved:    "text-emerald-600 fill-emerald-600",
+  in_progress: "text-[var(--amber)] fill-[var(--amber)]",
+  resolved:    "text-[var(--success)] fill-[var(--success)]",
   closed:      "text-muted-foreground fill-muted-foreground",
 };
 
@@ -191,14 +191,14 @@ export default function IssuesPage() {
 
       {!loading && issueList.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <Badge variant={statusFilter === null ? "default" : "secondary"} className="cursor-pointer rounded-full px-3 py-1" onClick={() => setStatusFilter(null)}>
+          <Badge variant={statusFilter === null ? "default" : "secondary"} className="cursor-pointer rounded-none px-3 py-1" onClick={() => setStatusFilter(null)}>
             Semua ({issueList.length})
           </Badge>
           {(Object.entries(STATUS_CONFIG) as [IssueStatus, { label: string; variant: "primary" | "warning" | "success" | "secondary" }][]).map(([s, cfg]) => statusCounts[s] > 0 && (
             <Badge
               key={s}
               variant={statusFilter === s ? cfg.variant : "secondary"}
-              className={cn("cursor-pointer rounded-full px-3 py-1", statusFilter !== s && "opacity-70 hover:opacity-100")}
+              className={cn("cursor-pointer rounded-none px-3 py-1", statusFilter !== s && "opacity-70 hover:opacity-100")}
               onClick={() => setStatusFilter(statusFilter === s ? null : s)}
             >
               {cfg.label} ({statusCounts[s]})

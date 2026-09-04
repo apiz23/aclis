@@ -72,11 +72,11 @@ interface Resident {
 }
 
 const residentSchema = z.object({
-  name:       z.string().min(1, "Nama diperlukan."),
-  ic_no:      z.string().optional(),
-  phone:      z.string().optional(),
+  name:       z.string().min(1, "Nama diperlukan.").max(100, "Nama terlalu panjang."),
+  ic_no:      z.string().regex(/^[\d\s-]*$/, "Format IC tidak sah.").max(20, "No. IC terlalu panjang.").optional().or(z.literal("")),
+  phone:      z.string().regex(/^[\d\s+-]*$/, "Format telefon tidak sah.").max(20, "No. telefon terlalu panjang.").optional().or(z.literal("")),
   b40_status: z.boolean(),
-  address:    z.string().optional(),
+  address:    z.string().max(500, "Alamat terlalu panjang.").optional().or(z.literal("")),
 });
 type ResidentValues = z.infer<typeof residentSchema>;
 

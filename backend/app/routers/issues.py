@@ -19,6 +19,16 @@ def _bg_categorize(issue_id: str, description: str, issue_type: str | None, sb: 
     except Exception as e:
         logger.warning("bg_categorize issue %s: %s", issue_id, e)
 
+
+def _bg_summarize(issue_id: str, description: str, issue_type: str | None, location: str | None, sb: Client):
+    from app.ai import ai
+    try:
+        summary = ai().summarize_issue(description, issue_type, location)
+        if summary:
+            sb.table("aclis_issue").update({"ai_summary": summary}).eq("id", issue_id).execute()
+    except Exception as e:
+        logger.warning("bg_summarize issue %s: %s", issue_id, e)
+
 _SELECT_DETAIL = "id, kampung_id, type, location, description, ai_category, status, coords, aclis_kampung(name)"
 
 
@@ -72,6 +82,62 @@ def get_issue(
     return IssueDetail(**_row_to_summary(r).model_dump())
 
 
+@router.get("/issues/{issue_id}/category")
+def get_issue_category(
+    issue_id: str,
+    background_tasks: BackgroundTasks,
+    scope: UserScope = Depends(get_user_scope),
+    sb: Client = Depends(get_supabase),
+):
+    rows = (
+        sb.table("aclis_issue")
+        .select("ai_category, description, type, kampung_id")
+        .eq("id", issue_id)
+        .execute()
+        .data
+    )
+    if not rows:
+        raise HTTPException(404, "Issue not found")
+    r = rows[0]
+    if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Issue not found")
+
+    category = r.get("ai_category")
+
+    if not category and r.get("description"):
+        background_tasks.add_task(_bg_categorize, issue_id, r["description"], r.get("type"), sb)
+
+    return {"ai_category": category}
+
+
+@router.get("/issues/{issue_id}/summary")
+def get_issue_summary(
+    issue_id: str,
+    background_tasks: BackgroundTasks,
+    scope: UserScope = Depends(get_user_scope),
+    sb: Client = Depends(get_supabase),
+):
+    rows = (
+        sb.table("aclis_issue")
+        .select("ai_summary, description, type, location, kampung_id")
+        .eq("id", issue_id)
+        .execute()
+        .data
+    )
+    if not rows:
+        raise HTTPException(404, "Issue not found")
+    r = rows[0]
+    if not scope.is_admin and r.get("kampung_id") not in scope.allowed_kampung_ids:
+        raise HTTPException(404, "Issue not found")
+
+    summary = r.get("ai_summary")
+
+    if not summary and r.get("description"):
+        background_tasks.add_task(_bg_summarize, issue_id, r["description"], r.get("type"), r.get("location"), sb)
+
+    return {"summary": summary}
+
+
 @router.post("/issues", response_model=IssueDetail, status_code=201)
 def create_issue(
     body: IssueCreate,
@@ -98,6 +164,7 @@ def create_issue(
     record_audit(sb, actor, "create", "issue", r["id"], {"kampung_id": body.kampung_id})
     if body.description:
         background_tasks.add_task(_bg_categorize, r["id"], body.description, body.type, sb)
+        background_tasks.add_task(_bg_summarize, r["id"], body.description, body.type, body.location, sb)
     return IssueDetail(**_row_to_summary(r).model_dump())
 
 

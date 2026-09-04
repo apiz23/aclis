@@ -13,8 +13,11 @@ dependencies = [
   "supabase>=2.4",
   "python-dateutil>=2.9",
   "groq>=0.18",
+  "jamaibase>=1.0.5",
   "pycountry>=24",
   "cachetools>=5.3",
+  "slowapi>=0.1.10",
+  "python-multipart>=0.0.9",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["."]

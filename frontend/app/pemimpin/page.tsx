@@ -58,19 +58,19 @@ function initials(name: string) {
 }
 
 const leaderSchema = z.object({
-  name:            z.string().min(1, "Nama diperlukan."),
-  type:            z.string().min(1, "Sila pilih jawatan."),
-  ic_no:           z.string().optional(),
+  name:            z.string().min(1, "Nama diperlukan.").max(100, "Nama terlalu panjang."),
+  type:            z.enum(["ketua_kampung", "penghulu", "ketua_masyarakat"], { required_error: "Sila pilih jawatan." }),
+  ic_no:           z.string().regex(/^[\d\s-]*$/, "Format IC tidak sah.").max(20, "No. IC terlalu panjang.").optional().or(z.literal("")),
   kampung_id:      z.string().optional(),
   tarikh_lantikan: z.string().optional(),
-  parti_lantikan:  z.string().optional(),
-  parti_terkini:   z.string().optional(),
+  parti_lantikan:  z.string().max(100, "Nama parti terlalu panjang.").optional().or(z.literal("")),
+  parti_terkini:   z.string().max(100, "Nama parti terlalu panjang.").optional().or(z.literal("")),
   photo_url:       z.string().optional(),
 });
 type LeaderFormValues = z.infer<typeof leaderSchema>;
 
 const EMPTY: LeaderFormValues = {
-  name: "", type: "", ic_no: "", kampung_id: "", tarikh_lantikan: "",
+  name: "", type: undefined as unknown as "ketua_kampung", ic_no: "", kampung_id: "", tarikh_lantikan: "",
   parti_lantikan: "", parti_terkini: "", photo_url: "",
 };
 
@@ -250,6 +250,7 @@ export default function LeadersPage() {
                     <SelectContent>
                       <SelectItem value="ketua_kampung">Ketua Kampung</SelectItem>
                       <SelectItem value="penghulu">Penghulu</SelectItem>
+                      <SelectItem value="ketua_masyarakat">Ketua Masyarakat</SelectItem>
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

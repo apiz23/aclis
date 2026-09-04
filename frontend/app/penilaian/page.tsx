@@ -18,10 +18,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { apiPost } from "@/lib/api";
-import { ClipboardList, Star, Plus } from "lucide-react";
+import { ClipboardList, Star, Plus, Bot, FileText, AlertTriangle } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { ColumnDef } from "@tanstack/react-table";
-import { useCurrentUser, useLeaders, useEvaluations, QUERY_KEYS } from "@/lib/queries";
+import { useCurrentUser, useLeaders, useEvaluations, useLeaderPerformance, QUERY_KEYS } from "@/lib/queries";
+import type { LeaderPerformanceData } from "@/lib/types";
 
 interface EvaluationSummary {
   id: string; leader_id: string; leader_name: string | null;
@@ -30,28 +31,35 @@ interface EvaluationSummary {
 
 interface LeaderOption { id: string; name: string; type: string }
 
-const MAX_SCORE = 60;
+const MAX_SCORE = 56;
 
-const SCORE_KEYS = ["kehadiran", "khidmat_komuniti", "pengurusan", "komunikasi", "inisiatif", "kerjasama"] as const;
+const SCORE_KEYS = [
+  "akhlak_personaliti", "mutu_kerja", "minat_kerja", "kebolehpercayaan",
+  "komunikasi", "inisiatif", "disiplin_diri", "kerjasama",
+] as const;
 const SCORE_LABELS: Record<typeof SCORE_KEYS[number], string> = {
-  kehadiran: "Kehadiran Mesyuarat",
-  khidmat_komuniti: "Khidmat Komuniti",
-  pengurusan: "Pengurusan Kampung",
+  akhlak_personaliti: "Akhlak / Personaliti",
+  mutu_kerja: "Mutu Kerja",
+  minat_kerja: "Minat Terhadap Kerja",
+  kebolehpercayaan: "Kebolehpercayaan",
   komunikasi: "Komunikasi",
   inisiatif: "Inisiatif",
-  kerjasama: "Kerjasama Agensi",
+  disiplin_diri: "Disiplin Diri dan Kerja",
+  kerjasama: "Kerjasama",
 };
 
 const evalSchema = z.object({
   leader_id: z.string().min(1, "Sila pilih pemimpin."),
   period: z.string().min(1, "Sila masukkan tempoh.").regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM"),
   ulasan: z.string().optional(),
-  kehadiran:        z.coerce.number().min(0).max(10),
-  khidmat_komuniti: z.coerce.number().min(0).max(10),
-  pengurusan:       z.coerce.number().min(0).max(10),
-  komunikasi:       z.coerce.number().min(0).max(10),
-  inisiatif:        z.coerce.number().min(0).max(10),
-  kerjasama:        z.coerce.number().min(0).max(10),
+  akhlak_personaliti: z.coerce.number().min(1).max(7),
+  mutu_kerja:         z.coerce.number().min(1).max(7),
+  minat_kerja:        z.coerce.number().min(1).max(7),
+  kebolehpercayaan:   z.coerce.number().min(1).max(7),
+  komunikasi:         z.coerce.number().min(1).max(7),
+  inisiatif:          z.coerce.number().min(1).max(7),
+  disiplin_diri:      z.coerce.number().min(1).max(7),
+  kerjasama:          z.coerce.number().min(1).max(7),
   keupayaan_ulasan: z.string().optional(),
   potensi_ulasan:   z.string().optional(),
   penilai_nama:     z.string().optional(),
@@ -68,8 +76,8 @@ type EvalFormValues = z.infer<typeof evalSchema>;
 
 const DEFAULT_VALS: EvalFormValues = {
   leader_id: "", period: "", ulasan: "",
-  kehadiran: 0, khidmat_komuniti: 0, pengurusan: 0,
-  komunikasi: 0, inisiatif: 0, kerjasama: 0,
+  akhlak_personaliti: 1, mutu_kerja: 1, minat_kerja: 1, kebolehpercayaan: 1,
+  komunikasi: 1, inisiatif: 1, disiplin_diri: 1, kerjasama: 1,
   keupayaan_ulasan: "", potensi_ulasan: "",
   penilai_nama: "", penilai_no_kad: "", penilai_jawatan: "",
   penilai_lama_mengenali: "", penilai_tarikh: "",
@@ -98,7 +106,7 @@ function ScoreLiveTotal({ control }: { control: Control<EvalFormValues> }) {
   const total = (vals as number[]).reduce((s, v) => s + (Number(v) || 0), 0);
   const pct = (total / MAX_SCORE) * 100;
   return (
-    <div className="rounded-md bg-muted/60 px-3 py-2.5 space-y-1.5">
+    <div className="rounded-md bg-muted/60 px-3 py-2.5 space-y-1.5" role="status" aria-live="polite">
       <div className="flex justify-between text-xs font-medium">
         <span className="text-muted-foreground">Jumlah Sementara</span>
         <span className={pct >= 80 ? "text-[var(--success)]" : pct >= 60 ? "text-[var(--warning)]" : "text-destructive"}>
@@ -106,6 +114,86 @@ function ScoreLiveTotal({ control }: { control: Control<EvalFormValues> }) {
         </span>
       </div>
       <Progress value={pct} className="h-1.5" />
+    </div>
+  );
+}
+
+function PerformanceDataCard({ data, isLoading }: { data: LeaderPerformanceData | undefined; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="rounded-md border bg-muted/30 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  return (
+    <div className="rounded-md border bg-muted/30 p-4 space-y-3">
+      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <FileText className="h-3.5 w-3.5" />
+        Data Prestasi — {data.kampung_name ?? "—"}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-md bg-card border p-3 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase">Laporan Bulanan</span>
+            <span className={`text-xs font-semibold tabular-nums ${data.reports.on_time_rate >= 80 ? "text-[var(--success)]" : data.reports.on_time_rate >= 50 ? "text-[var(--warning)]" : "text-destructive"}`}>
+              {data.reports.on_time_rate}%
+            </span>
+          </div>
+          <p className="text-2xl font-heading font-bold tabular-nums">
+            {data.reports.submitted}<span className="text-sm text-muted-foreground font-normal">/{data.reports.total}</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground">dihantar on-time</p>
+          <div className="flex gap-2 text-[11px]">
+            {data.reports.late > 0 && (
+              <span className="text-[var(--warning)]">{data.reports.late} lewat</span>
+            )}
+            {data.reports.draft > 0 && (
+              <span className="text-muted-foreground">{data.reports.draft} draf</span>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-md bg-card border p-3 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase">Isu Komuniti</span>
+            <span className={`text-xs font-semibold tabular-nums ${data.issues.resolution_rate >= 60 ? "text-[var(--success)]" : data.issues.resolution_rate >= 30 ? "text-[var(--warning)]" : "text-destructive"}`}>
+              {data.issues.resolution_rate}%
+            </span>
+          </div>
+          <p className="text-2xl font-heading font-bold tabular-nums">
+            {data.issues.resolved + data.issues.closed}<span className="text-sm text-muted-foreground font-normal">/{data.issues.total}</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground">selesai ditutup</p>
+          <div className="flex gap-2 text-[11px]">
+            {data.issues.open > 0 && (
+              <span className="text-destructive">{data.issues.open} terbuka</span>
+            )}
+            {data.issues.in_progress > 0 && (
+              <span className="text-[var(--warning)]">{data.issues.in_progress} proses</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {data.ai_summary && (
+        <div className="rounded-md bg-muted/30 border px-3 py-2.5 flex gap-2.5">
+          <Bot className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          <p className="text-xs leading-relaxed text-muted-foreground">{data.ai_summary}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -119,10 +207,13 @@ export default function EvaluationsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const isAdmin = me?.role === "admin_daerah";
 
-  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<EvalFormValues>({
+  const { control, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<EvalFormValues>({
     resolver: zodResolver(evalSchema),
     defaultValues: DEFAULT_VALS,
   });
+
+  const selectedLeaderId = watch("leader_id");
+  const { data: perfData, isLoading: perfLoading } = useLeaderPerformance(selectedLeaderId || null);
 
   function openDialog() {
     reset(DEFAULT_VALS);
@@ -315,8 +406,10 @@ export default function EvaluationsPage() {
                 )}
               />
 
+              {selectedLeaderId && <PerformanceDataCard data={perfData} isLoading={perfLoading} />}
+
               <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Markah Penilaian (0–10 setiap kriteria)</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Markah Penilaian (1–7 setiap kriteria)</p>
                 <div className="grid grid-cols-2 gap-3">
                   {SCORE_KEYS.map((key) => (
                     <Controller
@@ -330,8 +423,8 @@ export default function EvaluationsPage() {
                             {...field}
                             id={key}
                             type="number"
-                            min={0}
-                            max={10}
+                            min={1}
+                            max={7}
                             step={1}
                             aria-invalid={fieldState.invalid}
                             className="h-8 text-sm"

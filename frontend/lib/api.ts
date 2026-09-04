@@ -29,6 +29,17 @@ export async function apiPost(path: string, body: unknown) {
   return res.json();
 }
 
+export async function apiPostFile(path: string, formData: FormData) {
+  const token = await getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+    method: "POST",
+    headers: buildAuthHeaders(token),
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
 export async function apiPatch(path: string, body: unknown) {
   const token = await getToken();
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {

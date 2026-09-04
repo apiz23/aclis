@@ -22,9 +22,17 @@ import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/lib/queries";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiPost } from "@/lib/api";
+import { z } from "zod";
+import { toast } from "sonner";
 
 type Category = "Notis Rasmi" | "Arahan" | "Taklimat" | "Borang";
 const CATEGORIES: Category[] = ["Notis Rasmi", "Arahan", "Taklimat", "Borang"];
+
+const announcementSchema = z.object({
+  title:    z.string().min(1, "Tajuk diperlukan.").max(200, "Tajuk terlalu panjang."),
+  body:     z.string().min(1, "Kandungan diperlukan.").max(5000, "Kandungan terlalu panjang."),
+  category: z.enum(["Notis Rasmi", "Arahan", "Taklimat", "Borang"] as [Category, ...Category[]]),
+});
 
 interface Announcement {
   id: string;
@@ -222,7 +230,14 @@ export default function PengumumanPage() {
                     Batal
                   </Button>
                   <Button
-                    onClick={() => createAnnouncement.mutate(newAnnouncement)}
+                    onClick={() => {
+                      const parsed = announcementSchema.safeParse(newAnnouncement);
+                      if (!parsed.success) {
+                        toast.error(parsed.error.issues[0]?.message || "Data tidak lengkap.");
+                        return;
+                      }
+                      createAnnouncement.mutate(newAnnouncement);
+                    }}
                     disabled={
                       !newAnnouncement.title.trim() ||
                       !newAnnouncement.body.trim() ||

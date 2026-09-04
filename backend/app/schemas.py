@@ -163,6 +163,31 @@ class EvaluationUpdate(BaseModel):
     penilai_semula_jawatan: str | None = None
     penilai_semula_tarikh: str | None = None
 
+class LeaderPerformanceReportStats(BaseModel):
+    total: int = 0
+    submitted: int = 0
+    late: int = 0
+    draft: int = 0
+    on_time_rate: float = 0.0
+    latest_period: str | None = None
+
+class LeaderPerformanceIssueStats(BaseModel):
+    total: int = 0
+    open: int = 0
+    in_progress: int = 0
+    resolved: int = 0
+    closed: int = 0
+    resolution_rate: float = 0.0
+
+class LeaderPerformanceData(BaseModel):
+    kampung_id: str
+    kampung_name: str | None = None
+    leader_name: str | None = None
+    leader_type: str | None = None
+    reports: LeaderPerformanceReportStats
+    issues: LeaderPerformanceIssueStats
+    ai_summary: str | None = None
+
 class LeaderCreate(BaseModel):
     name: constr(min_length=1, max_length=100)
     type: constr(pattern=r'^(ketua_kampung|penghulu|ketua_masyarakat)$')
@@ -252,111 +277,3 @@ class AuditLogEntry(BaseModel):
     entity_id: str | None
     details: dict | None
     created_at: str
-
-
-# ── JPKK Schemas ──────────────────────────────────────────────────────────────
-
-JPKK_BUREAUS = [
-    "Pengerusi", "Setiausaha",
-    "Biro Pembangunan Prasarana", "Biro Keselamatan Dan Kesihatan",
-    "Biro Pengurusan Kewangan", "Biro Ekonomi Dan Keusahawanan",
-    "Biro Kesejahteraan Dan Keceriaan", "Biro Pendidikan Dan Inovasi",
-    "Biro Pemantapan Spiritual", "Biro Kebajikan Dan Kesukarelawan",
-    "Biro Belia Sukan Dan Ngo", "Biro Infrastruktur Dan Komunikasi",
-    "Biro Hal Ehwal Wanita Dan Keluarga",
-]
-
-class JpkkBankSummary(BaseModel):
-    id: str
-    kampung_id: str
-    kampung_name: str | None = None
-    account_name: str | None = None
-    account_no: str | None = None
-    bank_name: str | None = None
-
-class JpkkBankUpdate(BaseModel):
-    account_name: str | None = None
-    account_no: str | None = None
-    bank_name: str | None = None
-
-class JpkkMemberSummary(BaseModel):
-    id: str
-    kampung_id: str
-    name: constr(min_length=1, max_length=100)
-    ic_no: str | None = None
-    bureau: str
-    phone: str | None = None
-    is_active: bool = True
-
-class JpkkMemberCreate(BaseModel):
-    kampung_id: str
-    name: constr(min_length=1, max_length=100)
-    ic_no: str | None = None
-    bureau: str
-    phone: str | None = None
-
-class JpkkMemberUpdate(BaseModel):
-    name: constr(min_length=1, max_length=100) | None = None
-    ic_no: str | None = None
-    bureau: str | None = None
-    phone: str | None = None
-    is_active: bool | None = None
-
-class JpkkMeetingSummary(BaseModel):
-    id: str
-    kampung_id: str
-    kampung_name: str | None = None
-    meeting_number: int
-    meeting_year: int
-    meeting_date: str
-    meeting_venue: str | None = None
-    status: str
-    attendee_count: int = 0
-
-class JpkkMeetingDetail(JpkkMeetingSummary):
-    minutes_text: str | None = None
-    agenda_json: list[dict] | None = None
-    attendees: list[dict] = []
-
-class JpkkMeetingCreate(BaseModel):
-    kampung_id: str
-    meeting_number: int
-    meeting_year: int
-    meeting_date: str
-    meeting_venue: str | None = None
-
-class JpkkMeetingUpdate(BaseModel):
-    meeting_date: str | None = None
-    meeting_venue: str | None = None
-    minutes_text: str | None = None
-    agenda_json: list[dict] | None = None
-    status: constr(pattern=r'^(planned|conducted|claimed)$') | None = None
-
-class JpkkAttendanceUpdate(BaseModel):
-    member_id: str
-    attended: bool
-
-class JpkkClaimSummary(BaseModel):
-    id: str
-    meeting_id: str
-    meeting_date: str | None = None
-    kampung_id: str
-    kampung_name: str | None = None
-    claim_type: str
-    total_amount: float
-    status: str
-    submitted_at: str | None = None
-
-class JpkkClaimDetail(JpkkClaimSummary):
-    notes: str | None = None
-    approved_at: str | None = None
-
-class JpkkClaimCreate(BaseModel):
-    meeting_id: str
-    kampung_id: str
-    claim_type: constr(pattern=r'^(chairperson|attendance)$')
-    notes: str | None = None
-
-class JpkkClaimUpdate(BaseModel):
-    status: constr(pattern=r'^(draft|submitted|approved|rejected)$') | None = None
-    notes: str | None = None

@@ -1,8 +1,11 @@
+import json
+import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.audit import record_audit
+from app.config import settings
 from app.db import get_supabase
 from app.schemas import ReportSummary, ReportDetail, ReportCreate, ReportUpdate, ReportSummaryAI
 
@@ -129,3 +132,64 @@ def get_report_summary(
         return ReportSummaryAI(summary=None)
     summary = ai().summarize_report(content)
     return ReportSummaryAI(summary=summary)
+
+
+@router.post("/reports/scan")
+async def scan_report(
+    image: UploadFile = File(...),
+    actor: CurrentUser = Depends(get_current_user),
+    sb: Client = Depends(get_supabase),
+):
+    if not settings.jamai_token:
+        raise HTTPException(500, "JamAI not configured")
+
+    # 1. Upload image to Supabase Storage
+    ext = (image.filename or "scan.png").rsplit(".", 1)[-1] or "png"
+    path = f"form-scans/{uuid.uuid4().hex}.{ext}"
+    contents = await image.read()
+    sb.storage.from_("documents").upload(
+        path=path,
+        file=contents,
+        file_options={"content-type": image.content_type or "image/png", "upsert": "true"},
+    )
+    public_url = sb.storage.from_("documents").get_public_url(path)
+
+    # 2. Send to JamaiBase
+    try:
+        from jamaibase import JamAI
+        from jamaibase.types.gen_table import MultiRowAddRequest
+
+        client = JamAI(token=settings.jamai_token, project_id=settings.jamai_project_id)
+        req = MultiRowAddRequest(
+            table_id=settings.jamai_table_id,
+            data=[{"image": public_url}],
+            stream=False,
+        )
+        resp = client.table.add_table_rows("action", req)
+
+        # 3. Parse result
+        raw = resp.rows[0].columns["result"].choices[0].message.content.strip()
+        # Strip markdown code fences if present
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1]
+        if raw.endswith("```"):
+            raw = raw.rsplit("```", 1)[0]
+        raw = raw.strip()
+
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        raise HTTPException(502, "AI returned invalid JSON. Please try again.")
+    except Exception as e:
+        raise HTTPException(502, f"Scan failed: {e}")
+
+    return {
+        "kampung_name": data.get("kampung_name"),
+        "mukim_name": data.get("mukim_name"),
+        "period": data.get("period"),
+        "population": data.get("population"),
+        "households": data.get("households"),
+        "births": data.get("births"),
+        "deaths": data.get("deaths"),
+        "activities": data.get("activities", []),
+        "notes": data.get("notes"),
+    }

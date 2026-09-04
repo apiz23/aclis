@@ -4,7 +4,7 @@ from supabase import Client
 from app.auth import get_current_user, CurrentUser, require_role, get_user_scope, UserScope
 from app.audit import record_audit
 from app.db import get_supabase
-from app.schemas import EvaluationSummary, EvaluationDetail, EvaluationCreate, EvaluationUpdate
+from app.schemas import EvaluationSummary, EvaluationDetail, EvaluationCreate, EvaluationUpdate, LeaderPerformanceData, LeaderPerformanceReportStats, LeaderPerformanceIssueStats
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -180,4 +180,97 @@ def update_evaluation(
         penilai_semula_no_kad=r.get("penilai_semula_no_kad"),
         penilai_semula_jawatan=r.get("penilai_semula_jawatan"),
         penilai_semula_tarikh=r.get("penilai_semula_tarikh"),
+    )
+
+
+@router.get("/leaders/{leader_id}/performance-data", response_model=LeaderPerformanceData)
+def get_leader_performance(
+    leader_id: str,
+    actor: CurrentUser = Depends(require_role("admin_daerah")),
+    sb: Client = Depends(get_supabase),
+):
+    from app.ai import ai
+
+    leader_rows = (
+        sb.table("aclis_leader")
+        .select("id, name, type, kampung_id, aclis_kampung(name)")
+        .eq("id", leader_id)
+        .execute()
+        .data
+    )
+    if not leader_rows:
+        raise HTTPException(404, "Leader not found")
+    lr = leader_rows[0]
+    kampung_id = lr.get("kampung_id")
+    if not kampung_id:
+        raise HTTPException(400, "Leader has no assigned kampung")
+
+    kampung_name = (lr.get("aclis_kampung") or {}).get("name")
+
+    report_rows = (
+        sb.table("aclis_monthly_report")
+        .select("status, period")
+        .eq("kampung_id", kampung_id)
+        .execute()
+        .data
+        or []
+    )
+    total_reports = len(report_rows)
+    submitted = sum(1 for r in report_rows if r.get("status") == "submitted")
+    late = sum(1 for r in report_rows if r.get("status") == "late")
+    draft = sum(1 for r in report_rows if r.get("status") == "draft")
+    on_time_rate = round((submitted / total_reports * 100), 1) if total_reports > 0 else 0.0
+    latest_period = None
+    if report_rows:
+        periods = [r.get("period", "") for r in report_rows if r.get("period")]
+        if periods:
+            latest_period = max(periods)
+
+    issue_rows = (
+        sb.table("aclis_issue")
+        .select("status")
+        .eq("kampung_id", kampung_id)
+        .execute()
+        .data
+        or []
+    )
+    total_issues = len(issue_rows)
+    open_count = sum(1 for i in issue_rows if i.get("status") == "open")
+    in_progress = sum(1 for i in issue_rows if i.get("status") == "in_progress")
+    resolved = sum(1 for i in issue_rows if i.get("status") == "resolved")
+    closed = sum(1 for i in issue_rows if i.get("status") == "closed")
+    resolution_rate = round(((resolved + closed) / total_issues * 100), 1) if total_issues > 0 else 0.0
+
+    perf_data = {
+        "leader_name": lr.get("name"),
+        "leader_type": lr.get("type"),
+        "kampung_name": kampung_name,
+        "reports": {
+            "total": total_reports,
+            "submitted": submitted,
+            "late": late,
+            "draft": draft,
+            "on_time_rate": on_time_rate,
+            "latest_period": latest_period,
+        },
+        "issues": {
+            "total": total_issues,
+            "open": open_count,
+            "in_progress": in_progress,
+            "resolved": resolved,
+            "closed": closed,
+            "resolution_rate": resolution_rate,
+        },
+    }
+
+    ai_summary = ai().summarize_leader_performance(perf_data)
+
+    return LeaderPerformanceData(
+        kampung_id=kampung_id,
+        kampung_name=kampung_name,
+        leader_name=lr.get("name"),
+        leader_type=lr.get("type"),
+        reports=LeaderPerformanceReportStats(**perf_data["reports"]),
+        issues=LeaderPerformanceIssueStats(**perf_data["issues"]),
+        ai_summary=ai_summary,
     )

@@ -103,24 +103,24 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 const editSchema = z.object({
-  name:              z.string().min(1, "Nama diperlukan."),
-  type:              z.string().min(1, "Sila pilih jawatan."),
+  name:              z.string().min(1, "Nama diperlukan.").max(100, "Nama terlalu panjang."),
+  type:              z.enum(["ketua_kampung", "penghulu", "ketua_masyarakat"], { required_error: "Sila pilih jawatan." }),
   kampung_id:        z.string().optional(),
-  ic_no:             z.string().optional(),
+  ic_no:             z.string().regex(/^[\d\s-]*$/, "Format IC tidak sah.").max(20, "No. IC terlalu panjang.").optional().or(z.literal("")),
   tarikh_lantikan:   z.string().optional(),
-  parti_lantikan:    z.string().optional(),
-  parti_terkini:     z.string().optional(),
-  phone:             z.string().optional(),
-  address:           z.string().optional(),
-  poskod:            z.string().optional(),
+  parti_lantikan:    z.string().max(100, "Nama parti terlalu panjang.").optional().or(z.literal("")),
+  parti_terkini:     z.string().max(100, "Nama parti terlalu panjang.").optional().or(z.literal("")),
+  phone:             z.string().regex(/^[\d\s+-]*$/, "Format telefon tidak sah.").max(20, "No. telefon terlalu panjang.").optional().or(z.literal("")),
+  address:           z.string().max(500, "Alamat terlalu panjang.").optional().or(z.literal("")),
+  poskod:            z.string().regex(/^\d{0,5}$/, "Poskod mestilah 5 digit.").optional().or(z.literal("")),
   tarikh_lahir:      z.string().optional(),
-  pekerjaan_utama:   z.string().optional(),
-  pekerjaan_sampingan: z.string().optional(),
-  tahap_pendidikan:  z.string().optional(),
-  tanggungan:        z.string().optional(),
-  kegiatan_masyarakat: z.string().optional(),
-  pengalaman_kursus: z.string().optional(),
-  kampung_rangkaian: z.string().optional(),
+  pekerjaan_utama:   z.string().max(100, "Terlalu panjang.").optional().or(z.literal("")),
+  pekerjaan_sampingan: z.string().max(100, "Terlalu panjang.").optional().or(z.literal("")),
+  tahap_pendidikan:  z.string().max(100, "Terlalu panjang.").optional().or(z.literal("")),
+  tanggungan:        z.coerce.number().min(0, "Tidak boleh negatif.").max(50, "Jumlah tidak munasabah.").optional(),
+  kegiatan_masyarakat: z.string().max(1000, "Terlalu panjang.").optional().or(z.literal("")),
+  pengalaman_kursus: z.string().max(1000, "Terlalu panjang.").optional().or(z.literal("")),
+  kampung_rangkaian: z.string().max(500, "Terlalu panjang.").optional().or(z.literal("")),
   photo_url:         z.string().optional(),
 });
 type EditValues = z.infer<typeof editSchema>;
@@ -170,7 +170,7 @@ export default function LeaderDetailPage() {
     if (!data) return;
     reset({
       name:              data.name,
-      type:              data.type,
+      type:              data.type as "ketua_kampung" | "penghulu" | "ketua_masyarakat",
       kampung_id:        data.kampung_id ?? "",
       ic_no:             data.ic_no ?? "",
       tarikh_lantikan:   data.tarikh_lantikan ?? "",
@@ -183,7 +183,7 @@ export default function LeaderDetailPage() {
       pekerjaan_utama:   data.pekerjaan_utama ?? "",
       pekerjaan_sampingan: data.pekerjaan_sampingan ?? "",
       tahap_pendidikan:  data.tahap_pendidikan ?? "",
-      tanggungan:        data.tanggungan?.toString() ?? "",
+      tanggungan:        data.tanggungan != null ? Number(data.tanggungan) : undefined,
       kegiatan_masyarakat: data.kegiatan_masyarakat ?? "",
       pengalaman_kursus: data.pengalaman_kursus ?? "",
       kampung_rangkaian: data.kampung_rangkaian ?? "",
@@ -468,6 +468,7 @@ export default function LeaderDetailPage() {
                   <SelectContent>
                     <SelectItem value="ketua_kampung">Ketua Kampung</SelectItem>
                     <SelectItem value="penghulu">Penghulu</SelectItem>
+                    <SelectItem value="ketua_masyarakat">Ketua Masyarakat</SelectItem>
                   </SelectContent>
                 </Select>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

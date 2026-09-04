@@ -11,8 +11,9 @@ client = TestClient(app)
 EVAL_ROW = {
     "id": "e1", "leader_id": "l1", "period": "2026-06",
     "total": 45.0, "ulasan": "Baik",
-    "scores": {"kehadiran": 8, "khidmat_komuniti": 7, "pengurusan": 8,
-               "komunikasi": 7, "inisiatif": 8, "kerjasama": 7},
+    "scores": {"akhlak_personaliti": 6, "mutu_kerja": 5, "minat_kerja": 6,
+               "kebolehpercayaan": 6, "komunikasi": 5, "inisiatif": 6,
+               "disiplin_diri": 6, "kerjasama": 5},
     "aclis_leader": {"name": "Ahmad bin Ali"},
 }
 
@@ -42,8 +43,9 @@ def test_create_evaluation_ok(mock_sb):
     r = client.post("/evaluations", headers=auth(), json={
         "leader_id": "l1",
         "period": "2026-06",
-        "scores": {"kehadiran": 8, "khidmat_komuniti": 7, "pengurusan": 8,
-                   "komunikasi": 7, "inisiatif": 8, "kerjasama": 7},
+        "scores": {"akhlak_personaliti": 6, "mutu_kerja": 5, "minat_kerja": 6,
+                   "kebolehpercayaan": 6, "komunikasi": 5, "inisiatif": 6,
+                   "disiplin_diri": 6, "kerjasama": 5},
         "ulasan": "Baik",
     })
     assert r.status_code == 201

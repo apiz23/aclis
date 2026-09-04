@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/app-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { apiPost, apiPatch } from "@/lib/api";
+import { apiPost, apiPatch, apiPostFile } from "@/lib/api";
+import { z } from "zod";
 import {
 	useCurrentUser,
 	useKampung,
@@ -36,7 +37,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ScanLine, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -66,6 +67,24 @@ interface ReportRow {
 	status: string;
 	submitted_at: string | null;
 }
+
+const borangSchema = z.object({
+	kampungId:  z.string().min(1, "Sila pilih kampung."),
+	period:     z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM"),
+	population: z.string().optional(),
+	households: z.string().optional(),
+	births:     z.string().optional(),
+	deaths:     z.string().optional(),
+	notes:      z.string().max(2000, "Catatan terlalu panjang.").optional(),
+});
+
+const activitySchema = z.object({
+	name:       z.string().min(1, "Nama aktiviti diperlukan."),
+	date:       z.string().optional(),
+	attendance: z.string().optional(),
+});
+
+type BorangValues = z.infer<typeof borangSchema>;
 
 const STATUS_BADGE: Record<string, { label: string; variant: "success" | "secondary" | "destructive" }> = {
 	submitted: { label: "✓ Dihantar", variant: "success" },
@@ -282,6 +301,8 @@ export default function BorangPage() {
 	]);
 	const [nextId, setNextId] = useState(2);
 	const [saving, setSaving] = useState(false);
+	const [scanning, setScanning] = useState(false);
+	const scanInputRef = useRef<HTMLInputElement>(null);
 
 	const selectedKampung =
 		kampungList.find((k) => k.id === kampungId) ??
@@ -310,6 +331,43 @@ export default function BorangPage() {
 		setActivities((a) => a.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 	}
 
+	async function handleScan(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		setScanning(true);
+		try {
+			const formData = new FormData();
+			formData.append("image", file);
+			const data = await apiPostFile("/reports/scan", formData);
+
+			if (data.period) setPeriod(data.period);
+			if (data.population != null) setPopulation(String(data.population));
+			if (data.households != null) setHouseholds(String(data.households));
+			if (data.births != null) setBirths(String(data.births));
+			if (data.deaths != null) setDeaths(String(data.deaths));
+			if (data.notes) setNotes(data.notes);
+			if (data.activities?.length) {
+				setActivities(
+					data.activities.map((a: { name: string; date: string; attendance: number }, i: number) => ({
+						id: i + 1,
+						name: a.name ?? "",
+						date: a.date ?? "",
+						attendance: String(a.attendance ?? ""),
+					})),
+				);
+				setNextId(data.activities.length + 1);
+			}
+
+			const parts = [data.kampung_name, data.mukim_name].filter(Boolean).join(", ");
+			toast.success(parts ? `Data diekstrak: ${parts}` : "Data berjaya diekstrak daripada borang.");
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : "Gagal mengekstrak data.");
+		} finally {
+			setScanning(false);
+			e.target.value = "";
+		}
+	}
+
 	const checklist = [
 		{ label: "Maklumat asas", done: Boolean(effectiveKampungId && period) },
 		{
@@ -324,10 +382,35 @@ export default function BorangPage() {
 	];
 
 	async function save(submit: boolean) {
-		if (!effectiveKampungId) {
-			toast.error("Sila pilih kampung dahulu.");
+		const parsed = borangSchema.safeParse({
+			kampungId: effectiveKampungId,
+			period,
+			population,
+			households,
+			births,
+			deaths,
+			notes,
+		});
+		if (!parsed.success) {
+			const firstError = parsed.error.issues[0]?.message;
+			toast.error(firstError || "Sila lengkapkan borang.");
 			return;
 		}
+
+		const filledActivities = activities.filter((a) => a.name.trim());
+		if (submit && filledActivities.length === 0) {
+			toast.error("Sila tambah sekurang-kurangnya satu aktiviti.");
+			return;
+		}
+
+		for (const act of filledActivities) {
+			const actParsed = activitySchema.safeParse(act);
+			if (!actParsed.success) {
+				toast.error("Aktiviti: " + (actParsed.error.issues[0]?.message || "Data tidak lengkap."));
+				return;
+			}
+		}
+
 		setSaving(true);
 		try {
 			const content = buildContent({
@@ -390,6 +473,43 @@ export default function BorangPage() {
 						>
 							Draf — Belum Diserah
 						</Badge>
+					</div>
+
+					{/* Scan banner */}
+					<div className="flex items-center gap-3 rounded-md border border-[var(--gold-border)] bg-[var(--gold-light)] px-4 py-3">
+						<input
+							ref={scanInputRef}
+							type="file"
+							accept="image/*"
+							className="sr-only"
+							onChange={handleScan}
+						/>
+						{scanning ? (
+							<Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--amber)]" />
+						) : (
+							<ScanLine className="h-4 w-4 shrink-0 text-[var(--amber)]" />
+						)}
+						<div className="flex-1">
+							<p className="text-xs font-semibold text-[var(--amber)]">
+								{scanning ? "Mengekstrak data daripada borang…" : "Imbas Borang Kertas"}
+							</p>
+							<p className="text-[11px] text-[var(--amber)]/70">
+								{scanning
+									? "Sila tunggu, AI sedang membaca borang."
+									: "Muat naik gambar borang kertas untuk auto-isi medan di bawah."}
+							</p>
+						</div>
+						{!scanning && (
+							<Button
+								size="sm"
+								variant="outline"
+								className="shrink-0 rounded-none border-[var(--amber-border)] bg-white text-[11px] font-semibold text-[var(--amber)] hover:bg-[var(--amber-bg)]"
+								onClick={() => scanInputRef.current?.click()}
+							>
+								<ScanLine className="mr-1.5 h-3.5 w-3.5" />
+								Pilih Gambar
+							</Button>
+						)}
 					</div>
 
 					{/* A — Maklumat Asas */}

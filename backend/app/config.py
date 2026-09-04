@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
+    jamai_token: str = ""
+    jamai_project_id: str = ""
+    jamai_table_id: str = "form_scan"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
